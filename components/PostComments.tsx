@@ -10,7 +10,9 @@ import {
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
+    Modal,
     Pressable,
+    ScrollView,
     StyleSheet,
     Text,
     TextInput,
@@ -21,11 +23,11 @@ import { auth, db } from "../app/(tabs)/firebaseConfig";
   export default function PostComments({
     postId,
     expanded,
-    onExpand,
+    onToggle,
   }: {
     postId: string;
     expanded: boolean;
-    onExpand: () => void;
+    onToggle: () => void;
   }) {
     const [comments, setComments] = useState<any[]>([]);
     const [text, setText] = useState("");
@@ -37,9 +39,7 @@ import { auth, db } from "../app/(tabs)/firebaseConfig";
       );
   
       const unsub = onSnapshot(q, (snap) => {
-        setComments(
-          snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-        );
+        setComments(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
       });
   
       return unsub;
@@ -53,58 +53,77 @@ import { auth, db } from "../app/(tabs)/firebaseConfig";
       const userSnap = await getDoc(userRef);
       const userData = userSnap.exists() ? userSnap.data() : null;
   
-      await addDoc(
-        collection(db, "userBucketlistItems", postId, "comments"),
-        {
-          text: text.trim(),
-          userId: auth.currentUser.uid,
-          username: userData?.username || auth.currentUser.displayName || "user",
-          createdAt: serverTimestamp(),
-        }
-      );
+      await addDoc(collection(db, "userBucketlistItems", postId, "comments"), {
+        text: text.trim(),
+        userId: auth.currentUser.uid,
+        username: userData?.username || auth.currentUser.displayName || "user",
+        createdAt: serverTimestamp(),
+      });
   
       setText("");
     };
   
-    const visibleComments = expanded ? comments : comments.slice(0, 3);
+    const previewComments = comments.slice(0, 3);
   
     return (
       <View style={styles.container}>
-        {visibleComments.map((c) => (
+        {previewComments.map((c) => (
           <Text key={c.id} style={styles.comment}>
-            <Text style={styles.username}>
-              {c.username || "user"}{" "}
-            </Text>
+            <Text style={styles.username}>{c.username || "user"} </Text>
             {c.text}
           </Text>
         ))}
   
-        {!expanded && comments.length > 3 ? (
-          <Pressable onPress={onExpand}>
+        {comments.length > 3 ? (
+          <Pressable onPress={onToggle}>
             <Text style={styles.viewMoreText}>
               View all {comments.length} comments
             </Text>
           </Pressable>
         ) : null}
-
-{expanded && comments.length > 3 ? (
-  <Pressable onPress={onExpand}>
-    <Text style={styles.viewMoreText}>Show less</Text>
-  </Pressable>
-) : null}
   
-        <View style={styles.inputRow}>
-          <TextInput
-            value={text}
-            onChangeText={setText}
-            placeholder="Add a comment..."
-            style={styles.input}
-          />
+        <Modal
+          visible={expanded}
+          animationType="slide"
+          transparent
+          onRequestClose={onToggle}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHandle} />
   
-          <Pressable onPress={addComment}>
-            <Text style={styles.post}>Post</Text>
-          </Pressable>
-        </View>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Comments</Text>
+  
+                <Pressable onPress={onToggle}>
+                  <Text style={styles.closeText}>Close</Text>
+                </Pressable>
+              </View>
+  
+              <ScrollView style={styles.commentsList}>
+                {comments.map((c) => (
+                  <Text key={c.id} style={styles.modalComment}>
+                    <Text style={styles.username}>{c.username || "user"} </Text>
+                    {c.text}
+                  </Text>
+                ))}
+              </ScrollView>
+  
+              <View style={styles.inputRow}>
+                <TextInput
+                  value={text}
+                  onChangeText={setText}
+                  placeholder="Add a comment..."
+                  style={styles.input}
+                />
+  
+                <Pressable onPress={addComment}>
+                  <Text style={styles.post}>Post</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </View>
     );
   }
@@ -123,8 +142,7 @@ import { auth, db } from "../app/(tabs)/firebaseConfig";
     viewMoreText: {
       fontSize: 14,
       color: "#888",
-      marginTop: 4,
-      marginBottom: 6,
+      marginTop: 6,
     },
     inputRow: {
       flexDirection: "row",
@@ -139,5 +157,49 @@ import { auth, db } from "../app/(tabs)/firebaseConfig";
     post: {
       marginLeft: 8,
       fontWeight: "700",
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.45)",
+      justifyContent: "flex-end",
+    },
+    modalContent: {
+      backgroundColor: "#fff",
+      borderTopLeftRadius: 22,
+      borderTopRightRadius: 22,
+      paddingTop: 10,
+      paddingHorizontal: 16,
+      paddingBottom: 30,
+      maxHeight: "75%",
+    },
+    modalHandle: {
+      width: 42,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: "#ccc",
+      alignSelf: "center",
+      marginBottom: 12,
+    },
+    modalHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 14,
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: "800",
+    },
+    closeText: {
+      fontWeight: "700",
+      color: "#777",
+    },
+    commentsList: {
+      marginBottom: 12,
+    },
+    modalComment: {
+      fontSize: 15,
+      marginBottom: 12,
+      lineHeight: 21,
     },
   });
