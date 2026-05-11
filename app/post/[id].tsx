@@ -16,11 +16,13 @@ import {
     ScrollView,
     StyleSheet,
     Text,
+
     View,
 } from "react-native";
 import { auth, db } from "../(tabs)/firebaseConfig";
 import MediaCarousel from "../../components/MediaCarousel";
 import PostActions from "../../components/PostActions";
+import PostComments from "../../components/PostComments";
 
 export default function PostScreen() {
   const { id } = useLocalSearchParams();
@@ -28,6 +30,7 @@ export default function PostScreen() {
 
   const [posts, setPosts] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
+  const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const loadPosts = async () => {
@@ -151,7 +154,15 @@ export default function PostScreen() {
             <View style={styles.captionBox}>
   <Text style={styles.postTitle}>{post.title}</Text>
 
-  <PostActions postId={post.id} />
+  <PostActions
+  postId={post.id}
+  onCommentPress={() =>
+    setExpandedComments((prev) => ({
+      ...prev,
+      [post.id]: !prev[post.id],
+    }))
+  }
+/>
 
   {post.caption ? (
     <Text style={styles.caption}>
@@ -162,10 +173,22 @@ export default function PostScreen() {
     </Text>
   ) : null}
 
+  <PostComments
+    postId={post.id}
+    expanded={!!expandedComments[post.id]}
+    onToggle={() =>
+      setExpandedComments((prev) => ({
+        ...prev,
+        [post.id]: !prev[post.id],
+      }))
+    }
+  />
+
   <Text style={styles.dateText}>
     Completed {formatDate(post)}
   </Text>
 </View>
+
           </View>
         ))}
       </ScrollView>

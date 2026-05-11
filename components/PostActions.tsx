@@ -18,7 +18,6 @@ import {
     Pressable,
     StyleSheet,
     Text,
-    TextInput,
     View
 } from "react-native";
 import { auth, db } from "../app/(tabs)/firebaseConfig";
@@ -182,42 +181,6 @@ export default function PostActions({ postId }: { postId: string }) {
       <Text style={styles.likesText}>
         {likesCount} {likesCount === 1 ? "like" : "likes"}
       </Text>
-  
-      {comments.length > 0 ? (
-        <View style={styles.commentsBox}>
-          {comments.slice(0, 3).map((item) => (
-            <Pressable
-              key={item.id}
-              onLongPress={() => deleteComment(item.id, item.userId)}
-              style={styles.comment}
-            >
-              <Text style={styles.commentText}>
-                <Text style={styles.username}>{item.username} </Text>
-                {item.text}
-              </Text>
-            </Pressable>
-          ))}
-  
-          {comments.length > 3 ? (
-            <Text style={styles.viewMoreText}>
-              View all {comments.length} comments
-            </Text>
-          ) : null}
-        </View>
-      ) : null}
-  
-      <View style={styles.commentInputRow}>
-        <TextInput
-          value={commentText}
-          onChangeText={setCommentText}
-          placeholder="Add a comment..."
-          style={styles.input}
-        />
-  
-        <Pressable onPress={addComment} style={styles.postButton}>
-          <Text style={styles.postButtonText}>Post</Text>
-        </Pressable>
-      </View>
     </View>
   );
 }
