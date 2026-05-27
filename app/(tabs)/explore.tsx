@@ -3,19 +3,16 @@ import {
   addDoc,
   collection,
   doc,
-  getDoc,
   getDocs,
   increment,
   limit,
   query,
   serverTimestamp,
   updateDoc,
-  where,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
   Alert,
-  Dimensions,
   Image,
   Pressable,
   ScrollView,
@@ -24,136 +21,94 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { TabBar, TabView } from "react-native-tab-view";
 import { auth, db } from "../../lib/firebaseConfig";
 import { migrateIdeasToExperiences } from "../../lib/migration";
 
-type ExploreIdea = {
+type Experience = {
   id: string;
   title: string;
   category: string;
+  heroImageUrl: string | null;
+  savesCount: number;
+  completionsCount: number;
 };
+
+const CATEGORY_COLORS: Record<string, string> = {
+  Travel: "#E8F4FD",
+  Adventure: "#FEF3C7",
+  "Food & Drink": "#FCE7F3",
+  Health: "#D1FAE5",
+  Creative: "#EDE9FE",
+  Learning: "#FEF9C3",
+  Sports: "#DBEAFE",
+  Nature: "#DCFCE7",
+  Culture: "#FEE2E2",
+  Events: "#FFF7ED",
+  "Personal Growth": "#F3E8FF",
+  Other: "#F4F4F4",
+};
+
+const CATEGORIES = [
+  "All",
+  "Travel",
+  "Adventure",
+  "Food & Drink",
+  "Health",
+  "Creative",
+  "Learning",
+  "Sports",
+  "Nature",
+  "Culture",
+  "Events",
+  "Personal Growth",
+  "Other",
+];
 
 export default function ExploreScreen() {
   const [search, setSearch] = useState("");
-  const [ideas, setIdeas] = useState<ExploreIdea[]>([]);
-  const [posts, setPosts] = useState<any[]>([]);
+  const [experiences, setExperiences] = useState<Experience[]>([]);
   const [people, setPeople] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
 
-  const [index, setIndex] = useState(0);
-  const [routes] = useState([
-    { key: "posts", title: "Posts" },
-    { key: "ideas", title: "Ideas" },
-    { key: "people", title: "People" },
-  ]);
-
   useEffect(() => {
-    fetchExploreData();
+    fetchData();
   }, []);
 
-  const fetchExploreData = async () => {
-    await Promise.all([fetchIdeas(), fetchPosts(), fetchPeople()]);
+  const fetchData = async () => {
+    await Promise.all([fetchExperiences(), fetchPeople()]);
   };
 
-  const fetchIdeas = async () => {
+  const fetchExperiences = async () => {
     const expSnap = await getDocs(query(collection(db, "experiences"), limit(1)));
     if (expSnap.empty) {
       await migrateIdeasToExperiences();
     }
 
     const snapshot = await getDocs(query(collection(db, "experiences")));
-
-    const fetchedIdeas = snapshot.docs.map((docItem) => ({
-      id: docItem.id,
-      title: docItem.data().title,
-      category: docItem.data().category,
+    const fetched: Experience[] = snapshot.docs.map((d) => ({
+      id: d.id,
+      title: d.data().title || "",
+      category: d.data().category || "Other",
+      heroImageUrl: d.data().heroImageUrl || null,
+      savesCount: d.data().savesCount || 0,
+      completionsCount: d.data().completionsCount || 0,
     }));
 
-    setIdeas(shuffleArray(fetchedIdeas));
+    fetched.sort((a, b) => b.savesCount - a.savesCount);
+    setExperiences(fetched);
   };
 
   const fetchPeople = async () => {
     const snapshot = await getDocs(query(collection(db, "users"), limit(50)));
-
-    const fetchedPeople = snapshot.docs
-      .map((docItem) => ({
-        id: docItem.id,
-        ...docItem.data(),
-      }))
-      .filter((person: any) => person.isPrivate !== true)
-      .filter((person: any) => person.id !== auth.currentUser?.uid);
-
-    setPeople(fetchedPeople);
-  };
-
-  const fetchPosts = async () => {
-    const postsSnap = await getDocs(
-      query(
-        collection(db, "userBucketlistItems"),
-        where("completed", "==", true)
-      )
+    setPeople(
+      snapshot.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .filter((p: any) => p.isPrivate !== true)
+        .filter((p: any) => p.id !== auth.currentUser?.uid)
     );
-
-    const rawPosts = postsSnap.docs
-      .map((docItem) => ({ id: docItem.id, ...(docItem.data() as any) }))
-      .filter((post: any) => post.imageUrl && post.userId);
-
-    const withUsers = await Promise.all(
-      rawPosts.map(async (post: any) => {
-        const userSnap = await getDoc(doc(db, "users", post.userId));
-        return {
-          ...post,
-          user: userSnap.exists() ? { id: post.userId, ...userSnap.data() } : null,
-        };
-      })
-    );
-
-    const fetchedPosts = withUsers
-      .filter((post: any) => post.user?.isPrivate !== true)
-      .sort((a: any, b: any) => {
-        const aTime = a.completedAt?.seconds || 0;
-        const bTime = b.completedAt?.seconds || 0;
-        return bTime - aTime;
-      });
-
-    setPosts(fetchedPosts);
   };
 
-  const shuffleArray = (array: ExploreIdea[]) => {
-    return [...array].sort(() => Math.random() - 0.5);
-  };
-
-  const categories = [
-    "All",
-    ...Array.from(new Set(posts.map((post) => post.category || "Other"))).sort(),
-  ];
-
-  const filteredPosts = posts.filter((post) => {
-    const matchesCategory =
-      selectedCategory === "All" || post.category === selectedCategory;
-
-    const matchesSearch =
-      post.title?.toLowerCase().includes(search.toLowerCase()) ||
-      post.category?.toLowerCase().includes(search.toLowerCase()) ||
-      post.user?.username?.toLowerCase().includes(search.toLowerCase());
-
-    return matchesCategory && matchesSearch;
-  });
-
-  const filteredIdeas = ideas.filter(
-    (idea) =>
-      idea.title.toLowerCase().includes(search.toLowerCase()) ||
-      idea.category.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const filteredPeople = people.filter(
-    (person) =>
-      person.username?.toLowerCase().includes(search.toLowerCase()) ||
-      person.bio?.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const addToBucketlist = async (idea: ExploreIdea) => {
+  const addToBucketlist = async (exp: Experience) => {
     if (!auth.currentUser) {
       Alert.alert("Not logged in", "You need to log in first.");
       return;
@@ -161,8 +116,8 @@ export default function ExploreScreen() {
 
     await addDoc(collection(db, "userBucketlistItems"), {
       userId: auth.currentUser.uid,
-      title: idea.title,
-      category: idea.category,
+      title: exp.title,
+      category: exp.category,
       completed: false,
       imageUrl: null,
       caption: "",
@@ -170,206 +125,226 @@ export default function ExploreScreen() {
       createdAt: serverTimestamp(),
       completedAt: null,
       fromExplore: true,
-      experienceId: idea.id,
+      experienceId: exp.id,
     });
 
-    updateDoc(doc(db, "experiences", idea.id), {
+    updateDoc(doc(db, "experiences", exp.id), {
       savesCount: increment(1),
     }).catch(() => {});
 
-    Alert.alert("Added", `${idea.title} was added to your bucketlist.`);
+    Alert.alert("Added", `${exp.title} was added to your bucketlist.`);
   };
 
-  const goToUserProfile = (userId: string) => {
-    if (userId === auth.currentUser?.uid) {
-      router.push("/profile");
-    } else {
-      router.push({
-        pathname: "/user/[id]",
-        params: { id: userId },
-      });
-    }
-  };
+  const trending = experiences.slice(0, 6);
 
-  const renderPosts = () => (
-    <ScrollView style={styles.scene}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.categoryScroll}
-      >
-        {categories.map((category) => (
-          <Pressable
-            key={category}
-            style={[
-              styles.categoryChip,
-              selectedCategory === category && styles.categoryChipActive,
-            ]}
-            onPress={() => setSelectedCategory(category)}
-          >
-            <Text
-              style={[
-                styles.categoryChipText,
-                selectedCategory === category && styles.categoryChipTextActive,
-              ]}
-            >
-              {category}
-            </Text>
-          </Pressable>
-        ))}
-      </ScrollView>
+  const filtered = experiences.filter((exp) => {
+    const matchCat = selectedCategory === "All" || exp.category === selectedCategory;
+    const q = search.toLowerCase();
+    const matchSearch =
+      !q ||
+      exp.title.toLowerCase().includes(q) ||
+      exp.category.toLowerCase().includes(q);
+    return matchCat && matchSearch;
+  });
 
-      <View style={styles.grid}>
-        {filteredPosts.map((post) => (
-          <Pressable
-            key={post.id}
-            style={styles.postTile}
-            onPress={() =>
-              router.push({
-                pathname: "/explore-post/[id]",
-                params: { id: post.id },
-              })
-            }
-          >
-            <Image source={{ uri: post.imageUrl }} style={styles.postImage} />
+  const filteredPeople = people.filter((p: any) => {
+    const q = search.toLowerCase();
+    return (
+      !q ||
+      p.username?.toLowerCase().includes(q) ||
+      p.bio?.toLowerCase().includes(q)
+    );
+  });
 
-            <View style={styles.postOverlay}>
-              <Text style={styles.postCategory}>{post.category}</Text>
-              <Text numberOfLines={2} style={styles.postTitle}>
-                {post.title}
-              </Text>
-            </View>
-          </Pressable>
-        ))}
-      </View>
-    </ScrollView>
-  );
-
-  const renderIdeas = () => (
-    <ScrollView style={styles.scene}>
-      {filteredIdeas.map((idea) => (
-        <IdeaCard key={idea.id} idea={idea} onAdd={addToBucketlist} />
-      ))}
-    </ScrollView>
-  );
-
-  const renderPeople = () => (
-    <ScrollView style={styles.scene}>
-      {filteredPeople.map((person) => (
-        <Pressable
-          key={person.id}
-          style={styles.personCard}
-          onPress={() => goToUserProfile(person.id)}
-        >
-          {person.profileImage ? (
-            <Image source={{ uri: person.profileImage }} style={styles.personAvatar} />
-          ) : (
-            <View style={styles.personAvatarFallback}>
-              <Text style={styles.personAvatarText}>
-                {person.username?.charAt(0)?.toUpperCase() || "?"}
-              </Text>
-            </View>
-          )}
-
-          <View style={styles.personInfo}>
-            <Text style={styles.personUsername}>@{person.username || "user"}</Text>
-            <Text numberOfLines={2} style={styles.personBio}>
-              {person.bio || "No bio yet."}
-            </Text>
-          </View>
-
-          <Text style={styles.arrow}>›</Text>
-        </Pressable>
-      ))}
-    </ScrollView>
-  );
-
-  const renderScene = ({ route }: any) => {
-    switch (route.key) {
-      case "posts":
-        return renderPosts();
-      case "ideas":
-        return renderIdeas();
-      case "people":
-        return renderPeople();
-      default:
-        return null;
-    }
-  };
+  const leftCol = filtered.filter((_, i) => i % 2 === 0);
+  const rightCol = filtered.filter((_, i) => i % 2 !== 0);
 
   return (
     <View style={styles.container}>
       <View style={styles.top}>
-        <View style={styles.header}>
+        <View style={styles.headerRow}>
           <Text style={styles.title}>Explore</Text>
-
           <Pressable onPress={() => router.push("/add-idea")}>
             <Text style={styles.plus}>＋</Text>
           </Pressable>
         </View>
-
         <TextInput
           style={styles.searchInput}
-          placeholder="Search posts, ideas, people..."
+          placeholder="Search experiences, people..."
+          placeholderTextColor="#999"
           value={search}
           onChangeText={setSearch}
         />
       </View>
 
-      <TabView
-        navigationState={{ index, routes }}
-        renderScene={renderScene}
-        onIndexChange={(newIndex) => {
-          setIndex(newIndex);
-          setSearch("");
-          setSelectedCategory("All");
-        }}
-        initialLayout={{ width: Dimensions.get("window").width }}
-        renderTabBar={(props: any) => (
-          <TabBar
-            {...props}
-            indicatorStyle={styles.tabIndicator}
-            style={styles.tabBar}
-            activeColor="#111"
-            inactiveColor="#777"
-          />
+      <ScrollView showsVerticalScrollIndicator={false}>
+
+        {!search && trending.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Trending</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.trendingScroll}
+            >
+              {trending.map((exp) => (
+                <Pressable
+                  key={exp.id}
+                  style={styles.trendingCard}
+                  onPress={() =>
+                    router.push({ pathname: "/experience/[id]", params: { id: exp.id } })
+                  }
+                >
+                  {exp.heroImageUrl ? (
+                    <Image source={{ uri: exp.heroImageUrl }} style={styles.trendingImage} />
+                  ) : (
+                    <View
+                      style={[
+                        styles.trendingImage,
+                        { backgroundColor: CATEGORY_COLORS[exp.category] ?? "#F4F4F4" },
+                      ]}
+                    />
+                  )}
+                  <View style={styles.trendingOverlay}>
+                    <Text style={styles.trendingCat}>{exp.category}</Text>
+                    <Text numberOfLines={2} style={styles.trendingTitle}>
+                      {exp.title}
+                    </Text>
+                    {exp.savesCount > 0 && (
+                      <Text style={styles.trendingCount}>{exp.savesCount} saved</Text>
+                    )}
+                  </View>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
         )}
-      />
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipsScroll}
+        >
+          {CATEGORIES.map((cat) => (
+            <Pressable
+              key={cat}
+              style={[styles.chip, selectedCategory === cat && styles.chipActive]}
+              onPress={() => setSelectedCategory(cat)}
+            >
+              <Text
+                style={[
+                  styles.chipText,
+                  selectedCategory === cat && styles.chipTextActive,
+                ]}
+              >
+                {cat}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+
+        {filtered.length > 0 ? (
+          <View style={styles.masonry}>
+            <View style={styles.masonryCol}>
+              {leftCol.map((exp) => (
+                <ExperienceTile key={exp.id} exp={exp} onAdd={addToBucketlist} />
+              ))}
+            </View>
+            <View style={styles.masonryCol}>
+              {rightCol.map((exp) => (
+                <ExperienceTile key={exp.id} exp={exp} onAdd={addToBucketlist} />
+              ))}
+            </View>
+          </View>
+        ) : (
+          <Text style={styles.emptyText}>No experiences found.</Text>
+        )}
+
+        {filteredPeople.length > 0 && (
+          <View style={[styles.section, styles.peopleSection]}>
+            <Text style={styles.sectionLabel}>People to follow</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.peopleScroll}
+            >
+              {filteredPeople.map((person: any) => (
+                <Pressable
+                  key={person.id}
+                  style={styles.personCard}
+                  onPress={() =>
+                    person.id === auth.currentUser?.uid
+                      ? router.push("/profile")
+                      : router.push({ pathname: "/user/[id]", params: { id: person.id } })
+                  }
+                >
+                  {person.profileImage ? (
+                    <Image source={{ uri: person.profileImage }} style={styles.personAvatar} />
+                  ) : (
+                    <View style={styles.personAvatarFallback}>
+                      <Text style={styles.personAvatarText}>
+                        {person.username?.charAt(0)?.toUpperCase() || "?"}
+                      </Text>
+                    </View>
+                  )}
+                  <Text style={styles.personUsername} numberOfLines={1}>
+                    @{person.username || "user"}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        <View style={styles.bottomPad} />
+      </ScrollView>
     </View>
   );
 }
 
-function IdeaCard({
-  idea,
+function ExperienceTile({
+  exp,
   onAdd,
 }: {
-  idea: ExploreIdea;
-  onAdd: (idea: ExploreIdea) => void;
+  exp: Experience;
+  onAdd: (exp: Experience) => void;
 }) {
   return (
     <Pressable
-      style={styles.ideaCard}
+      style={styles.tile}
       onPress={() =>
-        router.push({
-          pathname: "/experience/[id]",
-          params: { id: idea.id },
-        })
+        router.push({ pathname: "/experience/[id]", params: { id: exp.id } })
       }
     >
-      <View style={styles.cardText}>
-        <Text style={styles.ideaTitle}>{idea.title}</Text>
-        <Text style={styles.ideaCategory}>{idea.category}</Text>
-      </View>
+      {exp.heroImageUrl ? (
+        <Image source={{ uri: exp.heroImageUrl }} style={styles.tileImage} />
+      ) : (
+        <View
+          style={[
+            styles.tileImage,
+            { backgroundColor: CATEGORY_COLORS[exp.category] ?? "#F4F4F4" },
+          ]}
+        />
+      )}
 
-      <Pressable
-        style={styles.addButton}
-        onPress={(event) => {
-          event.stopPropagation();
-          onAdd(idea);
-        }}
-      >
-        <Text style={styles.addButtonText}>Add</Text>
-      </Pressable>
+      <View style={styles.tileBody}>
+        <Text style={styles.tileCat}>{exp.category}</Text>
+        <Text style={styles.tileTitle} numberOfLines={3}>
+          {exp.title}
+        </Text>
+        {exp.savesCount > 0 && (
+          <Text style={styles.tileSaves}>{exp.savesCount} saved</Text>
+        )}
+        <Pressable
+          style={styles.tileAddBtn}
+          onPress={(e) => {
+            e.stopPropagation();
+            onAdd(exp);
+          }}
+        >
+          <Text style={styles.tileAddText}>+ Add</Text>
+        </Pressable>
+      </View>
     </Pressable>
   );
 }
@@ -379,210 +354,203 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
-
   top: {
     paddingTop: 70,
     paddingHorizontal: 18,
+    paddingBottom: 4,
     backgroundColor: "#fff",
   },
-
-  header: {
+  headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-
   title: {
     fontSize: 28,
     fontWeight: "900",
   },
-
   plus: {
     fontSize: 32,
     fontWeight: "800",
   },
-
   searchInput: {
-    marginTop: 16,
+    marginTop: 14,
     backgroundColor: "#F4F4F4",
     padding: 14,
     borderRadius: 16,
     fontSize: 16,
   },
 
-  tabBar: {
-    backgroundColor: "#fff",
-    elevation: 0,
-    shadowOpacity: 0,
+  section: {
+    marginTop: 22,
+  },
+  sectionLabel: {
+    fontSize: 17,
+    fontWeight: "900",
+    paddingHorizontal: 18,
+    marginBottom: 12,
   },
 
-  tabIndicator: {
-    backgroundColor: "#111",
-    height: 3,
-    borderRadius: 999,
+  trendingScroll: {
+    paddingHorizontal: 18,
+    gap: 12,
   },
-
-  scene: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-
-  categoryScroll: {
-    paddingVertical: 12,
-    paddingLeft: 10,
-  },
-
-  categoryChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+  trendingCard: {
+    width: 150,
+    borderRadius: 16,
+    overflow: "hidden",
     backgroundColor: "#F4F4F4",
-    borderRadius: 999,
-    marginRight: 8,
   },
-
-  categoryChipActive: {
-    backgroundColor: "#111",
+  trendingImage: {
+    width: 150,
+    height: 120,
   },
-
-  categoryChipText: {
-    color: "#555",
-    fontWeight: "700",
+  trendingOverlay: {
+    padding: 10,
   },
-
-  categoryChipTextActive: {
-    color: "#fff",
-  },
-
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    padding: 2,
-  },
-
-  postTile: {
-    width: "33.33%",
-    aspectRatio: 0.75,
-    padding: 2,
-  },
-
-  postImage: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 8,
-    backgroundColor: "#eee",
-  },
-
-  postOverlay: {
-    position: "absolute",
-    left: 6,
-    right: 6,
-    bottom: 6,
-    padding: 6,
-    borderRadius: 8,
-    backgroundColor: "rgba(0,0,0,0.45)",
-  },
-
-  postCategory: {
-    color: "#fff",
+  trendingCat: {
     fontSize: 10,
     fontWeight: "800",
     textTransform: "uppercase",
+    color: "#999",
   },
-
-  postTitle: {
-    color: "#fff",
-    fontSize: 11,
+  trendingTitle: {
+    fontSize: 13,
     fontWeight: "700",
-    marginTop: 2,
+    color: "#111",
+    marginTop: 3,
+    lineHeight: 18,
   },
-
-  ideaCard: {
-    marginHorizontal: 18,
-    marginTop: 14,
-    backgroundColor: "#F4F4F4",
-    padding: 16,
-    borderRadius: 18,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-
-  cardText: {
-    flex: 1,
-    paddingRight: 12,
-  },
-
-  ideaTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
-
-  ideaCategory: {
+  trendingCount: {
     marginTop: 4,
+    fontSize: 11,
     color: "#777",
+    fontWeight: "600",
   },
 
-  addButton: {
-    backgroundColor: "#111",
-    paddingVertical: 10,
+  chipsScroll: {
     paddingHorizontal: 18,
-    borderRadius: 14,
+    paddingVertical: 14,
+    gap: 8,
   },
-
-  addButtonText: {
-    color: "#fff",
-    fontWeight: "700",
-  },
-
-  personCard: {
-    marginHorizontal: 18,
-    marginTop: 14,
+  chip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     backgroundColor: "#F4F4F4",
-    padding: 16,
-    borderRadius: 18,
+    borderRadius: 999,
+  },
+  chipActive: {
+    backgroundColor: "#111",
+  },
+  chipText: {
+    color: "#555",
+    fontWeight: "700",
+    fontSize: 13,
+  },
+  chipTextActive: {
+    color: "#fff",
+  },
+
+  masonry: {
     flexDirection: "row",
+    paddingHorizontal: 12,
+    gap: 8,
+  },
+  masonryCol: {
+    flex: 1,
+    gap: 8,
+  },
+  tile: {
+    borderRadius: 16,
+    backgroundColor: "#F4F4F4",
+    overflow: "hidden",
+  },
+  tileImage: {
+    width: "100%",
+    aspectRatio: 1,
+  },
+  tileBody: {
+    padding: 10,
+  },
+  tileCat: {
+    fontSize: 10,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    color: "#999",
+  },
+  tileTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#111",
+    marginTop: 3,
+    lineHeight: 18,
+  },
+  tileSaves: {
+    marginTop: 4,
+    fontSize: 11,
+    color: "#777",
+    fontWeight: "600",
+  },
+  tileAddBtn: {
+    marginTop: 8,
+    backgroundColor: "#111",
+    paddingVertical: 7,
+    borderRadius: 10,
     alignItems: "center",
   },
-
-  personAvatar: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+  tileAddText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 12,
   },
 
+  emptyText: {
+    paddingHorizontal: 20,
+    paddingTop: 30,
+    color: "#777",
+    textAlign: "center",
+    fontWeight: "600",
+  },
+
+  peopleSection: {
+    marginTop: 28,
+  },
+  peopleScroll: {
+    paddingHorizontal: 18,
+    gap: 12,
+  },
+  personCard: {
+    alignItems: "center",
+    width: 80,
+  },
+  personAvatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#eee",
+  },
   personAvatarFallback: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: "#111",
     alignItems: "center",
     justifyContent: "center",
   },
-
   personAvatarText: {
     color: "#fff",
     fontWeight: "900",
-    fontSize: 18,
+    fontSize: 20,
   },
-
-  personInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
-
   personUsername: {
-    fontSize: 16,
-    fontWeight: "800",
+    marginTop: 6,
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#111",
+    textAlign: "center",
   },
 
-  personBio: {
-    marginTop: 4,
-    color: "#777",
-    lineHeight: 19,
-  },
-
-  arrow: {
-    fontSize: 30,
-    color: "#777",
+  bottomPad: {
+    height: 40,
   },
 });
