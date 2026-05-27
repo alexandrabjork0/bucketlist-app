@@ -23,7 +23,7 @@ import {
   View,
 } from "react-native";
 import { TabBar, TabView } from "react-native-tab-view";
-import { auth, db } from "./firebaseConfig";
+import { auth, db } from "../../lib/firebaseConfig";
 
 type ExploreIdea = {
   id: string;

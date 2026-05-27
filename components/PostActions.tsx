@@ -8,7 +8,7 @@ import {
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
-import { auth, db } from "../app/(tabs)/firebaseConfig";
+import { auth, db } from "../lib/firebaseConfig";
 
 export default function PostActions({ postId }: { postId: string }) {
   const user = auth.currentUser;

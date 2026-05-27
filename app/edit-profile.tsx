@@ -15,7 +15,7 @@ import {
     TouchableWithoutFeedback,
     View,
 } from "react-native";
-import { auth, db, storage } from "./(tabs)/firebaseConfig";
+import { auth, db, storage } from "../lib/firebaseConfig";
 
 export default function EditProfileScreen() {
   const [username, setUsername] = useState("");

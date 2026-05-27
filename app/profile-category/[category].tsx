@@ -8,7 +8,7 @@ import {
     Text,
     View,
 } from "react-native";
-import { auth, db } from "../(tabs)/firebaseConfig";
+import { auth, db } from "../../lib/firebaseConfig";
 import PostThumbnail from "../../components/PostThumbnail";
 
 export default function ProfileCategoryScreen() {

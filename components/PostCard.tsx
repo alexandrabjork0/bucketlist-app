@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
-import { auth } from "../app/(tabs)/firebaseConfig";
+import { auth } from "../lib/firebaseConfig";
 import MediaCarousel from "./MediaCarousel";
 import PostActions from "./PostActions";
 import PostComments from "./PostComments";

@@ -19,7 +19,7 @@ import {
   Text,
 } from "react-native";
 import PostCard from "../../components/PostCard";
-import { auth, db } from "./firebaseConfig";
+import { auth, db } from "../../lib/firebaseConfig";
 
 export default function HomeScreen() {
   const [user, setUser] = useState<User | null>(null);

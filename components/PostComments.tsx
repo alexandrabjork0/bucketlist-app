@@ -21,7 +21,7 @@ import {
     TextInput,
     View,
 } from "react-native";
-import { auth, db } from "../app/(tabs)/firebaseConfig";
+import { auth, db } from "../lib/firebaseConfig";
   
   export default function PostComments({ postId }: { postId: string }) {
     const [comments, setComments] = useState<any[]>([]);

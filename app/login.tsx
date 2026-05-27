@@ -10,7 +10,7 @@ import {
     TextInput,
     View,
 } from "react-native";
-import { auth } from "./(tabs)/firebaseConfig";
+import { auth } from "../lib/firebaseConfig";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");

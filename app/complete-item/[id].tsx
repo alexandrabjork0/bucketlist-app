@@ -15,7 +15,7 @@ import {
     useWindowDimensions,
     View,
 } from "react-native";
-import { db, storage } from "../(tabs)/firebaseConfig";
+import { db, storage } from "../../lib/firebaseConfig";
 import VideoPlayer from "../../components/VideoPlayer";
 
 type SelectedMedia = {

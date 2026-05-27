@@ -17,7 +17,7 @@ import {
     Text,
     View,
 } from "react-native";
-import { auth, db } from "../(tabs)/firebaseConfig";
+import { auth, db } from "../../lib/firebaseConfig";
 import PostCard from "../../components/PostCard";
 
 export default function PostScreen() {

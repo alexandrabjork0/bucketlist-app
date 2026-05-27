@@ -13,7 +13,7 @@ import {
     TouchableWithoutFeedback,
     View,
 } from "react-native";
-import { auth, db } from "./(tabs)/firebaseConfig";
+import { auth, db } from "../lib/firebaseConfig";
 
 const CATEGORIES = [
   "Travel",

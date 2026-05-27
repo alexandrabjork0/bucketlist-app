@@ -19,7 +19,7 @@ import {
     Text,
     View,
 } from "react-native";
-import { auth, db } from "./firebaseConfig";
+import { auth, db } from "../../lib/firebaseConfig";
 import PostThumbnail from "../../components/PostThumbnail";
 
 type ActiveTab = "posts" | "cards" | "bucketlist" | "collections";

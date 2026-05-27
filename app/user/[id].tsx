@@ -12,7 +12,7 @@ import {
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { auth, db } from "../(tabs)/firebaseConfig";
+import { auth, db } from "../../lib/firebaseConfig";
 import PostThumbnail from "../../components/PostThumbnail";
 
 export default function UserProfileScreen() {
