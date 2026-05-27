@@ -1,0 +1,153 @@
+import { useFocusEffect } from "expo-router";
+import {
+  collection,
+  doc,
+  getDocs,
+  limit,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
+  writeBatch,
+} from "firebase/firestore";
+import { useCallback, useEffect, useState } from "react";
+import { Dimensions, ScrollView, StyleSheet, Text, View } from "react-native";
+import { TabBar, TabView } from "react-native-tab-view";
+import NotificationRow from "../../components/NotificationRow";
+import { auth, db } from "../../lib/firebaseConfig";
+
+export default function NotificationsScreen() {
+  const [personalNotifs, setPersonalNotifs] = useState<any[]>([]);
+  const [friendNotifs, setFriendNotifs] = useState<any[]>([]);
+  const [tabIndex, setTabIndex] = useState(0);
+  const [routes] = useState([
+    { key: "personal", title: "Personal" },
+    { key: "friends", title: "Friends" },
+  ]);
+
+  useEffect(() => {
+    if (!auth.currentUser) return;
+
+    const q = query(
+      collection(db, "notifications"),
+      where("recipientId", "==", auth.currentUser.uid),
+      orderBy("updatedAt", "desc"),
+      limit(50)
+    );
+
+    const unsub = onSnapshot(q, (snap) => {
+      const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setPersonalNotifs(
+        all.filter((n: any) => n.tab === "personal" || n.tab === "system")
+      );
+      setFriendNotifs(all.filter((n: any) => n.tab === "friends"));
+    });
+
+    return unsub;
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!auth.currentUser) return;
+
+      const markRead = async () => {
+        const unreadSnap = await getDocs(
+          query(
+            collection(db, "notifications"),
+            where("recipientId", "==", auth.currentUser!.uid),
+            where("read", "==", false)
+          )
+        );
+        if (unreadSnap.empty) return;
+
+        const batch = writeBatch(db);
+        unreadSnap.docs.forEach((d) => batch.update(d.ref, { read: true }));
+        await batch.commit();
+
+        updateDoc(doc(db, "users", auth.currentUser!.uid), {
+          notificationsLastSeen: serverTimestamp(),
+        });
+      };
+
+      markRead();
+    }, [])
+  );
+
+  const renderScene = ({ route }: any) => {
+    const data = route.key === "personal" ? personalNotifs : friendNotifs;
+
+    return (
+      <ScrollView style={styles.scene}>
+        {data.length === 0 ? (
+          <Text style={styles.emptyText}>
+            {route.key === "personal"
+              ? "No notifications yet.\nComplete something and share it!"
+              : "Follow people to see their activity here."}
+          </Text>
+        ) : (
+          data.map((notif) => <NotificationRow key={notif.id} notification={notif} />)
+        )}
+      </ScrollView>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Notifications</Text>
+
+      <TabView
+        navigationState={{ index: tabIndex, routes }}
+        renderScene={renderScene}
+        onIndexChange={setTabIndex}
+        initialLayout={{ width: Dimensions.get("window").width }}
+        renderTabBar={(props: any) => (
+          <TabBar
+            {...props}
+            indicatorStyle={styles.tabIndicator}
+            style={styles.tabBar}
+            activeColor="#111"
+            inactiveColor="#777"
+          />
+        )}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "800",
+    paddingTop: 70,
+    paddingHorizontal: 18,
+    paddingBottom: 10,
+  },
+  tabBar: {
+    backgroundColor: "#fff",
+    elevation: 0,
+    shadowOpacity: 0,
+  },
+  tabIndicator: {
+    backgroundColor: "#111",
+    height: 3,
+    borderRadius: 999,
+  },
+  scene: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  emptyText: {
+    paddingHorizontal: 20,
+    paddingTop: 40,
+    color: "#777",
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: "center",
+  },
+});
