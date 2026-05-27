@@ -14,11 +14,16 @@ import { useEffect, useState } from "react";
 import {
   Alert,
   Image,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { auth, db } from "../../lib/firebaseConfig";
@@ -64,11 +69,20 @@ const CATEGORIES = [
   "Other",
 ];
 
+const CREATE_CATEGORIES = CATEGORIES.filter((c) => c !== "All");
+
 export default function ExploreScreen() {
   const [search, setSearch] = useState("");
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [people, setPeople] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
+
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newCategory, setNewCategory] = useState("");
+  const [newCustomCategory, setNewCustomCategory] = useState("");
+  const [newIsPrivate, setNewIsPrivate] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -106,6 +120,89 @@ export default function ExploreScreen() {
         .filter((p: any) => p.isPrivate !== true)
         .filter((p: any) => p.id !== auth.currentUser?.uid)
     );
+  };
+
+  const openSheet = () => {
+    setNewTitle("");
+    setNewCategory("");
+    setNewCustomCategory("");
+    setNewIsPrivate(false);
+    setSheetOpen(true);
+  };
+
+  const closeSheet = () => {
+    Keyboard.dismiss();
+    setSheetOpen(false);
+  };
+
+  const handleCreate = async () => {
+    if (!auth.currentUser) return;
+
+    const finalCategory =
+      newCategory === "Other" ? newCustomCategory.trim() : newCategory.trim();
+
+    if (!newTitle.trim() || !finalCategory) {
+      Alert.alert("Missing info", "Please add a title and category.");
+      return;
+    }
+
+    const cleanTitle = newTitle.trim();
+
+    try {
+      setSubmitting(true);
+
+      let experienceId: string | null = null;
+
+      if (!newIsPrivate) {
+        const expRef = await addDoc(collection(db, "experiences"), {
+          title: cleanTitle,
+          slug: cleanTitle.toLowerCase().replace(/\s+/g, "-"),
+          category: finalCategory,
+          tags: [],
+          description: "",
+          heroImageUrl: null,
+          savesCount: 0,
+          completionsCount: 0,
+          trending: false,
+          relatedIds: [],
+          createdBy: auth.currentUser.uid,
+          createdAt: serverTimestamp(),
+          source: "user",
+        });
+        experienceId = expRef.id;
+      }
+
+      await addDoc(collection(db, "userBucketlistItems"), {
+        userId: auth.currentUser.uid,
+        title: cleanTitle,
+        category: finalCategory,
+        completed: false,
+        imageUrl: null,
+        caption: "",
+        media: [],
+        createdAt: serverTimestamp(),
+        completedAt: null,
+        customIdea: true,
+        isPrivate: newIsPrivate,
+        experienceId,
+      });
+
+      closeSheet();
+      Alert.alert(
+        "Added",
+        newIsPrivate
+          ? "Your private idea was added to your list."
+          : "Your idea was added to your list and Explore."
+      );
+
+      if (!newIsPrivate) {
+        fetchExperiences();
+      }
+    } catch {
+      Alert.alert("Error", "Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const addToBucketlist = async (exp: Experience) => {
@@ -162,12 +259,7 @@ export default function ExploreScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.top}>
-        <View style={styles.headerRow}>
-          <Text style={styles.title}>Explore</Text>
-          <Pressable onPress={() => router.push("/add-idea")}>
-            <Text style={styles.plus}>＋</Text>
-          </Pressable>
-        </View>
+        <Text style={styles.title}>Explore</Text>
         <TextInput
           style={styles.searchInput}
           placeholder="Search experiences, people..."
@@ -178,7 +270,6 @@ export default function ExploreScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-
         {!search && trending.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>Trending</Text>
@@ -232,10 +323,7 @@ export default function ExploreScreen() {
               onPress={() => setSelectedCategory(cat)}
             >
               <Text
-                style={[
-                  styles.chipText,
-                  selectedCategory === cat && styles.chipTextActive,
-                ]}
+                style={[styles.chipText, selectedCategory === cat && styles.chipTextActive]}
               >
                 {cat}
               </Text>
@@ -298,6 +386,116 @@ export default function ExploreScreen() {
 
         <View style={styles.bottomPad} />
       </ScrollView>
+
+      {/* FAB */}
+      <Pressable style={styles.fab} onPress={openSheet}>
+        <Text style={styles.fabIcon}>＋</Text>
+      </Pressable>
+
+      {/* Creation bottom sheet */}
+      <Modal
+        visible={sheetOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={closeSheet}
+      >
+        <TouchableWithoutFeedback onPress={closeSheet}>
+          <View style={styles.overlay} />
+        </TouchableWithoutFeedback>
+
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.sheetWrapper}
+        >
+          <View style={styles.sheet}>
+            <View style={styles.sheetHandle} />
+
+            <Text style={styles.sheetTitle}>Add your own idea</Text>
+            <Text style={styles.sheetSubtitle}>
+              Something you want to do, visit, or experience.
+            </Text>
+
+            <TextInput
+              style={styles.sheetInput}
+              placeholder="e.g. Sleep in a glass igloo"
+              placeholderTextColor="#999"
+              value={newTitle}
+              onChangeText={setNewTitle}
+              returnKeyType="done"
+              onSubmitEditing={Keyboard.dismiss}
+            />
+
+            <Text style={styles.sheetLabel}>Category</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.sheetChipsScroll}
+            >
+              {CREATE_CATEGORIES.map((cat) => (
+                <Pressable
+                  key={cat}
+                  style={[
+                    styles.sheetChip,
+                    newCategory === cat && styles.sheetChipActive,
+                  ]}
+                  onPress={() => {
+                    setNewCategory(cat);
+                    if (cat !== "Other") setNewCustomCategory("");
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.sheetChipText,
+                      newCategory === cat && styles.sheetChipTextActive,
+                    ]}
+                  >
+                    {cat}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+
+            {newCategory === "Other" && (
+              <TextInput
+                style={[styles.sheetInput, { marginTop: 10 }]}
+                placeholder="Write your category"
+                placeholderTextColor="#999"
+                value={newCustomCategory}
+                onChangeText={setNewCustomCategory}
+                returnKeyType="done"
+                onSubmitEditing={Keyboard.dismiss}
+              />
+            )}
+
+            <Pressable
+              style={styles.sheetToggleRow}
+              onPress={() => setNewIsPrivate((v) => !v)}
+            >
+              <View style={[styles.sheetCheckbox, newIsPrivate && styles.sheetCheckboxChecked]}>
+                {newIsPrivate && <Text style={styles.sheetCheckmark}>✓</Text>}
+              </View>
+              <View>
+                <Text style={styles.sheetToggleTitle}>Keep private</Text>
+                <Text style={styles.sheetToggleSub}>Won't show on Explore</Text>
+              </View>
+            </Pressable>
+
+            <Pressable
+              style={[styles.sheetButton, submitting && styles.sheetButtonDisabled]}
+              onPress={handleCreate}
+              disabled={submitting}
+            >
+              <Text style={styles.sheetButtonText}>
+                {submitting ? "Adding..." : "Add to my list"}
+              </Text>
+            </Pressable>
+
+            <Pressable onPress={closeSheet} style={styles.sheetCancel}>
+              <Text style={styles.sheetCancelText}>Cancel</Text>
+            </Pressable>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -360,18 +558,9 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
     backgroundColor: "#fff",
   },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
   title: {
     fontSize: 28,
     fontWeight: "900",
-  },
-  plus: {
-    fontSize: 32,
-    fontWeight: "800",
   },
   searchInput: {
     marginTop: 14,
@@ -551,6 +740,155 @@ const styles = StyleSheet.create({
   },
 
   bottomPad: {
-    height: 40,
+    height: 100,
+  },
+
+  fab: {
+    position: "absolute",
+    bottom: 28,
+    right: 22,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#111",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+  },
+  fabIcon: {
+    color: "#fff",
+    fontSize: 28,
+    fontWeight: "300",
+    lineHeight: 32,
+  },
+
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+  },
+  sheetWrapper: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  sheet: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 22,
+    paddingBottom: 40,
+    paddingTop: 14,
+  },
+  sheetHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#E0E0E0",
+    alignSelf: "center",
+    marginBottom: 20,
+  },
+  sheetTitle: {
+    fontSize: 22,
+    fontWeight: "800",
+  },
+  sheetSubtitle: {
+    marginTop: 6,
+    color: "#777",
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 18,
+  },
+  sheetInput: {
+    backgroundColor: "#F4F4F4",
+    padding: 15,
+    borderRadius: 14,
+    fontSize: 16,
+  },
+  sheetLabel: {
+    fontSize: 14,
+    fontWeight: "800",
+    marginTop: 16,
+    marginBottom: 10,
+  },
+  sheetChipsScroll: {
+    gap: 8,
+  },
+  sheetChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: "#F4F4F4",
+    borderRadius: 999,
+  },
+  sheetChipActive: {
+    backgroundColor: "#111",
+  },
+  sheetChipText: {
+    color: "#555",
+    fontWeight: "700",
+    fontSize: 13,
+  },
+  sheetChipTextActive: {
+    color: "#fff",
+  },
+  sheetToggleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginTop: 18,
+    marginBottom: 20,
+  },
+  sheetCheckbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 7,
+    borderWidth: 2,
+    borderColor: "#111",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sheetCheckboxChecked: {
+    backgroundColor: "#111",
+  },
+  sheetCheckmark: {
+    color: "#fff",
+    fontWeight: "900",
+    fontSize: 13,
+  },
+  sheetToggleTitle: {
+    fontWeight: "800",
+    fontSize: 15,
+  },
+  sheetToggleSub: {
+    color: "#777",
+    fontSize: 12,
+    marginTop: 1,
+  },
+  sheetButton: {
+    backgroundColor: "#111",
+    padding: 16,
+    borderRadius: 18,
+    alignItems: "center",
+  },
+  sheetButtonDisabled: {
+    backgroundColor: "#ccc",
+  },
+  sheetButtonText: {
+    color: "#fff",
+    fontWeight: "800",
+    fontSize: 16,
+  },
+  sheetCancel: {
+    alignItems: "center",
+    marginTop: 14,
+  },
+  sheetCancelText: {
+    color: "#777",
+    fontWeight: "700",
+    fontSize: 15,
   },
 });
