@@ -1,4 +1,5 @@
 import { useFocusEffect } from "expo-router";
+import { onAuthStateChanged } from "firebase/auth";
 import {
   collection,
   doc,
@@ -28,24 +29,38 @@ export default function NotificationsScreen() {
   ]);
 
   useEffect(() => {
-    if (!auth.currentUser) return;
+    let unsubNotifs: (() => void) | null = null;
 
-    const q = query(
-      collection(db, "notifications"),
-      where("recipientId", "==", auth.currentUser.uid),
-      orderBy("updatedAt", "desc"),
-      limit(50)
-    );
+    const unsubAuth = onAuthStateChanged(auth, (user) => {
+      if (unsubNotifs) { unsubNotifs(); unsubNotifs = null; }
 
-    const unsub = onSnapshot(q, (snap) => {
-      const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      setPersonalNotifs(
-        all.filter((n: any) => n.tab === "personal" || n.tab === "system")
+      if (!user) {
+        setPersonalNotifs([]);
+        setFriendNotifs([]);
+        return;
+      }
+
+      unsubNotifs = onSnapshot(
+        query(
+          collection(db, "notifications"),
+          where("recipientId", "==", user.uid),
+          orderBy("updatedAt", "desc"),
+          limit(50)
+        ),
+        (snap) => {
+          const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+          setPersonalNotifs(
+            all.filter((n: any) => n.tab === "personal" || n.tab === "system")
+          );
+          setFriendNotifs(all.filter((n: any) => n.tab === "friends"));
+        }
       );
-      setFriendNotifs(all.filter((n: any) => n.tab === "friends"));
     });
 
-    return unsub;
+    return () => {
+      unsubAuth();
+      if (unsubNotifs) unsubNotifs();
+    };
   }, []);
 
   useFocusEffect(
