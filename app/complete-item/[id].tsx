@@ -1,7 +1,17 @@
 import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
 import * as VideoThumbnails from "expo-video-thumbnails";
-import { doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { useEffect, useState } from "react";
 import {
@@ -15,8 +25,69 @@ import {
     useWindowDimensions,
     View,
 } from "react-native";
-import { db, storage } from "../../lib/firebaseConfig";
+import { auth, db, storage } from "../../lib/firebaseConfig";
+import { createNotification } from "../../lib/notifications";
 import VideoPlayer from "../../components/VideoPlayer";
+
+const MILESTONES: Record<number, string> = {
+  1: "You completed your first experience! 🎉",
+  5: "5 experiences completed. You're on a roll!",
+  10: "10 experiences! You're living life to the fullest.",
+  25: "25 experiences completed. Keep going!",
+  50: "50 experiences. You're an inspiration!",
+  100: "100 experiences. You're a legend!",
+};
+
+async function notifyCompletion(postId: string) {
+  const currentUser = auth.currentUser;
+  if (!currentUser) return;
+
+  const followersSnap = await getDocs(
+    query(collection(db, "follows"), where("followingId", "==", currentUser.uid))
+  );
+
+  await Promise.all(
+    followersSnap.docs.map((followDoc) =>
+      createNotification({
+        recipientId: followDoc.data().followerId,
+        type: "friend_completion",
+        actorId: currentUser.uid,
+        postId,
+      }).catch(() => {})
+    )
+  );
+
+  const completedSnap = await getDocs(
+    query(
+      collection(db, "userBucketlistItems"),
+      where("userId", "==", currentUser.uid),
+      where("completed", "==", true)
+    )
+  );
+
+  const count = completedSnap.size;
+  const message = MILESTONES[count];
+
+  if (message) {
+    await setDoc(
+      doc(db, "notifications", `milestone_${currentUser.uid}_${count}`),
+      {
+        recipientId: currentUser.uid,
+        type: "milestone",
+        tab: "personal",
+        actors: [],
+        actorCount: 0,
+        postId: null,
+        postTitle: null,
+        postImageUrl: null,
+        previewText: message,
+        read: false,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      }
+    );
+  }
+}
 
 type SelectedMedia = {
   uri: string;
@@ -160,6 +231,8 @@ export default function CompleteItemScreen() {
         imageUrl: firstImage?.url || firstMedia?.url || null,
         media: cleanMedia,
       });
+
+      notifyCompletion(id).catch(() => {});
 
       Alert.alert("Posted", "Your bucketlist item is now posted!");
       router.back();

@@ -41,6 +41,24 @@ export default function SignupScreen() {
         notificationsLastSeen: serverTimestamp(),
       });
   
+      await setDoc(
+        doc(db, "notifications", `system_${userCredential.user.uid}_welcome`),
+        {
+          recipientId: userCredential.user.uid,
+          type: "system",
+          tab: "system",
+          actors: [],
+          actorCount: 0,
+          postId: null,
+          postTitle: null,
+          postImageUrl: null,
+          previewText: "Welcome to Bucketlist! Start exploring experiences and save what inspires you.",
+          read: false,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        }
+      );
+
       router.replace("/(tabs)");
     } catch (error: any) {
       alert(error.message);
