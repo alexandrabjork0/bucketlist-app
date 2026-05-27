@@ -343,6 +343,7 @@ export default function ExploreScreen() {
                 <ExperienceTile key={exp.id} exp={exp} onAdd={addToBucketlist} />
               ))}
             </View>
+            
           </View>
         ) : (
           <Text style={styles.emptyText}>No experiences found.</Text>
