@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Image, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import VideoPlayer from "./VideoPlayer";
 
@@ -14,6 +15,7 @@ type Props = {
 
 export default function MediaCarousel({ media, imageUrl, height }: Props) {
   const { width } = useWindowDimensions();
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const cleanMedia =
     media && media.length > 0
@@ -31,6 +33,10 @@ export default function MediaCarousel({ media, imageUrl, height }: Props) {
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         style={styles.carousel}
+        onMomentumScrollEnd={(e) => {
+          const index = Math.round(e.nativeEvent.contentOffset.x / width);
+          setCurrentIndex(index);
+        }}
       >
         {cleanMedia.map((item, index) => (
           <View
@@ -54,7 +60,7 @@ export default function MediaCarousel({ media, imageUrl, height }: Props) {
 
       {cleanMedia.length > 1 && (
         <View style={styles.counter}>
-          <Text style={styles.counterText}>1/{cleanMedia.length}</Text>
+          <Text style={styles.counterText}>{currentIndex + 1}/{cleanMedia.length}</Text>
         </View>
       )}
     </View>
