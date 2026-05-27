@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
   Image,
   Pressable,
   ScrollView,
@@ -25,6 +26,24 @@ import {
 import PostCard from "../../components/PostCard";
 import { auth, db } from "../../lib/firebaseConfig";
 import { createNotification } from "../../lib/notifications";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const HERO_HEIGHT = SCREEN_WIDTH * 1.15;
+
+const CATEGORY_BG: Record<string, string> = {
+  Travel: "#1a5f7a",
+  Adventure: "#7a4a10",
+  "Food & Drink": "#7a1a4a",
+  Health: "#1a7a4a",
+  Creative: "#4a1a7a",
+  Learning: "#6a5a10",
+  Sports: "#1a2a7a",
+  Nature: "#1a6a1a",
+  Culture: "#7a1a1a",
+  Events: "#6a4a10",
+  "Personal Growth": "#4a1a6a",
+  Other: "#333",
+};
 
 export default function ExperienceScreen() {
   const { id } = useLocalSearchParams();
@@ -102,7 +121,7 @@ export default function ExperienceScreen() {
       setSimilar(
         simSnap.docs
           .filter((d) => d.id !== String(id))
-          .slice(0, 5)
+          .slice(0, 8)
           .map((d) => ({ id: d.id, ...d.data() }))
       );
     } catch (e) {
@@ -187,86 +206,134 @@ export default function ExperienceScreen() {
     );
   }
 
+  const heroBg = CATEGORY_BG[experience.category] ?? "#333";
+
   return (
-    <ScrollView style={styles.container}>
-      <Pressable style={styles.backWrapper} onPress={() => router.back()}>
-        <Text style={styles.backText}>‹ Back</Text>
-      </Pressable>
+    <View style={styles.container}>
+      <ScrollView showsVerticalScrollIndicator={false} bounces>
 
-      {experience.heroImageUrl ? (
-        <Image source={{ uri: experience.heroImageUrl }} style={styles.hero} />
-      ) : (
-        <View style={styles.heroPlaceholder} />
-      )}
+        {/* ── Hero ── */}
+        <View style={[styles.hero, { height: HERO_HEIGHT }]}>
+          {experience.heroImageUrl ? (
+            <Image
+              source={{ uri: experience.heroImageUrl }}
+              style={styles.heroImage}
+            />
+          ) : (
+            <View style={[styles.heroImage, { backgroundColor: heroBg }]} />
+          )}
 
-      <View style={styles.header}>
-        <Text style={styles.category}>{experience.category}</Text>
-        <Text style={styles.title}>{experience.title}</Text>
+          {/* Bottom gradient overlay */}
+          <View style={styles.heroGradient} />
 
-        <View style={styles.stats}>
-          <Text style={styles.stat}>{experience.savesCount || 0} saved</Text>
-          <Text style={styles.statDot}>·</Text>
-          <Text style={styles.stat}>{experience.completionsCount || 0} completed</Text>
+          {/* Floating back button */}
+          <Pressable style={styles.backBtn} onPress={() => router.back()}>
+            <Text style={styles.backBtnText}>‹</Text>
+          </Pressable>
+
+          {/* Title overlaid on hero */}
+          <View style={styles.heroContent}>
+            <Text style={styles.heroCat}>{experience.category}</Text>
+            <Text style={styles.heroTitle} numberOfLines={3}>
+              {experience.title}
+            </Text>
+          </View>
         </View>
 
-        <Pressable
-          style={[styles.addButton, isAdded && styles.addButtonDone]}
-          onPress={isAdded ? undefined : addToBucketlist}
-        >
-          <Text style={[styles.addButtonText, isAdded && styles.addButtonTextDone]}>
-            {isAdded ? "Added to your list ✓" : "Add to my bucketlist"}
-          </Text>
-        </Pressable>
-      </View>
+        {/* ── Action bar ── */}
+        <View style={styles.actionBar}>
+          <View style={styles.statsBlock}>
+            <Text style={styles.statNum}>{experience.savesCount || 0}</Text>
+            <Text style={styles.statLbl}>saved</Text>
+          </View>
 
-      {posts.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>People who completed this</Text>
-          {posts.map((post) => {
-            const isOwnPost = post.userId === auth.currentUser?.uid;
-            const isSaved = savedPostIds.includes(post.id);
-            return (
-              <PostCard
-                key={post.id}
-                post={post}
-                author={post.author}
-                onSave={!isOwnPost && !isSaved ? () => savePost(post) : undefined}
-                saveDone={!isOwnPost && isSaved}
-              />
-            );
-          })}
+          <View style={styles.statsDivider} />
+
+          <View style={styles.statsBlock}>
+            <Text style={styles.statNum}>{experience.completionsCount || 0}</Text>
+            <Text style={styles.statLbl}>completed</Text>
+          </View>
+
+          <Pressable
+            style={[styles.addBtn, isAdded && styles.addBtnDone]}
+            onPress={isAdded ? undefined : addToBucketlist}
+          >
+            <Text style={[styles.addBtnText, isAdded && styles.addBtnTextDone]}>
+              {isAdded ? "Added ✓" : "+ Add to my list"}
+            </Text>
+          </Pressable>
         </View>
-      )}
 
-      {similar.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Similar experiences</Text>
-          {similar.map((exp) => (
-            <Pressable
-              key={exp.id}
-              style={styles.similarCard}
-              onPress={() =>
-                router.push({ pathname: "/experience/[id]", params: { id: exp.id } })
-              }
+        {/* ── Posts feed ── */}
+        {posts.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>People who completed this</Text>
+            {posts.map((post) => {
+              const isOwnPost = post.userId === auth.currentUser?.uid;
+              const isSaved = savedPostIds.includes(post.id);
+              return (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  author={post.author}
+                  onSave={!isOwnPost && !isSaved ? () => savePost(post) : undefined}
+                  saveDone={!isOwnPost && isSaved}
+                />
+              );
+            })}
+          </View>
+        )}
+
+        {posts.length === 0 && (
+          <View style={styles.emptyPosts}>
+            <Text style={styles.emptyPostsText}>
+              No one has completed this yet.{"\n"}Be the first.
+            </Text>
+          </View>
+        )}
+
+        {/* ── Similar experiences ── */}
+        {similar.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>More {experience.category}</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.similarScroll}
             >
-              {exp.heroImageUrl ? (
-                <Image source={{ uri: exp.heroImageUrl }} style={styles.similarImage} />
-              ) : (
-                <View style={styles.similarImagePlaceholder} />
-              )}
-              <View style={styles.similarText}>
-                <Text style={styles.similarCategory}>{exp.category}</Text>
-                <Text style={styles.similarTitle} numberOfLines={2}>
-                  {exp.title}
-                </Text>
-              </View>
-            </Pressable>
-          ))}
-        </View>
-      )}
+              {similar.map((exp) => (
+                <Pressable
+                  key={exp.id}
+                  style={styles.similarCard}
+                  onPress={() =>
+                    router.push({ pathname: "/experience/[id]", params: { id: exp.id } })
+                  }
+                >
+                  {exp.heroImageUrl ? (
+                    <Image source={{ uri: exp.heroImageUrl }} style={styles.similarImage} />
+                  ) : (
+                    <View
+                      style={[
+                        styles.similarImage,
+                        { backgroundColor: CATEGORY_BG[exp.category] ?? "#333" },
+                      ]}
+                    />
+                  )}
+                  <View style={styles.similarOverlay} />
+                  <View style={styles.similarContent}>
+                    <Text style={styles.similarTitle} numberOfLines={2}>
+                      {exp.title}
+                    </Text>
+                  </View>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
-      <View style={styles.bottomPad} />
-    </ScrollView>
+        <View style={styles.bottomPad} />
+      </ScrollView>
+    </View>
   );
 }
 
@@ -284,123 +351,179 @@ const styles = StyleSheet.create({
     color: "#777",
     fontSize: 16,
   },
-  backWrapper: {
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 12,
-  },
-  backText: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: "#111",
-  },
+
+  // Hero
   hero: {
     width: "100%",
-    height: 280,
-    backgroundColor: "#eee",
+    backgroundColor: "#222",
+    overflow: "hidden",
   },
-  heroPlaceholder: {
+  heroImage: {
     width: "100%",
-    height: 180,
-    backgroundColor: "#F4F4F4",
+    height: "100%",
+    resizeMode: "cover",
   },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 8,
+  heroGradient: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 260,
+    backgroundColor: "rgba(0,0,0,0.6)",
   },
-  category: {
+  backBtn: {
+    position: "absolute",
+    top: 56,
+    left: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "rgba(0,0,0,0.35)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  backBtnText: {
+    color: "#fff",
+    fontSize: 24,
+    fontWeight: "700",
+    lineHeight: 28,
+    marginTop: -2,
+  },
+  heroContent: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 20,
+    paddingBottom: 24,
+  },
+  heroCat: {
+    color: "rgba(255,255,255,0.75)",
     fontSize: 12,
     fontWeight: "800",
     textTransform: "uppercase",
-    color: "#777",
-    letterSpacing: 0.5,
+    letterSpacing: 1,
+    marginBottom: 6,
   },
-  title: {
-    fontSize: 28,
+  heroTitle: {
+    color: "#fff",
+    fontSize: 32,
     fontWeight: "900",
-    marginTop: 6,
-    lineHeight: 34,
+    lineHeight: 38,
   },
-  stats: {
+
+  // Action bar
+  actionBar: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 10,
-    gap: 6,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+    gap: 14,
   },
-  stat: {
-    fontSize: 14,
-    color: "#777",
-    fontWeight: "600",
-  },
-  statDot: {
-    color: "#ccc",
-    fontSize: 14,
-  },
-  addButton: {
-    marginTop: 18,
-    backgroundColor: "#111",
-    paddingVertical: 15,
-    borderRadius: 18,
+  statsBlock: {
     alignItems: "center",
   },
-  addButtonDone: {
-    backgroundColor: "#F4F4F4",
-  },
-  addButtonText: {
-    color: "#fff",
-    fontWeight: "800",
-    fontSize: 16,
-  },
-  addButtonTextDone: {
+  statNum: {
+    fontSize: 18,
+    fontWeight: "900",
     color: "#111",
   },
+  statLbl: {
+    fontSize: 11,
+    color: "#999",
+    fontWeight: "600",
+    marginTop: 1,
+  },
+  statsDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: "#eee",
+  },
+  addBtn: {
+    flex: 1,
+    marginLeft: 4,
+    backgroundColor: "#111",
+    paddingVertical: 12,
+    borderRadius: 14,
+    alignItems: "center",
+  },
+  addBtnDone: {
+    backgroundColor: "#F0F0F0",
+  },
+  addBtnText: {
+    color: "#fff",
+    fontWeight: "800",
+    fontSize: 15,
+  },
+  addBtnTextDone: {
+    color: "#777",
+  },
+
+  // Feed
   section: {
-    marginTop: 28,
+    marginTop: 24,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "900",
     paddingHorizontal: 20,
-    marginBottom: 6,
+    marginBottom: 4,
+  },
+  emptyPosts: {
+    paddingHorizontal: 20,
+    paddingTop: 32,
+    alignItems: "center",
+  },
+  emptyPostsText: {
+    color: "#999",
+    fontSize: 15,
+    textAlign: "center",
+    lineHeight: 22,
+  },
+
+  // Similar
+  similarScroll: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    gap: 10,
   },
   similarCard: {
-    marginHorizontal: 20,
-    marginTop: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F4F4F4",
-    borderRadius: 16,
+    width: 140,
+    height: 190,
+    borderRadius: 14,
     overflow: "hidden",
+    backgroundColor: "#222",
   },
   similarImage: {
-    width: 70,
-    height: 70,
-    backgroundColor: "#ddd",
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
-  similarImagePlaceholder: {
-    width: 70,
-    height: 70,
-    backgroundColor: "#e0e0e0",
+  similarOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 90,
+    backgroundColor: "rgba(0,0,0,0.55)",
   },
-  similarText: {
-    flex: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  similarCategory: {
-    fontSize: 11,
-    fontWeight: "800",
-    textTransform: "uppercase",
-    color: "#999",
+  similarContent: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 10,
   },
   similarTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    marginTop: 3,
-    color: "#111",
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "800",
+    lineHeight: 17,
   },
+
   bottomPad: {
-    height: 40,
+    height: 48,
   },
 });

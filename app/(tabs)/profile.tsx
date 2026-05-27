@@ -228,7 +228,7 @@ export default function ProfileScreen() {
       {completedCategories.length === 0 ? (
         <Text style={styles.emptyText}>No completed categories yet.</Text>
       ) : (
-        <View style={styles.grid}>
+        <View style={styles.cardsGrid}>
           {completedCategories.map((category) => {
             const categoryItems = completedItems.filter((i) => i.category === category);
             const thumbnail = categoryItems.find((i) => i.imageUrl)?.imageUrl;
@@ -236,7 +236,7 @@ export default function ProfileScreen() {
             return (
               <Pressable
                 key={category}
-                style={styles.categoryImageCard}
+                style={styles.cardItem}
                 onPress={() =>
                   router.push({
                     pathname: "/profile-category/[category]",
@@ -245,15 +245,15 @@ export default function ProfileScreen() {
                 }
               >
                 {thumbnail ? (
-                  <Image source={{ uri: thumbnail }} style={styles.completedImage} />
+                  <Image source={{ uri: thumbnail }} style={styles.cardImage} />
                 ) : (
-                  <View style={styles.categoryThumbnailFallback}>
-                    <Text style={styles.categoryThumbnailText}>{category}</Text>
+                  <View style={styles.cardImageFallback}>
+                    <Text style={styles.cardImageFallbackText}>{category[0]}</Text>
                   </View>
                 )}
-                <View style={styles.cardOverlay}>
-                  <Text style={styles.cardOverlayTitle}>{category}</Text>
-                  <Text style={styles.cardOverlayCount}>{categoryItems.length} posts</Text>
+                <View style={styles.cardTextBlock}>
+                  <Text style={styles.cardCategoryText} numberOfLines={1}>{category}</Text>
+                  <Text style={styles.cardCountText}>{categoryItems.length} posts</Text>
                 </View>
               </Pressable>
             );
@@ -315,44 +315,39 @@ export default function ProfileScreen() {
             {displayItems.map((item) => {
               const label = sourceLabel(item);
               return (
-                <View key={item.id} style={styles.bucketlistCard}>
-                  <View style={styles.bucketlistCardTop}>
-                    <Text style={styles.bucketlistCardTitle}>{item.title}</Text>
-                    <Pressable
-                      style={styles.completeBtn}
-                      onPress={() =>
-                        router.push({
-                          pathname: "/complete-item/[id]",
-                          params: { id: item.id },
-                        })
-                      }
-                    >
-                      <Text style={styles.completeBtnText}>Complete →</Text>
-                    </Pressable>
-                  </View>
-
-                  <View style={styles.bucketlistCardMeta}>
-                    <View style={styles.categoryPill}>
-                      <Text style={styles.categoryPillText}>{item.category}</Text>
+                <View key={item.id} style={styles.bucketlistRow}>
+                  <View style={styles.bucketlistRowLeft}>
+                    <Text style={styles.bucketlistRowTitle}>{item.title}</Text>
+                    <View style={styles.bucketlistRowMeta}>
+                      <View style={styles.categoryPill}>
+                        <Text style={styles.categoryPillText}>{item.category}</Text>
+                      </View>
+                      {label && <Text style={styles.sourceLabel}>{label}</Text>}
                     </View>
-                    {label && (
-                      <Text style={styles.sourceLabel}>{label}</Text>
-                    )}
+                    <View style={styles.itemActions}>
+                      {collections.length > 0 && (
+                        <Pressable
+                          style={styles.addToCollectionBtn}
+                          onPress={() => setAddToCollectionItemId(item.id)}
+                        >
+                          <Text style={styles.addToCollectionText}>+ Collection</Text>
+                        </Pressable>
+                      )}
+                      <Pressable onPress={() => deleteBucketlistItem(item.id)}>
+                        <Text style={styles.deleteItemText}>Delete</Text>
+                      </Pressable>
+                    </View>
                   </View>
 
-                  <View style={styles.itemActions}>
-                    {collections.length > 0 && (
-                      <Pressable
-                        style={styles.addToCollectionBtn}
-                        onPress={() => setAddToCollectionItemId(item.id)}
-                      >
-                        <Text style={styles.addToCollectionText}>+ Collection</Text>
-                      </Pressable>
-                    )}
-                    <Pressable onPress={() => deleteBucketlistItem(item.id)}>
-                      <Text style={styles.deleteItemText}>Delete</Text>
-                    </Pressable>
-                  </View>
+                  <Pressable
+                    style={styles.circleBtn}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/complete-item/[id]",
+                        params: { id: item.id },
+                      })
+                    }
+                  />
                 </View>
               );
             })}
@@ -762,11 +757,6 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     marginHorizontal: -24,
   },
-  completedImage: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
   categoryCard: {
     backgroundColor: "#F4F4F4",
     padding: 18,
@@ -785,44 +775,47 @@ const styles = StyleSheet.create({
     color: "#777",
     fontWeight: "600",
   },
-  categoryThumbnailFallback: {
-    flex: 1,
-    backgroundColor: "#ddd",
+  cardsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+  },
+  cardItem: {
+    width: "47%",
+    borderRadius: 16,
+    overflow: "hidden",
+    backgroundColor: "#F8F8F8",
+  },
+  cardImage: {
+    width: "100%",
+    aspectRatio: 4 / 3,
+    resizeMode: "cover",
+  },
+  cardImageFallback: {
+    width: "100%",
+    aspectRatio: 4 / 3,
+    backgroundColor: "#E0E0E0",
     alignItems: "center",
     justifyContent: "center",
   },
-  categoryThumbnailText: {
+  cardImageFallbackText: {
+    fontSize: 32,
     fontWeight: "900",
-    fontSize: 16,
-    textAlign: "center",
-    padding: 8,
+    color: "#bbb",
   },
-  cardOverlay: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    padding: 8,
-    backgroundColor: "rgba(0,0,0,0.45)",
+  cardTextBlock: {
+    padding: 10,
   },
-  cardOverlayTitle: {
-    color: "#fff",
-    fontWeight: "900",
-    fontSize: 13,
+  cardCategoryText: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#111",
   },
-  cardOverlayCount: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 11,
+  cardCountText: {
+    fontSize: 12,
+    color: "#888",
     marginTop: 2,
-  },
-  categoryImageCard: {
-    width: "33.3333%",
-    aspectRatio: 3 / 4,
-    backgroundColor: "#F4F4F4",
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "#fff",
+    fontWeight: "600",
   },
   arrow: {
     fontSize: 30,
@@ -913,44 +906,39 @@ const styles = StyleSheet.create({
   bucketlistChipTextActive: {
     color: "#fff",
   },
-  bucketlistCard: {
-    backgroundColor: "#F4F4F4",
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 10,
-  },
-  bucketlistCardTop: {
+  bucketlistRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: 12,
+    alignItems: "center",
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F2F2F2",
+    gap: 14,
   },
-  bucketlistCardTitle: {
+  bucketlistRowLeft: {
     flex: 1,
+  },
+  bucketlistRowTitle: {
     fontSize: 16,
-    fontWeight: "800",
+    fontWeight: "700",
     color: "#111",
     lineHeight: 22,
   },
-  completeBtn: {
-    backgroundColor: "#111",
-    paddingVertical: 7,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-  },
-  completeBtnText: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 13,
-  },
-  bucketlistCardMeta: {
+  bucketlistRowMeta: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginTop: 10,
+    gap: 6,
+    marginTop: 5,
+  },
+  circleBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: "#CCCCCC",
+    flexShrink: 0,
   },
   categoryPill: {
-    backgroundColor: "#E8E8E8",
+    backgroundColor: "#F0F0F0",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 999,
@@ -962,7 +950,7 @@ const styles = StyleSheet.create({
   },
   sourceLabel: {
     fontSize: 12,
-    color: "#999",
+    color: "#BBBBBB",
     fontWeight: "600",
   },
 
