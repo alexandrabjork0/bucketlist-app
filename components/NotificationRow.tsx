@@ -34,7 +34,9 @@ function getDisplayText(notification: any): string {
     case "save":
       return `${actorLabel} saved${postLabel} to their bucketlist`;
     case "friend_completion":
-      return `${actorLabel} just completed${postLabel}`;
+      return postTitle
+        ? `${actorLabel} just completed "${postTitle}"`
+        : `${actorLabel} just completed something new`;
     case "milestone":
       return notification.previewText || "You reached a milestone!";
     case "system":
