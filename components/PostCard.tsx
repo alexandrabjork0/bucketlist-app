@@ -82,7 +82,7 @@ export default function PostCard({ post, author, onSave, saveDone, onDelete }: P
       <View style={styles.body}>
         <Text style={styles.title}>{post.title}</Text>
 
-        <PostActions postId={post.id} />
+        <PostActions postId={post.id} authorId={author.userId} />
 
         {post.caption ? (
           <Text style={styles.caption}>
@@ -93,7 +93,7 @@ export default function PostCard({ post, author, onSave, saveDone, onDelete }: P
           </Text>
         ) : null}
 
-        <PostComments postId={post.id} />
+        <PostComments postId={post.id} authorId={author.userId} />
 
         {date ? <Text style={styles.date}>{date}</Text> : null}
 

@@ -22,8 +22,9 @@ import {
     View,
 } from "react-native";
 import { auth, db } from "../lib/firebaseConfig";
+import { createNotification } from "../lib/notifications";
   
-  export default function PostComments({ postId }: { postId: string }) {
+  export default function PostComments({ postId, authorId }: { postId: string; authorId: string }) {
     const [comments, setComments] = useState<any[]>([]);
     const [text, setText] = useState("");
     const [expanded, setExpanded] = useState(false);
@@ -62,6 +63,14 @@ import { auth, db } from "../lib/firebaseConfig";
       });
 
       setText("");
+
+      createNotification({
+        recipientId: authorId,
+        type: "comment",
+        actorId: auth.currentUser.uid,
+        postId,
+        previewText: text.trim(),
+      }).catch(() => {});
     };
   
     const previewComments = comments.slice(-2);

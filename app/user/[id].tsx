@@ -13,6 +13,7 @@ import {
 import { useEffect, useState } from "react";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { auth, db } from "../../lib/firebaseConfig";
+import { createNotification } from "../../lib/notifications";
 import PostThumbnail from "../../components/PostThumbnail";
 
 export default function UserProfileScreen() {
@@ -104,6 +105,12 @@ export default function UserProfileScreen() {
 
       setIsFollowing(true);
       setFollowersCount((prev) => prev + 1);
+
+      createNotification({
+        recipientId: id,
+        type: "follow",
+        actorId: currentUserId,
+      }).catch(() => {});
     }
   };
 

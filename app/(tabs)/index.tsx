@@ -20,6 +20,7 @@ import {
 } from "react-native";
 import PostCard from "../../components/PostCard";
 import { auth, db } from "../../lib/firebaseConfig";
+import { createNotification } from "../../lib/notifications";
 
 export default function HomeScreen() {
   const [user, setUser] = useState<User | null>(null);
@@ -112,6 +113,13 @@ export default function HomeScreen() {
 
     setSavedIds((prev) => [...prev, post.id]);
     Alert.alert("Added", `${post.title} was added to your bucketlist.`);
+
+    createNotification({
+      recipientId: post.userId,
+      type: "save",
+      actorId: auth.currentUser.uid,
+      postId: post.id,
+    }).catch(() => {});
   };
 
   if (!authChecked) {

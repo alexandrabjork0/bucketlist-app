@@ -20,6 +20,7 @@ import {
     View,
 } from "react-native";
 import { auth, db } from "../../lib/firebaseConfig";
+import { createNotification } from "../../lib/notifications";
 import PostCard from "../../components/PostCard";
 
 type CompletedItem = {
@@ -125,6 +126,13 @@ export default function ExploreItemScreen() {
 
     setSavedIds((prev) => [...prev, item.id]);
     Alert.alert("Added", `${item.title} was added to your bucketlist.`);
+
+    createNotification({
+      recipientId: item.userId,
+      type: "save",
+      actorId: auth.currentUser.uid,
+      postId: item.id,
+    }).catch(() => {});
   };
 
   if (loading) {

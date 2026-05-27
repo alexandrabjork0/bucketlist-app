@@ -9,8 +9,9 @@ import {
 import { useEffect, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { auth, db } from "../lib/firebaseConfig";
+import { createNotification } from "../lib/notifications";
 
-export default function PostActions({ postId }: { postId: string }) {
+export default function PostActions({ postId, authorId }: { postId: string; authorId: string }) {
   const user = auth.currentUser;
 
   const [liked, setLiked] = useState(false);
@@ -47,6 +48,8 @@ export default function PostActions({ postId }: { postId: string }) {
     const postRef = doc(db, "userBucketlistItems", postId);
     const likeRef = doc(db, "userBucketlistItems", postId, "likes", user.uid);
 
+    const wasLiked = liked;
+
     await runTransaction(db, async (transaction) => {
       const likeDoc = await transaction.get(likeRef);
       if (likeDoc.exists()) {
@@ -57,6 +60,15 @@ export default function PostActions({ postId }: { postId: string }) {
         transaction.update(postRef, { likesCount: increment(1) });
       }
     });
+
+    if (!wasLiked) {
+      createNotification({
+        recipientId: authorId,
+        type: "like",
+        actorId: user.uid,
+        postId,
+      }).catch(() => {});
+    }
   };
 
   return (

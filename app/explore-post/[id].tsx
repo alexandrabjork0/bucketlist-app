@@ -17,6 +17,7 @@ import {
     View,
 } from "react-native";
 import { auth, db } from "../../lib/firebaseConfig";
+import { createNotification } from "../../lib/notifications";
 import PostCard from "../../components/PostCard";
 
 export default function ExplorePostScreen() {
@@ -74,6 +75,13 @@ export default function ExplorePostScreen() {
 
     setIsSaved(true);
     Alert.alert("Added", `${post.title} was added to your bucketlist.`);
+
+    createNotification({
+      recipientId: post.userId,
+      type: "save",
+      actorId: auth.currentUser.uid,
+      postId: post.id,
+    }).catch(() => {});
   };
 
   if (loading) {

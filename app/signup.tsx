@@ -1,6 +1,6 @@
 import { Link, router } from "expo-router";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { useState } from "react";
 import {
     KeyboardAvoidingView,
@@ -37,7 +37,8 @@ export default function SignupScreen() {
         username: username.trim(),
         bio: "",
         profileImage: "",
-        createdAt: new Date(),
+        createdAt: serverTimestamp(),
+        notificationsLastSeen: serverTimestamp(),
       });
   
       router.replace("/(tabs)");
