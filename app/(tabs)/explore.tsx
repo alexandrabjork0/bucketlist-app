@@ -351,7 +351,7 @@ function IdeaCard({
       style={styles.ideaCard}
       onPress={() =>
         router.push({
-          pathname: "/explore-item/[id]",
+          pathname: "/experience/[id]",
           params: { id: idea.id },
         })
       }
