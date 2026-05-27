@@ -6,6 +6,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  increment,
   query,
   serverTimestamp,
   setDoc,
@@ -233,6 +234,13 @@ export default function CompleteItemScreen() {
       });
 
       notifyCompletion(id).catch(() => {});
+
+      if (item?.experienceId) {
+        const heroUpdate: Record<string, any> = { completionsCount: increment(1) };
+        const firstImageUrl = cleanMedia.find((m: any) => m.type === "image")?.url;
+        if (firstImageUrl) heroUpdate.heroImageUrl = firstImageUrl;
+        updateDoc(doc(db, "experiences", item.experienceId), heroUpdate).catch(() => {});
+      }
 
       Alert.alert("Posted", "Your bucketlist item is now posted!");
       router.back();

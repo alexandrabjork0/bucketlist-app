@@ -53,18 +53,26 @@ export default function AddIdeaScreen() {
     const cleanTitle = title.trim();
     const cleanCategory = finalCategory;
 
-    let exploreIdeaId = null;
+    let experienceId = null;
 
     if (!isPrivate) {
-      const exploreIdeaRef = await addDoc(collection(db, "exploreIdeas"), {
+      const experienceRef = await addDoc(collection(db, "experiences"), {
         title: cleanTitle,
+        slug: cleanTitle.toLowerCase().replace(/\s+/g, "-"),
         category: cleanCategory,
+        tags: [],
+        description: "",
+        heroImageUrl: null,
+        savesCount: 0,
+        completionsCount: 0,
+        trending: false,
+        relatedIds: [],
         createdBy: auth.currentUser.uid,
         createdAt: serverTimestamp(),
         source: "user",
       });
 
-      exploreIdeaId = exploreIdeaRef.id;
+      experienceId = experienceRef.id;
     }
 
     await addDoc(collection(db, "userBucketlistItems"), {
@@ -79,7 +87,7 @@ export default function AddIdeaScreen() {
       completedAt: null,
       customIdea: true,
       isPrivate,
-      exploreIdeaId,
+      experienceId,
     });
 
     Alert.alert(

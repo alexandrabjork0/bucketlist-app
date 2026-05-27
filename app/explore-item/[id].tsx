@@ -5,8 +5,10 @@ import {
     doc,
     getDoc,
     getDocs,
+    increment,
     query,
     serverTimestamp,
+    updateDoc,
     where,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
@@ -54,7 +56,7 @@ export default function ExploreItemScreen() {
 
   const fetchCompletedPosts = async () => {
     try {
-      const ideaRef = doc(db, "exploreIdeas", String(id));
+      const ideaRef = doc(db, "experiences", String(id));
       const ideaSnap = await getDoc(ideaRef);
 
       if (!ideaSnap.exists()) {
@@ -122,7 +124,12 @@ export default function ExploreItemScreen() {
       fromPost: true,
       inspiredByPostId: item.id,
       inspiredByUserId: item.userId,
+      experienceId: String(id),
     });
+
+    updateDoc(doc(db, "experiences", String(id)), {
+      savesCount: increment(1),
+    }).catch(() => {});
 
     setSavedIds((prev) => [...prev, item.id]);
     Alert.alert("Added", `${item.title} was added to your bucketlist.`);

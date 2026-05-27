@@ -6,9 +6,11 @@ import {
   doc,
   getDoc,
   getDocs,
+  increment,
   onSnapshot,
   query,
   serverTimestamp,
+  updateDoc,
   where,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
@@ -109,7 +111,14 @@ export default function HomeScreen() {
       fromPost: true,
       inspiredByPostId: post.id,
       inspiredByUserId: post.userId,
+      experienceId: post.experienceId || null,
     });
+
+    if (post.experienceId) {
+      updateDoc(doc(db, "experiences", post.experienceId), {
+        savesCount: increment(1),
+      }).catch(() => {});
+    }
 
     setSavedIds((prev) => [...prev, post.id]);
     Alert.alert("Added", `${post.title} was added to your bucketlist.`);

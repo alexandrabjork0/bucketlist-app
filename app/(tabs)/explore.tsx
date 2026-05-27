@@ -5,9 +5,11 @@ import {
   doc,
   getDoc,
   getDocs,
+  increment,
   limit,
   query,
   serverTimestamp,
+  updateDoc,
   where,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
@@ -24,6 +26,7 @@ import {
 } from "react-native";
 import { TabBar, TabView } from "react-native-tab-view";
 import { auth, db } from "../../lib/firebaseConfig";
+import { migrateIdeasToExperiences } from "../../lib/migration";
 
 type ExploreIdea = {
   id: string;
@@ -54,7 +57,12 @@ export default function ExploreScreen() {
   };
 
   const fetchIdeas = async () => {
-    const snapshot = await getDocs(query(collection(db, "exploreIdeas")));
+    const expSnap = await getDocs(query(collection(db, "experiences"), limit(1)));
+    if (expSnap.empty) {
+      await migrateIdeasToExperiences();
+    }
+
+    const snapshot = await getDocs(query(collection(db, "experiences")));
 
     const fetchedIdeas = snapshot.docs.map((docItem) => ({
       id: docItem.id,
@@ -162,8 +170,12 @@ export default function ExploreScreen() {
       createdAt: serverTimestamp(),
       completedAt: null,
       fromExplore: true,
-      exploreIdeaId: idea.id,
+      experienceId: idea.id,
     });
+
+    updateDoc(doc(db, "experiences", idea.id), {
+      savesCount: increment(1),
+    }).catch(() => {});
 
     Alert.alert("Added", `${idea.title} was added to your bucketlist.`);
   };
