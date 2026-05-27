@@ -2,7 +2,6 @@ import { router, useLocalSearchParams } from "expo-router";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
-    Image,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -10,6 +9,7 @@ import {
     View,
 } from "react-native";
 import { auth, db } from "../(tabs)/firebaseConfig";
+import PostThumbnail from "../../components/PostThumbnail";
 
 export default function ProfileCategoryScreen() {
   const { category } = useLocalSearchParams();
@@ -59,22 +59,16 @@ export default function ProfileCategoryScreen() {
       ) : (
         <View style={styles.grid}>
           {posts.map((item) => (
-            <Pressable
+            <PostThumbnail
               key={item.id}
-              style={styles.completedCard}
+              post={item}
               onPress={() =>
                 router.push({
                   pathname: "/post/[id]",
                   params: { id: item.id },
                 })
               }
-            >
-              {item.imageUrl ? (
-                <Image source={{ uri: item.imageUrl }} style={styles.completedImage} />
-              ) : (
-                <Text style={styles.completedPlaceholder}>{item.title}</Text>
-              )}
-            </Pressable>
+            />
           ))}
         </View>
       )}
@@ -115,23 +109,5 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     marginHorizontal: -24,
-  },
-  completedCard: {
-    width: "33.3333%",
-    aspectRatio: 3 / 4,
-    backgroundColor: "#F4F4F4",
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "#fff",
-  },
-  completedImage: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
-  completedPlaceholder: {
-    textAlign: "center",
-    fontSize: 12,
-    fontWeight: "700",
   },
 });

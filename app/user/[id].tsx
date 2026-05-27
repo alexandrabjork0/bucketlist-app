@@ -13,6 +13,7 @@ import {
 import { useEffect, useState } from "react";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { auth, db } from "../(tabs)/firebaseConfig";
+import PostThumbnail from "../../components/PostThumbnail";
 
 export default function UserProfileScreen() {
   const { id } = useLocalSearchParams();
@@ -167,9 +168,16 @@ export default function UserProfileScreen() {
 
       <View style={styles.grid}>
         {items.map((item) => (
-          <View key={item.id} style={styles.completedCard}>
-            <Image source={{ uri: item.imageUrl }} style={styles.completedImage} />
-          </View>
+          <PostThumbnail
+            key={item.id}
+            post={item}
+            onPress={() =>
+              router.push({
+                pathname: "/explore-post/[id]",
+                params: { id: item.id },
+              })
+            }
+          />
         ))}
       </View>
     </ScrollView>
@@ -279,16 +287,4 @@ const styles = StyleSheet.create({
     padding: 2,
   },
 
-  completedCard: {
-    width: "33.33%",
-    aspectRatio: 1,
-    padding: 2,
-  },
-
-  completedImage: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 8,
-    backgroundColor: "#eee",
-  },
 });

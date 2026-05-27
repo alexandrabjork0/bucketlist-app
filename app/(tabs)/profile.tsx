@@ -20,6 +20,7 @@ import {
     View,
 } from "react-native";
 import { auth, db } from "./firebaseConfig";
+import PostThumbnail from "../../components/PostThumbnail";
 
 type ActiveTab = "posts" | "cards" | "bucketlist" | "collections";
 
@@ -150,16 +151,6 @@ export default function ProfileScreen() {
   );
 
 
-  const getGridImage = (item: any) => {
-    const firstMedia = item.media?.[0];
-  
-    if (firstMedia?.type === "video") {
-      return firstMedia.thumbnailUrl || item.imageUrl || null;
-    }
-  
-    return firstMedia?.url || item.imageUrl || null;
-  };
-
   const renderPosts = () => (
     <View style={styles.scene}>
       {completedItems.length === 0 ? (
@@ -169,36 +160,16 @@ export default function ProfileScreen() {
       ) : (
         <View style={styles.grid}>
           {completedItems.map((item) => (
-            <View key={item.id} style={styles.completedCard}>
-              <Pressable
-                style={styles.completedImageButton}
-                onPress={() =>
-                  router.push({
-                    pathname: "/post/[id]",
-                    params: { id: item.id },
-                  })
-                }
-              >
-               {getGridImage(item) ? (
-  <>
-    <Image
-      source={{ uri: getGridImage(item) }}
-      style={styles.completedImage}
-    />
-
-    {item.media?.[0]?.type === "video" && (
-      <View style={styles.videoBadge}>
-        <Text style={styles.videoBadgeText}>▶</Text>
-      </View>
-    )}
-  </>
-) : (
-  <Text style={styles.completedPlaceholder}>{item.title}</Text>
-)} 
-              </Pressable>
-
-             
-            </View>
+            <PostThumbnail
+              key={item.id}
+              post={item}
+              onPress={() =>
+                router.push({
+                  pathname: "/post/[id]",
+                  params: { id: item.id },
+                })
+              }
+            />
           ))}
         </View>
       )}
@@ -532,23 +503,10 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     marginHorizontal: -24,
   },
-  completedCard: {
-    width: "33.3333%",
-    aspectRatio: 3 / 4,
-    backgroundColor: "#F4F4F4",
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "#fff",
-  },
   completedImage: {
     width: "100%",
     height: "100%",
     resizeMode: "cover",
-  },
-  completedPlaceholder: {
-    textAlign: "center",
-    fontSize: 12,
-    fontWeight: "700",
   },
   categoryCard: {
     backgroundColor: "#F4F4F4",
@@ -656,11 +614,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     fontSize: 14,
   },
-  completedImageButton: {
-    width: "100%",
-    height: "100%",
-  },
-  
   deletePostOverlay: {
     position: "absolute",
     top: 6,
@@ -706,22 +659,5 @@ const styles = StyleSheet.create({
   
   customTabTextActive: {
     color: "#111",
-  },
-  videoBadge: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-    backgroundColor: "rgba(0,0,0,0.55)",
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  
-  videoBadgeText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "900",
   },
 });
