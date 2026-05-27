@@ -32,6 +32,8 @@ export default function CompleteItemScreen() {
   const [caption, setCaption] = useState("");
   const [saving, setSaving] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
+  const [previewIndex, setPreviewIndex] = useState(0);
+  const [captionIndex, setCaptionIndex] = useState(0);
 
   useEffect(() => {
     const loadItem = async () => {
@@ -52,7 +54,7 @@ export default function CompleteItemScreen() {
     if (saving) return;
 
     const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        mediaTypes: ["images", "videos"],
         allowsMultipleSelection: true,
         selectionLimit: 6,
         quality: 0.8,
@@ -66,6 +68,7 @@ export default function CompleteItemScreen() {
     }));
 
     setMedia(selectedMedia);
+    setPreviewIndex(0);
   };
 
   const removeMedia = (indexToRemove: number) => {
@@ -221,39 +224,50 @@ export default function CompleteItemScreen() {
 
           {media.length > 0 ? (
             <>
-              <ScrollView
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                style={styles.previewScroll}
-              >
-                {media.map((mediaItem, index) => (
-                  <View
-                    key={`${mediaItem.uri}-${index}`}
-                    style={[
-                      styles.previewPage,
-                      {
-                        width,
-                        height: width * 1.15,
-                      },
-                    ]}
-                  >
-                    {mediaItem.type === "image" ? (
-                      <Image source={{ uri: mediaItem.uri }} style={styles.previewMedia} />
-                    ) : (
-                        <VideoPlayer uri={mediaItem.uri} style={styles.previewMedia} />
-                    )}
-
-                    <Pressable
-                      style={styles.removeButton}
-                      onPress={() => removeMedia(index)}
-                      disabled={saving}
+              <View>
+                <ScrollView
+                  horizontal
+                  pagingEnabled
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.previewScroll}
+                  onMomentumScrollEnd={(e) => {
+                    setPreviewIndex(Math.round(e.nativeEvent.contentOffset.x / width));
+                  }}
+                >
+                  {media.map((mediaItem, index) => (
+                    <View
+                      key={`${mediaItem.uri}-${index}`}
+                      style={[
+                        styles.previewPage,
+                        {
+                          width,
+                          height: width * 1.15,
+                        },
+                      ]}
                     >
-                      <Text style={styles.removeButtonText}>×</Text>
-                    </Pressable>
+                      {mediaItem.type === "image" ? (
+                        <Image source={{ uri: mediaItem.uri }} style={styles.previewMedia} />
+                      ) : (
+                        <VideoPlayer uri={mediaItem.uri} style={styles.previewMedia} />
+                      )}
+
+                      <Pressable
+                        style={styles.removeButton}
+                        onPress={() => removeMedia(index)}
+                        disabled={saving}
+                      >
+                        <Text style={styles.removeButtonText}>×</Text>
+                      </Pressable>
+                    </View>
+                  ))}
+                </ScrollView>
+
+                {media.length > 1 && (
+                  <View style={styles.counter}>
+                    <Text style={styles.counterText}>{previewIndex + 1}/{media.length}</Text>
                   </View>
-                ))}
-              </ScrollView>
+                )}
+              </View>
 
               <Text style={styles.mediaCount}>{media.length}/6 selected</Text>
 
@@ -277,6 +291,9 @@ export default function CompleteItemScreen() {
               pagingEnabled
               showsHorizontalScrollIndicator={false}
               style={styles.previewScroll}
+              onMomentumScrollEnd={(e) => {
+                setCaptionIndex(Math.round(e.nativeEvent.contentOffset.x / width));
+              }}
             >
               {media.map((mediaItem, index) => (
                 <View
@@ -299,7 +316,9 @@ export default function CompleteItemScreen() {
             </ScrollView>
 
             {media.length > 1 && (
-              <Text style={styles.mediaCount}>{media.length} media selected</Text>
+              <View style={styles.counter}>
+                <Text style={styles.counterText}>{captionIndex + 1}/{media.length}</Text>
+              </View>
             )}
           </View>
 
@@ -480,6 +499,22 @@ const styles = StyleSheet.create({
 
   captionPreview: {
     backgroundColor: "#000",
+  },
+
+  counter: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+  },
+
+  counterText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "800",
   },
 
   captionBox: {
