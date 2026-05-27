@@ -2,9 +2,13 @@ import { router } from "expo-router";
 import {
   addDoc,
   collection,
+  doc,
+  getDoc,
   getDocs,
+  limit,
   query,
   serverTimestamp,
+  where,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
@@ -62,7 +66,7 @@ export default function ExploreScreen() {
   };
 
   const fetchPeople = async () => {
-    const snapshot = await getDocs(query(collection(db, "users")));
+    const snapshot = await getDocs(query(collection(db, "users"), limit(50)));
 
     const fetchedPeople = snapshot.docs
       .map((docItem) => ({
@@ -76,30 +80,28 @@ export default function ExploreScreen() {
   };
 
   const fetchPosts = async () => {
-    const postsSnap = await getDocs(query(collection(db, "userBucketlistItems")));
-    const usersSnap = await getDocs(query(collection(db, "users")));
+    const postsSnap = await getDocs(
+      query(
+        collection(db, "userBucketlistItems"),
+        where("completed", "==", true)
+      )
+    );
 
-    const usersById: any = {};
+    const rawPosts = postsSnap.docs
+      .map((docItem) => ({ id: docItem.id, ...(docItem.data() as any) }))
+      .filter((post: any) => post.imageUrl && post.userId);
 
-    usersSnap.docs.forEach((docItem) => {
-      usersById[docItem.id] = {
-        id: docItem.id,
-        ...docItem.data(),
-      };
-    });
+    const withUsers = await Promise.all(
+      rawPosts.map(async (post: any) => {
+        const userSnap = await getDoc(doc(db, "users", post.userId));
+        return {
+          ...post,
+          user: userSnap.exists() ? { id: post.userId, ...userSnap.data() } : null,
+        };
+      })
+    );
 
-    const fetchedPosts = postsSnap.docs
-      .map((docItem) => ({
-        id: docItem.id,
-        ...docItem.data(),
-      }))
-      .filter((post: any) => post.completed === true)
-      .filter((post: any) => post.imageUrl)
-      .filter((post: any) => post.userId)
-      .map((post: any) => ({
-        ...post,
-        user: usersById[post.userId] || null,
-      }))
+    const fetchedPosts = withUsers
       .filter((post: any) => post.user?.isPrivate !== true)
       .sort((a: any, b: any) => {
         const aTime = a.completedAt?.seconds || 0;
