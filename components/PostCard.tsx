@@ -1,0 +1,213 @@
+import { router } from "expo-router";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { auth } from "../app/(tabs)/firebaseConfig";
+import MediaCarousel from "./MediaCarousel";
+import PostActions from "./PostActions";
+import PostComments from "./PostComments";
+
+type Post = {
+  id: string;
+  title: string;
+  category?: string;
+  caption?: string;
+  completedAt?: any;
+  media?: Array<{ url: string; type: "image" | "video" }>;
+  imageUrl?: string | null;
+};
+
+type Author = {
+  userId: string;
+  username?: string;
+  profileImage?: string | null;
+};
+
+type Props = {
+  post: Post;
+  author: Author;
+  onSave?: () => void;
+  saveDone?: boolean;
+  onDelete?: () => void;
+};
+
+export default function PostCard({ post, author, onSave, saveDone, onDelete }: Props) {
+  const goToProfile = () => {
+    if (author.userId === auth.currentUser?.uid) {
+      router.push("/profile");
+    } else {
+      router.push({ pathname: "/user/[id]", params: { id: author.userId } });
+    }
+  };
+
+  const formatDate = () => {
+    if (!post.completedAt?.seconds) return "";
+    const date = new Date(post.completedAt.seconds * 1000);
+    return date.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const date = formatDate();
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.headerRow}>
+        <Pressable style={styles.headerLeft} onPress={goToProfile}>
+          {author.profileImage ? (
+            <Image source={{ uri: author.profileImage }} style={styles.avatar} />
+          ) : (
+            <View style={styles.avatarFallback}>
+              <Text style={styles.avatarInitial}>
+                {author.username?.charAt(0)?.toUpperCase() || "?"}
+              </Text>
+            </View>
+          )}
+          <Text style={styles.username}>@{author.username || "user"}</Text>
+        </Pressable>
+
+        {onDelete && (
+          <Pressable onPress={onDelete} style={styles.menuButton}>
+            <Text style={styles.menuText}>⋯</Text>
+          </Pressable>
+        )}
+      </View>
+
+      {post.category ? (
+        <Text style={styles.category}>{post.category}</Text>
+      ) : null}
+
+      <MediaCarousel media={post.media} imageUrl={post.imageUrl} />
+
+      <View style={styles.body}>
+        <Text style={styles.title}>{post.title}</Text>
+
+        <PostActions postId={post.id} />
+
+        {post.caption ? (
+          <Text style={styles.caption}>
+            <Text style={styles.captionUsername} onPress={goToProfile}>
+              {author.username || "user"}{" "}
+            </Text>
+            {post.caption}
+          </Text>
+        ) : null}
+
+        <PostComments postId={post.id} />
+
+        {date ? <Text style={styles.date}>{date}</Text> : null}
+
+        {(onSave || saveDone) && (
+          <Pressable
+            style={[styles.saveButton, saveDone && styles.savedButton]}
+            onPress={onSave}
+            disabled={!!saveDone}
+          >
+            <Text style={[styles.saveButtonText, saveDone && styles.savedButtonText]}>
+              {saveDone ? "Added to your list" : "Add this to my list"}
+            </Text>
+          </Pressable>
+        )}
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    marginBottom: 32,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 14,
+    paddingTop: 14,
+    paddingBottom: 8,
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  avatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+  },
+  avatarFallback: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "#111",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarInitial: {
+    color: "#fff",
+    fontWeight: "800",
+    fontSize: 14,
+  },
+  username: {
+    fontWeight: "800",
+    fontSize: 15,
+  },
+  menuButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  menuText: {
+    fontSize: 26,
+    fontWeight: "900",
+    color: "#111",
+    lineHeight: 26,
+  },
+  category: {
+    paddingHorizontal: 14,
+    paddingBottom: 10,
+    color: "#777",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  body: {
+    padding: 14,
+  },
+  title: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#777",
+    marginBottom: 4,
+  },
+  caption: {
+    fontSize: 15,
+    lineHeight: 21,
+    marginTop: 4,
+  },
+  captionUsername: {
+    fontWeight: "800",
+  },
+  date: {
+    marginTop: 10,
+    color: "#999",
+    fontSize: 12,
+    textTransform: "uppercase",
+  },
+  saveButton: {
+    marginTop: 16,
+    backgroundColor: "#111",
+    paddingVertical: 13,
+    borderRadius: 999,
+    alignItems: "center",
+  },
+  saveButtonText: {
+    color: "#fff",
+    fontWeight: "800",
+    fontSize: 15,
+  },
+  savedButton: {
+    backgroundColor: "#F4F4F4",
+  },
+  savedButtonText: {
+    color: "#111",
+  },
+});

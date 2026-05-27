@@ -2,14 +2,14 @@ import { router, useLocalSearchParams } from "expo-router";
 import {
     addDoc,
     collection,
-    getDocs,
-    query,
-    serverTimestamp
+    doc,
+    getDoc,
+    serverTimestamp,
 } from "firebase/firestore";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
+    ActivityIndicator,
     Alert,
-    Image,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -17,69 +17,45 @@ import {
     View,
 } from "react-native";
 import { auth, db } from "../(tabs)/firebaseConfig";
+import PostCard from "../../components/PostCard";
 
-export default function PostScreen() {
+export default function ExplorePostScreen() {
   const { id } = useLocalSearchParams();
-  const scrollViewRef = useRef<ScrollView>(null);
 
-  const [posts, setPosts] = useState<any[]>([]);
-  const [savedPostIds, setSavedPostIds] = useState<string[]>([]);
+  const [post, setPost] = useState<any>(null);
+  const [author, setAuthor] = useState<any>(null);
+  const [isSaved, setIsSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadPosts = async () => {
-      const postsSnap = await getDocs(query(collection(db, "userBucketlistItems")));
-      const usersSnap = await getDocs(query(collection(db, "users")));
+    const loadPost = async () => {
+      if (!id) return;
 
-      const usersById: any = {};
+      const postSnap = await getDoc(doc(db, "userBucketlistItems", String(id)));
 
-      usersSnap.docs.forEach((docItem) => {
-        usersById[docItem.id] = {
-          id: docItem.id,
-          ...docItem.data(),
-        };
-      });
+      if (!postSnap.exists()) {
+        setLoading(false);
+        return;
+      }
 
-      const fetchedPosts = postsSnap.docs
-        .map((docItem) => ({
-          id: docItem.id,
-          ...docItem.data(),
-        }))
-        .filter((post: any) => post.completed === true)
-        .filter((post: any) => post.imageUrl)
-        .filter((post: any) => post.userId)
-        .map((post: any) => ({
-          ...post,
-          user: usersById[post.userId] || null,
-        }))
-        .filter((post: any) => post.user?.isPrivate !== true)
-        .sort((a: any, b: any) => {
-          const aTime = a.completedAt?.seconds || 0;
-          const bTime = b.completedAt?.seconds || 0;
-          return bTime - aTime;
-        });
+      const postData = { id: postSnap.id, ...postSnap.data() };
+      setPost(postData);
 
-      setPosts(fetchedPosts);
+      const authorSnap = await getDoc(doc(db, "users", (postData as any).userId));
+      setAuthor(
+        authorSnap.exists()
+          ? { userId: (postData as any).userId, ...authorSnap.data() }
+          : { userId: (postData as any).userId }
+      );
 
-      setTimeout(() => {
-        const selectedIndex = fetchedPosts.findIndex((post: any) => post.id === id);
-
-        if (selectedIndex !== -1) {
-          scrollViewRef.current?.scrollTo({
-            y: selectedIndex * 720,
-            animated: false,
-          });
-        }
-      }, 300);
+      setLoading(false);
     };
 
-    loadPosts();
+    loadPost();
   }, [id]);
 
-  const saveToBucketlist = async (post: any) => {
-    if (!auth.currentUser) {
-      Alert.alert("Not logged in", "You need to log in first.");
-      return;
-    }
+  const saveToBucketlist = async () => {
+    if (!auth.currentUser || !post) return;
 
     await addDoc(collection(db, "userBucketlistItems"), {
       userId: auth.currentUser.uid,
@@ -96,32 +72,27 @@ export default function PostScreen() {
       inspiredByUserId: post.userId,
     });
 
-    setSavedPostIds((prev) => [...prev, post.id]);
+    setIsSaved(true);
     Alert.alert("Added", `${post.title} was added to your bucketlist.`);
   };
 
-  const goToUserProfile = (userId: string) => {
-    if (userId === auth.currentUser?.uid) {
-      router.push("/profile");
-    } else {
-      router.push({
-        pathname: "/user/[id]",
-        params: { id: userId },
-      });
-    }
-  };
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator />
+      </View>
+    );
+  }
 
-  const formatDate = (post: any) => {
-    if (!post.completedAt?.seconds) return "";
+  if (!post || !author) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.errorText}>Post not found.</Text>
+      </View>
+    );
+  }
 
-    const date = new Date(post.completedAt.seconds * 1000);
-
-    return date.toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
+  const isOwnPost = post.userId === auth.currentUser?.uid;
 
   return (
     <View style={styles.container}>
@@ -130,216 +101,56 @@ export default function PostScreen() {
           <Text style={styles.backText}>Back</Text>
         </Pressable>
 
-        <Text style={styles.topTitle}>Posts</Text>
+        <Text style={styles.topTitle}>Post</Text>
 
         <View style={{ width: 45 }} />
       </View>
 
-      <ScrollView ref={scrollViewRef} style={styles.feed}>
-        {posts.map((post) => {
-          const isOwnPost = post.userId === auth.currentUser?.uid;
-          const isSaved = savedPostIds.includes(post.id);
-
-          return (
-            <View key={post.id} style={styles.post}>
-              <Pressable
-                style={styles.postHeader}
-                onPress={() => goToUserProfile(post.userId)}
-              >
-                {post.user?.profileImage ? (
-                  <Image
-                    source={{ uri: post.user.profileImage }}
-                    style={styles.avatar}
-                  />
-                ) : (
-                  <View style={styles.avatarFallback}>
-                    <Text style={styles.avatarText}>
-                      {post.user?.username?.charAt(0)?.toUpperCase() || "?"}
-                    </Text>
-                  </View>
-                )}
-
-                <Text style={styles.username}>
-                  @{post.user?.username || "user"}
-                </Text>
-              </Pressable>
-
-              <Text style={styles.category}>{post.category}</Text>
-
-              <Image source={{ uri: post.imageUrl }} style={styles.postImage} />
-
-              <View style={styles.captionBox}>
-                <Text style={styles.postTitle}>{post.title}</Text>
-
-                {post.caption ? (
-                  <Text style={styles.caption}>
-                    <Text
-                      style={styles.captionUsername}
-                      onPress={() => goToUserProfile(post.userId)}
-                    >
-                      {post.user?.username || "user"}{" "}
-                    </Text>
-                    {post.caption}
-                  </Text>
-                ) : null}
-
-                <Text style={styles.dateText}>Completed {formatDate(post)}</Text>
-
-                {!isOwnPost && (
-                  <Pressable
-                    style={[styles.saveButton, isSaved && styles.savedButton]}
-                    onPress={() => saveToBucketlist(post)}
-                    disabled={isSaved}
-                  >
-                    <Text
-                      style={[
-                        styles.saveButtonText,
-                        isSaved && styles.savedButtonText,
-                      ]}
-                    >
-                      {isSaved ? "Added to your list" : "Add this to my list"}
-                    </Text>
-                  </Pressable>
-                )}
-              </View>
-            </View>
-          );
-        })}
+      <ScrollView style={styles.feed}>
+        <PostCard
+          post={post}
+          author={author}
+          onSave={!isOwnPost && !isSaved ? saveToBucketlist : undefined}
+          saveDone={!isOwnPost && isSaved}
+        />
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: "#fff",
-    },
-  
-    topBar: {
-      paddingTop: 60,
-      paddingHorizontal: 20,
-      paddingBottom: 14,
-      borderBottomWidth: 1,
-      borderBottomColor: "#eee",
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-    },
-  
-    backText: {
-      fontSize: 16,
-      fontWeight: "700",
-    },
-  
-    topTitle: {
-      fontSize: 18,
-      fontWeight: "800",
-    },
-  
-    feed: {
-      flex: 1,
-    },
-  
-    post: {
-      marginBottom: 32,
-    },
-  
-    postHeader: {
-      paddingHorizontal: 14,
-      paddingTop: 14,
-      paddingBottom: 8,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 10,
-    },
-  
-    avatar: {
-      width: 34,
-      height: 34,
-      borderRadius: 17,
-    },
-  
-    avatarFallback: {
-      width: 34,
-      height: 34,
-      borderRadius: 17,
-      backgroundColor: "#111",
-      justifyContent: "center",
-      alignItems: "center",
-    },
-  
-    avatarText: {
-      color: "#fff",
-      fontWeight: "800",
-    },
-  
-    username: {
-      fontWeight: "800",
-      fontSize: 15,
-    },
-  
-    category: {
-      paddingHorizontal: 14,
-      paddingBottom: 10,
-      color: "#777",
-      fontSize: 14,
-      fontWeight: "600",
-    },
-  
-    postImage: {
-      width: "100%",
-      aspectRatio: 4 / 5,
-      resizeMode: "cover",
-      backgroundColor: "#F4F4F4",
-    },
-  
-    captionBox: {
-      padding: 14,
-    },
-  
-    postTitle: {
-      fontSize: 14,
-      fontWeight: "600",
-      color: "#777",
-      marginBottom: 8,
-    },
-  
-    caption: {
-      fontSize: 15,
-      lineHeight: 21,
-    },
-  
-    captionUsername: {
-      fontWeight: "800",
-    },
-  
-    dateText: {
-      marginTop: 10,
-      color: "#999",
-      fontSize: 12,
-      textTransform: "uppercase",
-    },
-  
-    saveButton: {
-      marginTop: 18,
-      backgroundColor: "#111",
-      paddingVertical: 13,
-      borderRadius: 999,
-      alignItems: "center",
-    },
-  
-    savedButton: {
-      backgroundColor: "#F4F4F4",
-    },
-  
-    saveButtonText: {
-      color: "#fff",
-      fontWeight: "800",
-      fontSize: 15,
-    },
-  
-    savedButtonText: {
-      color: "#111",
-    },
-  });
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  center: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  topBar: {
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  backText: {
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  topTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+  },
+  feed: {
+    flex: 1,
+  },
+  errorText: {
+    color: "#777",
+    fontSize: 16,
+  },
+});

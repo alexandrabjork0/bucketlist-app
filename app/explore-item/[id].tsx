@@ -1,23 +1,26 @@
 import { router, useLocalSearchParams } from "expo-router";
 import {
+    addDoc,
     collection,
     doc,
     getDoc,
     getDocs,
     query,
+    serverTimestamp,
     where,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
     ActivityIndicator,
-    Image,
+    Alert,
     Pressable,
     ScrollView,
     StyleSheet,
     Text,
     View,
 } from "react-native";
-import { db } from "../(tabs)/firebaseConfig";
+import { auth, db } from "../(tabs)/firebaseConfig";
+import PostCard from "../../components/PostCard";
 
 type CompletedItem = {
   id: string;
@@ -27,12 +30,19 @@ type CompletedItem = {
   imageUrl: string | null;
   caption?: string;
   completedAt?: any;
+  media?: Array<{ url: string; type: "image" | "video" }>;
+  author: {
+    userId: string;
+    username?: string;
+    profileImage?: string | null;
+  };
 };
 
 export default function ExploreItemScreen() {
   const { id } = useLocalSearchParams();
   const [ideaTitle, setIdeaTitle] = useState("");
   const [completedItems, setCompletedItems] = useState<CompletedItem[]>([]);
+  const [savedIds, setSavedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -51,9 +61,7 @@ export default function ExploreItemScreen() {
         return;
       }
 
-      const ideaData = ideaSnap.data();
-      const title = ideaData.title;
-
+      const title = ideaSnap.data().title;
       setIdeaTitle(title);
 
       const q = query(
@@ -65,23 +73,58 @@ export default function ExploreItemScreen() {
       const snapshot = await getDocs(q);
 
       const posts = snapshot.docs
-        .map((doc) => ({
-          id: doc.id,
-          userId: doc.data().userId,
-          title: doc.data().title,
-          category: doc.data().category,
-          imageUrl: doc.data().imageUrl ?? null,
-          caption: doc.data().caption ?? "",
-          completedAt: doc.data().completedAt ?? null,
+        .map((docItem) => ({
+          id: docItem.id,
+          userId: docItem.data().userId,
+          title: docItem.data().title,
+          category: docItem.data().category,
+          imageUrl: docItem.data().imageUrl ?? null,
+          caption: docItem.data().caption ?? "",
+          completedAt: docItem.data().completedAt ?? null,
+          media: docItem.data().media ?? [],
         }))
         .filter((item) => item.imageUrl);
 
-      setCompletedItems(posts);
+      const withAuthors = await Promise.all(
+        posts.map(async (item) => {
+          const authorSnap = await getDoc(doc(db, "users", item.userId));
+          return {
+            ...item,
+            author: authorSnap.exists()
+              ? { userId: item.userId, ...authorSnap.data() }
+              : { userId: item.userId },
+          };
+        })
+      );
+
+      setCompletedItems(withAuthors);
     } catch (error) {
       console.log("Error fetching completed posts:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const saveToBucketlist = async (item: CompletedItem) => {
+    if (!auth.currentUser) return;
+
+    await addDoc(collection(db, "userBucketlistItems"), {
+      userId: auth.currentUser.uid,
+      title: item.title,
+      category: item.category,
+      completed: false,
+      imageUrl: null,
+      caption: "",
+      media: [],
+      createdAt: serverTimestamp(),
+      completedAt: null,
+      fromPost: true,
+      inspiredByPostId: item.id,
+      inspiredByUserId: item.userId,
+    });
+
+    setSavedIds((prev) => [...prev, item.id]);
+    Alert.alert("Added", `${item.title} was added to your bucketlist.`);
   };
 
   if (loading) {
@@ -108,29 +151,20 @@ export default function ExploreItemScreen() {
           No one has completed this yet. Be the first.
         </Text>
       ) : (
-        completedItems.map((item) => (
-          <Pressable
-            key={item.id}
-            style={styles.postCard}
-            onPress={() => router.push(`/post/${item.id}`)}
-          >
-            {item.imageUrl && (
-              <Image source={{ uri: item.imageUrl }} style={styles.image} />
-            )}
+        completedItems.map((item) => {
+          const isOwnPost = item.userId === auth.currentUser?.uid;
+          const isSaved = savedIds.includes(item.id);
 
-            <View style={styles.postInfo}>
-              <Text style={styles.postTitle}>{item.title}</Text>
-
-              {item.caption ? (
-                <Text style={styles.caption}>{item.caption}</Text>
-              ) : null}
-
-              <Pressable onPress={() => router.push(`/user/${item.userId}`)}>
-                <Text style={styles.userLink}>View profile</Text>
-              </Pressable>
-            </View>
-          </Pressable>
-        ))
+          return (
+            <PostCard
+              key={item.id}
+              post={item}
+              author={item.author}
+              onSave={!isOwnPost && !isSaved ? () => saveToBucketlist(item) : undefined}
+              saveDone={!isOwnPost && isSaved}
+            />
+          );
+        })
       )}
     </ScrollView>
   );
@@ -140,7 +174,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    padding: 24,
     paddingTop: 80,
   },
   center: {
@@ -152,10 +185,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "800",
     marginBottom: 18,
+    paddingHorizontal: 24,
   },
   title: {
     fontSize: 28,
     fontWeight: "900",
+    paddingHorizontal: 24,
   },
   subtitle: {
     marginTop: 8,
@@ -163,40 +198,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 21,
     marginBottom: 20,
+    paddingHorizontal: 24,
   },
   emptyText: {
     marginTop: 30,
     color: "#777",
     textAlign: "center",
     fontWeight: "600",
-  },
-  postCard: {
-    marginTop: 18,
-    backgroundColor: "#F4F4F4",
-    borderRadius: 22,
-    overflow: "hidden",
-  },
-  image: {
-    width: "100%",
-    height: 280,
-    backgroundColor: "#ddd",
-  },
-  postInfo: {
-    padding: 16,
-  },
-  postTitle: {
-    fontSize: 18,
-    fontWeight: "900",
-  },
-  caption: {
-    marginTop: 8,
-    fontSize: 15,
-    color: "#555",
-    lineHeight: 21,
-  },
-  userLink: {
-    marginTop: 12,
-    fontWeight: "800",
-    color: "#111",
+    paddingHorizontal: 24,
   },
 });

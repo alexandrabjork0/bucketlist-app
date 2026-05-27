@@ -1,11 +1,14 @@
+import { Ionicons } from "@expo/vector-icons";
 import {
     addDoc,
     collection,
     doc,
     getDoc,
+    increment,
     onSnapshot,
     orderBy,
     query,
+    runTransaction,
     serverTimestamp,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
@@ -20,17 +23,10 @@ import {
 } from "react-native";
 import { auth, db } from "../app/(tabs)/firebaseConfig";
   
-  export default function PostComments({
-    postId,
-    expanded,
-    onToggle,
-  }: {
-    postId: string;
-    expanded: boolean;
-    onToggle: () => void;
-  }) {
+  export default function PostComments({ postId }: { postId: string }) {
     const [comments, setComments] = useState<any[]>([]);
     const [text, setText] = useState("");
+    const [expanded, setExpanded] = useState(false);
   
     useEffect(() => {
       const q = query(
@@ -59,47 +55,54 @@ import { auth, db } from "../app/(tabs)/firebaseConfig";
         username: userData?.username || auth.currentUser.displayName || "user",
         createdAt: serverTimestamp(),
       });
-  
+
+      const postRef = doc(db, "userBucketlistItems", postId);
+      await runTransaction(db, async (transaction) => {
+        transaction.update(postRef, { commentsCount: increment(1) });
+      });
+
       setText("");
     };
   
-    const previewComments = comments.slice(0, 3);
-  
+    const previewComments = comments.slice(-2);
+
     return (
       <View style={styles.container}>
+        <Pressable onPress={() => setExpanded(true)} style={styles.bubbleRow}>
+          <Ionicons name="chatbubble-outline" size={25} color="#111" />
+          <Text style={styles.countText}>
+            {comments.length} {comments.length === 1 ? "comment" : "comments"}
+          </Text>
+        </Pressable>
+
         {previewComments.map((c) => (
           <Text key={c.id} style={styles.comment}>
             <Text style={styles.username}>{c.username || "user"} </Text>
             {c.text}
           </Text>
         ))}
-  
-        {comments.length > 3 ? (
-          <Pressable onPress={onToggle}>
-            <Text style={styles.viewMoreText}>
-              View all {comments.length} comments
-            </Text>
-          </Pressable>
-        ) : null}
-  
+
+        <Pressable onPress={() => setExpanded(true)}>
+          <Text style={styles.addCommentText}>Add a comment...</Text>
+        </Pressable>
+
         <Modal
           visible={expanded}
           animationType="slide"
           transparent
-          onRequestClose={onToggle}
+          onRequestClose={() => setExpanded(false)}
         >
-          <Pressable style={styles.modalOverlay} onPress={onToggle}>
-          <Pressable style={styles.modalContent}>
+          <Pressable style={styles.modalOverlay} onPress={() => setExpanded(false)}>
+            <Pressable style={styles.modalContent}>
               <View style={styles.modalHandle} />
-  
+
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Comments</Text>
-  
-                <Pressable onPress={onToggle}>
+                <Pressable onPress={() => setExpanded(false)}>
                   <Text style={styles.closeText}>Close</Text>
                 </Pressable>
               </View>
-  
+
               <ScrollView style={styles.commentsList}>
                 {comments.map((c) => (
                   <Text key={c.id} style={styles.modalComment}>
@@ -108,7 +111,7 @@ import { auth, db } from "../app/(tabs)/firebaseConfig";
                   </Text>
                 ))}
               </ScrollView>
-  
+
               <View style={styles.inputRow}>
                 <TextInput
                   value={text}
@@ -116,21 +119,31 @@ import { auth, db } from "../app/(tabs)/firebaseConfig";
                   placeholder="Add a comment..."
                   style={styles.input}
                 />
-  
                 <Pressable onPress={addComment}>
                   <Text style={styles.post}>Post</Text>
                 </Pressable>
               </View>
-              </Pressable>
-             </Pressable>
+            </Pressable>
+          </Pressable>
         </Modal>
       </View>
     );
   }
-  
+
   const styles = StyleSheet.create({
     container: {
       marginTop: 8,
+    },
+    bubbleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      marginBottom: 8,
+    },
+    countText: {
+      fontSize: 14,
+      fontWeight: "700",
+      color: "#111",
     },
     comment: {
       fontSize: 14,
@@ -139,14 +152,16 @@ import { auth, db } from "../app/(tabs)/firebaseConfig";
     username: {
       fontWeight: "700",
     },
-    viewMoreText: {
+    addCommentText: {
       fontSize: 14,
-      color: "#888",
+      color: "#999",
       marginTop: 6,
     },
     inputRow: {
       flexDirection: "row",
       marginTop: 8,
+      alignItems: "center",
+      gap: 8,
     },
     input: {
       flex: 1,
