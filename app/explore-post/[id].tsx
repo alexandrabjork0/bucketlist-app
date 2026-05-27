@@ -4,9 +4,12 @@ import {
     collection,
     doc,
     getDoc,
+    getDocs,
     increment,
+    query,
     serverTimestamp,
     updateDoc,
+    where,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
@@ -44,13 +47,27 @@ export default function ExplorePostScreen() {
       const postData = { id: postSnap.id, ...postSnap.data() };
       setPost(postData);
 
-      const authorSnap = await getDoc(doc(db, "users", (postData as any).userId));
+      const [authorSnap, alreadySnap] = await Promise.all([
+        getDoc(doc(db, "users", (postData as any).userId)),
+        auth.currentUser && (postData as any).title
+          ? getDocs(
+              query(
+                collection(db, "userBucketlistItems"),
+                where("userId", "==", auth.currentUser.uid),
+                where("title", "==", (postData as any).title),
+                where("completed", "==", false)
+              )
+            )
+          : Promise.resolve(null),
+      ]);
+
       setAuthor(
         authorSnap.exists()
           ? { userId: (postData as any).userId, ...authorSnap.data() }
           : { userId: (postData as any).userId }
       );
 
+      if (alreadySnap && !alreadySnap.empty) setIsSaved(true);
       setLoading(false);
     };
 

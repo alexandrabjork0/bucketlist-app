@@ -67,6 +67,20 @@ export default function ExploreItemScreen() {
       const title = ideaSnap.data().title;
       setIdeaTitle(title);
 
+      if (auth.currentUser) {
+        const alreadySnap = await getDocs(
+          query(
+            collection(db, "userBucketlistItems"),
+            where("userId", "==", auth.currentUser.uid),
+            where("title", "==", title),
+            where("completed", "==", false)
+          )
+        );
+        if (!alreadySnap.empty) {
+          setSavedIds(["__title_already_saved__"]);
+        }
+      }
+
       const q = query(
         collection(db, "userBucketlistItems"),
         where("title", "==", title),
@@ -168,7 +182,8 @@ export default function ExploreItemScreen() {
       ) : (
         completedItems.map((item) => {
           const isOwnPost = item.userId === auth.currentUser?.uid;
-          const isSaved = savedIds.includes(item.id);
+          const titleAlreadySaved = savedIds.includes("__title_already_saved__");
+          const isSaved = titleAlreadySaved || savedIds.includes(item.id);
 
           return (
             <PostCard

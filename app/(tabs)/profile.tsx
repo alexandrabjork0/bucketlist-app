@@ -263,69 +263,104 @@ export default function ProfileScreen() {
     </View>
   );
 
-  const renderBucketlist = () => (
-    <View style={styles.scene}>
-      {selectedBucketlistCategory === null ? (
-        bucketlistCategories.map((category) => {
-          const count =
-            category === "All"
-              ? uncompletedItems.length
-              : uncompletedItems.filter((i) => i.category === category).length;
+  const renderBucketlist = () => {
+    const displayItems =
+      selectedBucketlistCategory === null || selectedBucketlistCategory === "All"
+        ? uncompletedItems
+        : uncompletedItems.filter((i) => i.category === selectedBucketlistCategory);
 
-          return (
-            <Pressable
-              key={category}
-              style={styles.categoryCard}
-              onPress={() => setSelectedBucketlistCategory(category)}
+    const sourceLabel = (item: any) => {
+      if (item.customIdea) return "My idea";
+      if (item.fromExplore) return "From Explore";
+      if (item.fromPost) return "Inspired by post";
+      return null;
+    };
+
+    return (
+      <View style={styles.scene}>
+        {uncompletedItems.length === 0 ? (
+          <Text style={styles.emptyText}>
+            Your bucketlist is empty. Explore ideas or add your own.
+          </Text>
+        ) : (
+          <>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.bucketlistChipsScroll}
+              nestedScrollEnabled
             >
-              <View>
-                <Text style={styles.categoryTitle}>{category}</Text>
-                <Text style={styles.categoryCount}>{count} ideas</Text>
-              </View>
-              <Text style={styles.arrow}>›</Text>
-            </Pressable>
-          );
-        })
-      ) : (
-        <>
-          <Pressable onPress={() => setSelectedBucketlistCategory(null)}>
-            <Text style={styles.backText}>‹ Back to categories</Text>
-          </Pressable>
-
-          <Text style={styles.sectionTitle}>{selectedBucketlistCategory}</Text>
-
-          {visibleBucketlistItems.map((item) => (
-            <View key={item.id} style={styles.itemCard}>
-              <Pressable
-                style={styles.itemContent}
-                onPress={() =>
-                  router.push({ pathname: "/complete-item/[id]", params: { id: item.id } })
-                }
-              >
-                <Text style={styles.itemTitle}>{item.title}</Text>
-                <Text style={styles.itemCategory}>{item.category}</Text>
-                <Text style={styles.completeHint}>Tap to complete</Text>
-              </Pressable>
-
-              <View style={styles.itemActions}>
-                {collections.length > 0 && (
-                  <Pressable
-                    style={styles.addToCollectionBtn}
-                    onPress={() => setAddToCollectionItemId(item.id)}
+              {bucketlistCategories.map((cat) => (
+                <Pressable
+                  key={cat}
+                  style={[
+                    styles.bucketlistChip,
+                    (selectedBucketlistCategory ?? "All") === cat && styles.bucketlistChipActive,
+                  ]}
+                  onPress={() => setSelectedBucketlistCategory(cat)}
+                >
+                  <Text
+                    style={[
+                      styles.bucketlistChipText,
+                      (selectedBucketlistCategory ?? "All") === cat &&
+                        styles.bucketlistChipTextActive,
+                    ]}
                   >
-                    <Text style={styles.addToCollectionText}>+ Collection</Text>
-                  </Pressable>
-                )}
-                <Pressable onPress={() => deleteBucketlistItem(item.id)}>
-                  <Text style={styles.deleteItemText}>Delete</Text>
+                    {cat}
+                  </Text>
                 </Pressable>
-              </View>
-            </View>
-          ))}
-        </>
-      )}
-    </View>
-  );
+              ))}
+            </ScrollView>
+
+            {displayItems.map((item) => {
+              const label = sourceLabel(item);
+              return (
+                <View key={item.id} style={styles.bucketlistCard}>
+                  <View style={styles.bucketlistCardTop}>
+                    <Text style={styles.bucketlistCardTitle}>{item.title}</Text>
+                    <Pressable
+                      style={styles.completeBtn}
+                      onPress={() =>
+                        router.push({
+                          pathname: "/complete-item/[id]",
+                          params: { id: item.id },
+                        })
+                      }
+                    >
+                      <Text style={styles.completeBtnText}>Complete →</Text>
+                    </Pressable>
+                  </View>
+
+                  <View style={styles.bucketlistCardMeta}>
+                    <View style={styles.categoryPill}>
+                      <Text style={styles.categoryPillText}>{item.category}</Text>
+                    </View>
+                    {label && (
+                      <Text style={styles.sourceLabel}>{label}</Text>
+                    )}
+                  </View>
+
+                  <View style={styles.itemActions}>
+                    {collections.length > 0 && (
+                      <Pressable
+                        style={styles.addToCollectionBtn}
+                        onPress={() => setAddToCollectionItemId(item.id)}
+                      >
+                        <Text style={styles.addToCollectionText}>+ Collection</Text>
+                      </Pressable>
+                    )}
+                    <Pressable onPress={() => deleteBucketlistItem(item.id)}>
+                      <Text style={styles.deleteItemText}>Delete</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              );
+            })}
+          </>
+        )}
+      </View>
+    );
+  };
 
   const renderCollections = () => {
     if (activeCollectionId) {
@@ -854,6 +889,81 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     fontSize: 14,
     paddingVertical: 5,
+  },
+
+  // Bucketlist tab
+  bucketlistChipsScroll: {
+    paddingBottom: 16,
+    gap: 8,
+  },
+  bucketlistChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: "#F4F4F4",
+    borderRadius: 999,
+  },
+  bucketlistChipActive: {
+    backgroundColor: "#111",
+  },
+  bucketlistChipText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#555",
+  },
+  bucketlistChipTextActive: {
+    color: "#fff",
+  },
+  bucketlistCard: {
+    backgroundColor: "#F4F4F4",
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 10,
+  },
+  bucketlistCardTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 12,
+  },
+  bucketlistCardTitle: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#111",
+    lineHeight: 22,
+  },
+  completeBtn: {
+    backgroundColor: "#111",
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+  },
+  completeBtnText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 13,
+  },
+  bucketlistCardMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 10,
+  },
+  categoryPill: {
+    backgroundColor: "#E8E8E8",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  categoryPillText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#555",
+  },
+  sourceLabel: {
+    fontSize: 12,
+    color: "#999",
+    fontWeight: "600",
   },
 
   // Collections grid

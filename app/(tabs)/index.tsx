@@ -47,9 +47,18 @@ export default function HomeScreen() {
     let unsubPosts: (() => void) | null = null;
 
     const init = async () => {
-      const followsSnap = await getDocs(
-        query(collection(db, "follows"), where("followerId", "==", user.uid))
-      );
+      const [followsSnap, userItemsSnap] = await Promise.all([
+        getDocs(query(collection(db, "follows"), where("followerId", "==", user.uid))),
+        getDocs(
+          query(
+            collection(db, "userBucketlistItems"),
+            where("userId", "==", user.uid),
+            where("completed", "==", false)
+          )
+        ),
+      ]);
+
+      const userTitles = new Set(userItemsSnap.docs.map((d) => d.data().title as string));
 
       const followingIds = followsSnap.docs.map((d) => d.data().followingId);
       const allowedUserIds = [user.uid, ...followingIds].slice(0, 30);
@@ -83,6 +92,10 @@ export default function HomeScreen() {
             return bTime - aTime;
           });
 
+          const alreadySavedIds = postsWithAuthors
+            .filter((p: any) => userTitles.has(p.title))
+            .map((p: any) => p.id);
+          setSavedIds(alreadySavedIds);
           setPosts(postsWithAuthors);
         }
       );

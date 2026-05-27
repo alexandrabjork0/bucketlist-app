@@ -50,7 +50,7 @@ export default function ExperienceScreen() {
       const expData = { id: expSnap.id, ...expSnap.data() };
       setExperience(expData);
 
-      const [postsSnap, simSnap] = await Promise.all([
+      const [postsSnap, simSnap, alreadySnap] = await Promise.all([
         getDocs(
           query(
             collection(db, "userBucketlistItems"),
@@ -64,7 +64,19 @@ export default function ExperienceScreen() {
             where("category", "==", (expData as any).category)
           )
         ),
+        auth.currentUser
+          ? getDocs(
+              query(
+                collection(db, "userBucketlistItems"),
+                where("userId", "==", auth.currentUser.uid),
+                where("experienceId", "==", String(id)),
+                where("completed", "==", false)
+              )
+            )
+          : Promise.resolve(null),
       ]);
+
+      if (alreadySnap && !alreadySnap.empty) setIsAdded(true);
 
       const rawPosts = postsSnap.docs
         .map((d) => ({ id: d.id, ...(d.data() as any) }))

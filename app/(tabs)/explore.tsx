@@ -9,6 +9,7 @@ import {
   query,
   serverTimestamp,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
@@ -77,6 +78,8 @@ export default function ExploreScreen() {
   const [people, setPeople] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
 
+  const [userExperienceIds, setUserExperienceIds] = useState<Set<string>>(new Set());
+
   const [sheetOpen, setSheetOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newCategory, setNewCategory] = useState("");
@@ -89,7 +92,24 @@ export default function ExploreScreen() {
   }, []);
 
   const fetchData = async () => {
-    await Promise.all([fetchExperiences(), fetchPeople()]);
+    await Promise.all([fetchExperiences(), fetchPeople(), fetchUserExperienceIds()]);
+  };
+
+  const fetchUserExperienceIds = async () => {
+    if (!auth.currentUser) return;
+    const snap = await getDocs(
+      query(
+        collection(db, "userBucketlistItems"),
+        where("userId", "==", auth.currentUser.uid),
+        where("completed", "==", false)
+      )
+    );
+    const ids = new Set<string>();
+    snap.docs.forEach((d) => {
+      const eid = d.data().experienceId;
+      if (eid) ids.add(eid);
+    });
+    setUserExperienceIds(ids);
   };
 
   const fetchExperiences = async () => {
@@ -229,6 +249,7 @@ export default function ExploreScreen() {
       savesCount: increment(1),
     }).catch(() => {});
 
+    setUserExperienceIds((prev) => new Set([...prev, exp.id]));
     Alert.alert("Added", `${exp.title} was added to your bucketlist.`);
   };
 
@@ -335,12 +356,22 @@ export default function ExploreScreen() {
           <View style={styles.masonry}>
             <View style={styles.masonryCol}>
               {leftCol.map((exp) => (
-                <ExperienceTile key={exp.id} exp={exp} onAdd={addToBucketlist} />
+                <ExperienceTile
+                  key={exp.id}
+                  exp={exp}
+                  onAdd={addToBucketlist}
+                  isAdded={userExperienceIds.has(exp.id)}
+                />
               ))}
             </View>
             <View style={styles.masonryCol}>
               {rightCol.map((exp) => (
-                <ExperienceTile key={exp.id} exp={exp} onAdd={addToBucketlist} />
+                <ExperienceTile
+                  key={exp.id}
+                  exp={exp}
+                  onAdd={addToBucketlist}
+                  isAdded={userExperienceIds.has(exp.id)}
+                />
               ))}
             </View>
             
@@ -504,9 +535,11 @@ export default function ExploreScreen() {
 function ExperienceTile({
   exp,
   onAdd,
+  isAdded,
 }: {
   exp: Experience;
   onAdd: (exp: Experience) => void;
+  isAdded: boolean;
 }) {
   return (
     <Pressable
@@ -535,13 +568,16 @@ function ExperienceTile({
           <Text style={styles.tileSaves}>{exp.savesCount} saved</Text>
         )}
         <Pressable
-          style={styles.tileAddBtn}
+          style={[styles.tileAddBtn, isAdded && styles.tileAddBtnDone]}
           onPress={(e) => {
             e.stopPropagation();
-            onAdd(exp);
+            if (!isAdded) onAdd(exp);
           }}
+          disabled={isAdded}
         >
-          <Text style={styles.tileAddText}>+ Add</Text>
+          <Text style={[styles.tileAddText, isAdded && styles.tileAddTextDone]}>
+            {isAdded ? "Added ✓" : "+ Add"}
+          </Text>
         </Pressable>
       </View>
     </Pressable>
@@ -688,10 +724,16 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
   },
+  tileAddBtnDone: {
+    backgroundColor: "#E8E8E8",
+  },
   tileAddText: {
     color: "#fff",
     fontWeight: "700",
     fontSize: 12,
+  },
+  tileAddTextDone: {
+    color: "#777",
   },
 
   emptyText: {
