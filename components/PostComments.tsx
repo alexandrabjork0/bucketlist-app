@@ -88,8 +88,8 @@ import { auth, db } from "../app/(tabs)/firebaseConfig";
           transparent
           onRequestClose={onToggle}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
+          <Pressable style={styles.modalOverlay} onPress={onToggle}>
+          <Pressable style={styles.modalContent}>
               <View style={styles.modalHandle} />
   
               <View style={styles.modalHeader}>
@@ -121,8 +121,8 @@ import { auth, db } from "../app/(tabs)/firebaseConfig";
                   <Text style={styles.post}>Post</Text>
                 </Pressable>
               </View>
-            </View>
-          </View>
+              </Pressable>
+             </Pressable>
         </Modal>
       </View>
     );

@@ -159,7 +159,7 @@ export default function PostScreen() {
   onCommentPress={() =>
     setExpandedComments((prev) => ({
       ...prev,
-      [post.id]: !prev[post.id],
+      [post.id]: true,
     }))
   }
 />
