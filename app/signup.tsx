@@ -1,7 +1,7 @@
 import { Link, router } from "expo-router";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
     KeyboardAvoidingView,
     Platform,
@@ -12,8 +12,12 @@ import {
     View,
 } from "react-native";
 import { auth, db } from "../lib/firebaseConfig";
+import { ThemeColors, useTheme } from "../lib/theme";
 
 export default function SignupScreen() {
+  const C = useTheme();
+  const styles = useMemo(() => makeStyles(C), [C]);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
@@ -79,7 +83,7 @@ export default function SignupScreen() {
 
         <TextInput
           placeholder="Username"
-          placeholderTextColor="#999"
+          placeholderTextColor={C.inputPlaceholder}
           value={username}
           onChangeText={setUsername}
           autoCapitalize="none"
@@ -88,7 +92,7 @@ export default function SignupScreen() {
 
         <TextInput
           placeholder="Email"
-          placeholderTextColor="#999"
+          placeholderTextColor={C.inputPlaceholder}
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
@@ -98,7 +102,7 @@ export default function SignupScreen() {
 
         <TextInput
           placeholder="Password"
-          placeholderTextColor="#999"
+          placeholderTextColor={C.inputPlaceholder}
           value={password}
           onChangeText={setPassword}
           secureTextEntry
@@ -120,64 +124,69 @@ export default function SignupScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FAFAFA",
-    justifyContent: "center",
-    padding: 24,
-  },
-  card: {
-    backgroundColor: "#FFFFFF",
-    padding: 26,
-    borderRadius: 28,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
-    elevation: 5,
-  },
-  logo: {
-    fontSize: 34,
-    fontWeight: "800",
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-  },
-  subtitle: {
-    fontSize: 15,
-    color: "#777",
-    marginTop: 8,
-    marginBottom: 24,
-    lineHeight: 21,
-  },
-  input: {
-    backgroundColor: "#F4F4F4",
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 12,
-    fontSize: 16,
-  },
-  button: {
-    backgroundColor: "#111",
-    padding: 17,
-    borderRadius: 18,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  buttonText: {
-    color: "#FFF",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  bottomText: {
-    textAlign: "center",
-    marginTop: 20,
-    color: "#777",
-  },
-  link: {
-    color: "#111",
-    fontWeight: "700",
-  },
-});
+function makeStyles(C: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: C.background,
+      justifyContent: "center",
+      padding: 24,
+    },
+    card: {
+      backgroundColor: C.surface,
+      padding: 26,
+      borderRadius: 28,
+      shadowColor: "#000",
+      shadowOpacity: 0.08,
+      shadowRadius: 20,
+      elevation: 5,
+    },
+    logo: {
+      fontSize: 34,
+      fontWeight: "800",
+      marginBottom: 24,
+      color: C.text,
+    },
+    title: {
+      fontSize: 28,
+      fontWeight: "700",
+      color: C.text,
+    },
+    subtitle: {
+      fontSize: 15,
+      color: C.textSecondary,
+      marginTop: 8,
+      marginBottom: 24,
+      lineHeight: 21,
+    },
+    input: {
+      backgroundColor: C.inputBackground,
+      padding: 16,
+      borderRadius: 16,
+      marginBottom: 12,
+      fontSize: 16,
+      color: C.text,
+    },
+    button: {
+      backgroundColor: C.buttonPrimary,
+      padding: 17,
+      borderRadius: 18,
+      alignItems: "center",
+      marginTop: 8,
+    },
+    buttonText: {
+      color: C.buttonPrimaryText,
+      fontSize: 16,
+      fontWeight: "700",
+    },
+    bottomText: {
+      textAlign: "center",
+      marginTop: 20,
+      color: C.textSecondary,
+    },
+    link: {
+      color: C.text,
+      fontWeight: "700",
+    },
+  });
+}

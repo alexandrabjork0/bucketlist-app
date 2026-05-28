@@ -11,8 +11,7 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { useEffect, useState } from "react";
-import CollectionPickerSheet from "../../components/CollectionPickerSheet";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -24,12 +23,14 @@ import {
   Text,
   View,
 } from "react-native";
-import PostCard from "../../components/PostCard";
+import CollectionPickerSheet from "../../components/CollectionPickerSheet";
 import { auth, db } from "../../lib/firebaseConfig";
-import { createNotification } from "../../lib/notifications";
+import { ThemeColors, useTheme } from "../../lib/theme";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const HERO_HEIGHT = SCREEN_WIDTH * 1.15;
+const HERO_HEIGHT = SCREEN_WIDTH * 1.05;
+const GRID_GAP = 2;
+const TILE_SIZE = Math.floor((SCREEN_WIDTH - GRID_GAP * 2) / 3);
 
 const CATEGORY_BG: Record<string, string> = {
   Travel: "#1a5f7a",
@@ -47,15 +48,16 @@ const CATEGORY_BG: Record<string, string> = {
 };
 
 export default function ExperienceScreen() {
+  const C = useTheme();
+  const styles = useMemo(() => makeStyles(C), [C]);
+
   const { id } = useLocalSearchParams();
   const [experience, setExperience] = useState<any>(null);
   const [posts, setPosts] = useState<any[]>([]);
   const [similar, setSimilar] = useState<any[]>([]);
-  const [savedPostIds, setSavedPostIds] = useState<string[]>([]);
   const [isAdded, setIsAdded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [pickerVisible, setPickerVisible] = useState(false);
-  const [pendingPost, setPendingPost] = useState<any | null>(null);
 
   useEffect(() => {
     if (id) loadExperience();
@@ -64,10 +66,7 @@ export default function ExperienceScreen() {
   const loadExperience = async () => {
     try {
       const expSnap = await getDoc(doc(db, "experiences", String(id)));
-      if (!expSnap.exists()) {
-        setLoading(false);
-        return;
-      }
+      if (!expSnap.exists()) { setLoading(false); return; }
 
       const expData = { id: expSnap.id, ...expSnap.data() };
       setExperience(expData);
@@ -81,10 +80,7 @@ export default function ExperienceScreen() {
           )
         ),
         getDocs(
-          query(
-            collection(db, "experiences"),
-            where("category", "==", (expData as any).category)
-          )
+          query(collection(db, "experiences"), where("category", "==", (expData as any).category))
         ),
         auth.currentUser
           ? getDocs(
@@ -99,26 +95,12 @@ export default function ExperienceScreen() {
 
       if (alreadySnap && !alreadySnap.empty) setIsAdded(true);
 
-      const rawPosts = postsSnap.docs
+      // Grid only needs image + id — no author fetching needed
+      const gridPosts = postsSnap.docs
         .map((d) => ({ id: d.id, ...(d.data() as any) }))
-        .filter((p: any) => p.imageUrl);
-
-      const withAuthors = await Promise.all(
-        rawPosts.map(async (post: any) => {
-          const authorSnap = await getDoc(doc(db, "users", post.userId));
-          return {
-            ...post,
-            author: authorSnap.exists()
-              ? { userId: post.userId, ...authorSnap.data() }
-              : { userId: post.userId },
-          };
-        })
-      );
-
-      withAuthors.sort(
-        (a: any, b: any) => (b.completedAt?.seconds || 0) - (a.completedAt?.seconds || 0)
-      );
-      setPosts(withAuthors);
+        .filter((p: any) => p.imageUrl || p.media?.length > 0)
+        .sort((a: any, b: any) => (b.completedAt?.seconds || 0) - (a.completedAt?.seconds || 0));
+      setPosts(gridPosts);
 
       setSimilar(
         simSnap.docs
@@ -133,29 +115,8 @@ export default function ExperienceScreen() {
     }
   };
 
-  const openPickerForExperience = () => {
-    if (!auth.currentUser || !experience) return;
-    setPendingPost(null);
-    setPickerVisible(true);
-  };
-
-  const openPickerForPost = (post: any) => {
-    if (!auth.currentUser) return;
-    setPendingPost(post);
-    setPickerVisible(true);
-  };
-
   const handlePickerSelect = async (collectionId: string, collectionName: string) => {
     setPickerVisible(false);
-    if (pendingPost) {
-      await doSavePost(pendingPost, collectionId, collectionName);
-      setPendingPost(null);
-    } else {
-      await doAddExperience(collectionId, collectionName);
-    }
-  };
-
-  const doAddExperience = async (collectionId: string, collectionName: string) => {
     if (!auth.currentUser || !experience) return;
     await addDoc(collection(db, "userBucketlistItems"), {
       userId: auth.currentUser.uid,
@@ -172,9 +133,7 @@ export default function ExperienceScreen() {
       experienceId: String(id),
     });
     await Promise.all([
-      updateDoc(doc(db, "experiences", String(id)), {
-        savesCount: increment(1),
-      }).catch(() => {}),
+      updateDoc(doc(db, "experiences", String(id)), { savesCount: increment(1) }).catch(() => {}),
       updateDoc(doc(db, "collections", collectionId), {
         itemCount: increment(1),
         updatedAt: serverTimestamp(),
@@ -184,47 +143,10 @@ export default function ExperienceScreen() {
     Alert.alert("Saved", `Added to "${collectionName}"`);
   };
 
-  const doSavePost = async (post: any, collectionId: string, collectionName: string) => {
-    if (!auth.currentUser) return;
-    await addDoc(collection(db, "userBucketlistItems"), {
-      userId: auth.currentUser.uid,
-      collectionId,
-      title: post.title,
-      category: post.category,
-      completed: false,
-      imageUrl: null,
-      caption: "",
-      media: [],
-      createdAt: serverTimestamp(),
-      completedAt: null,
-      fromPost: true,
-      inspiredByPostId: post.id,
-      inspiredByUserId: post.userId,
-      experienceId: String(id),
-    });
-    await Promise.all([
-      updateDoc(doc(db, "experiences", String(id)), {
-        savesCount: increment(1),
-      }).catch(() => {}),
-      updateDoc(doc(db, "collections", collectionId), {
-        itemCount: increment(1),
-        updatedAt: serverTimestamp(),
-      }).catch(() => {}),
-    ]);
-    setSavedPostIds((prev) => [...prev, post.id]);
-    Alert.alert("Saved", `Added to "${collectionName}"`);
-    createNotification({
-      recipientId: post.userId,
-      type: "save",
-      actorId: auth.currentUser.uid,
-      postId: post.id,
-    }).catch(() => {});
-  };
-
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator />
+        <ActivityIndicator color={C.textSecondary} />
       </View>
     );
   }
@@ -246,23 +168,16 @@ export default function ExperienceScreen() {
         {/* ── Hero ── */}
         <View style={[styles.hero, { height: HERO_HEIGHT }]}>
           {experience.heroImageUrl ? (
-            <Image
-              source={{ uri: experience.heroImageUrl }}
-              style={styles.heroImage}
-            />
+            <Image source={{ uri: experience.heroImageUrl }} style={styles.heroImage} />
           ) : (
             <View style={[styles.heroImage, { backgroundColor: heroBg }]} />
           )}
-
-          {/* Bottom gradient overlay */}
           <View style={styles.heroGradient} />
 
-          {/* Floating back button */}
           <Pressable style={styles.backBtn} onPress={() => router.back()}>
             <Text style={styles.backBtnText}>‹</Text>
           </Pressable>
 
-          {/* Title overlaid on hero */}
           <View style={styles.heroContent}>
             <Text style={styles.heroCat}>{experience.category}</Text>
             <Text style={styles.heroTitle} numberOfLines={3}>
@@ -277,17 +192,14 @@ export default function ExperienceScreen() {
             <Text style={styles.statNum}>{experience.savesCount || 0}</Text>
             <Text style={styles.statLbl}>saved</Text>
           </View>
-
           <View style={styles.statsDivider} />
-
           <View style={styles.statsBlock}>
             <Text style={styles.statNum}>{experience.completionsCount || 0}</Text>
             <Text style={styles.statLbl}>completed</Text>
           </View>
-
           <Pressable
             style={[styles.addBtn, isAdded && styles.addBtnDone]}
-            onPress={isAdded ? undefined : openPickerForExperience}
+            onPress={isAdded ? undefined : () => setPickerVisible(true)}
           >
             <Text style={[styles.addBtnText, isAdded && styles.addBtnTextDone]}>
               {isAdded ? "Saved ✓" : "+ Save to list"}
@@ -295,30 +207,42 @@ export default function ExperienceScreen() {
           </Pressable>
         </View>
 
-        {/* ── Posts feed ── */}
-        {posts.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>People who completed this</Text>
-            {posts.map((post) => {
-              const isOwnPost = post.userId === auth.currentUser?.uid;
-              const isSaved = savedPostIds.includes(post.id);
-              return (
-                <PostCard
-                  key={post.id}
-                  post={post}
-                  author={post.author}
-                  onSave={!isOwnPost && !isSaved ? () => openPickerForPost(post) : undefined}
-                  saveDone={!isOwnPost && isSaved}
-                />
-              );
-            })}
+        {/* ── Completions grid ── */}
+        {posts.length > 0 ? (
+          <View style={styles.gridSection}>
+            <View style={styles.gridHeader}>
+              <Text style={styles.sectionTitle}>Completed</Text>
+              <Text style={styles.gridCount}>{posts.length}</Text>
+            </View>
+            <View style={styles.grid}>
+              {posts.map((post) => {
+                const imageUrl = post.imageUrl || post.media?.[0]?.url;
+                return (
+                  <Pressable
+                    key={post.id}
+                    style={styles.gridTile}
+                    onPress={() =>
+                      router.push({ pathname: "/post/[id]", params: { id: post.id } })
+                    }
+                  >
+                    {imageUrl ? (
+                      <Image
+                        source={{ uri: imageUrl }}
+                        style={styles.gridTileImage}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View style={[styles.gridTileImage, { backgroundColor: C.surfaceElevated }]} />
+                    )}
+                  </Pressable>
+                );
+              })}
+            </View>
           </View>
-        )}
-
-        {posts.length === 0 && (
+        ) : (
           <View style={styles.emptyPosts}>
             <Text style={styles.emptyPostsText}>
-              No one has completed this yet.{"\n"}Be the first.
+              No completions yet.{"\n"}Be the first.
             </Text>
           </View>
         )}
@@ -344,17 +268,12 @@ export default function ExperienceScreen() {
                     <Image source={{ uri: exp.heroImageUrl }} style={styles.similarImage} />
                   ) : (
                     <View
-                      style={[
-                        styles.similarImage,
-                        { backgroundColor: CATEGORY_BG[exp.category] ?? "#333" },
-                      ]}
+                      style={[styles.similarImage, { backgroundColor: CATEGORY_BG[exp.category] ?? "#333" }]}
                     />
                   )}
                   <View style={styles.similarOverlay} />
                   <View style={styles.similarContent}>
-                    <Text style={styles.similarTitle} numberOfLines={2}>
-                      {exp.title}
-                    </Text>
+                    <Text style={styles.similarTitle} numberOfLines={2}>{exp.title}</Text>
                   </View>
                 </Pressable>
               ))}
@@ -367,200 +286,231 @@ export default function ExperienceScreen() {
 
       <CollectionPickerSheet
         visible={pickerVisible}
-        onClose={() => { setPickerVisible(false); setPendingPost(null); }}
+        onClose={() => setPickerVisible(false)}
         onSelect={handlePickerSelect}
       />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  errorText: {
-    color: "#777",
-    fontSize: 16,
-  },
+function makeStyles(C: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: C.background,
+    },
+    center: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: C.background,
+    },
+    errorText: {
+      color: C.textTertiary,
+      fontSize: 16,
+    },
 
-  // Hero
-  hero: {
-    width: "100%",
-    backgroundColor: "#222",
-    overflow: "hidden",
-  },
-  heroImage: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
-  heroGradient: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 260,
-    backgroundColor: "rgba(0,0,0,0.6)",
-  },
-  backBtn: {
-    position: "absolute",
-    top: 56,
-    left: 18,
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: "rgba(0,0,0,0.35)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  backBtnText: {
-    color: "#fff",
-    fontSize: 24,
-    fontWeight: "700",
-    lineHeight: 28,
-    marginTop: -2,
-  },
-  heroContent: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 20,
-    paddingBottom: 24,
-  },
-  heroCat: {
-    color: "rgba(255,255,255,0.75)",
-    fontSize: 12,
-    fontWeight: "800",
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    marginBottom: 6,
-  },
-  heroTitle: {
-    color: "#fff",
-    fontSize: 32,
-    fontWeight: "900",
-    lineHeight: 38,
-  },
+    // Hero — always dark regardless of theme
+    hero: {
+      width: "100%",
+      backgroundColor: "#1A1A1A",
+      overflow: "hidden",
+    },
+    heroImage: {
+      width: "100%",
+      height: "100%",
+      resizeMode: "cover",
+    },
+    heroGradient: {
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: 280,
+      backgroundColor: "rgba(0,0,0,0.65)",
+    },
+    backBtn: {
+      position: "absolute",
+      top: 56,
+      left: 18,
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      backgroundColor: "rgba(0,0,0,0.35)",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    backBtnText: {
+      color: "#fff",
+      fontSize: 24,
+      fontWeight: "700",
+      lineHeight: 28,
+      marginTop: -2,
+    },
+    heroContent: {
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      padding: 20,
+      paddingBottom: 24,
+    },
+    heroCat: {
+      color: "rgba(255,255,255,0.7)",
+      fontSize: 12,
+      fontWeight: "800",
+      textTransform: "uppercase",
+      letterSpacing: 1,
+      marginBottom: 6,
+    },
+    heroTitle: {
+      color: "#fff",
+      fontSize: 32,
+      fontWeight: "900",
+      lineHeight: 38,
+    },
 
-  // Action bar
-  actionBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-    gap: 14,
-  },
-  statsBlock: {
-    alignItems: "center",
-  },
-  statNum: {
-    fontSize: 18,
-    fontWeight: "900",
-    color: "#111",
-  },
-  statLbl: {
-    fontSize: 11,
-    color: "#999",
-    fontWeight: "600",
-    marginTop: 1,
-  },
-  statsDivider: {
-    width: 1,
-    height: 28,
-    backgroundColor: "#eee",
-  },
-  addBtn: {
-    flex: 1,
-    marginLeft: 4,
-    backgroundColor: "#111",
-    paddingVertical: 12,
-    borderRadius: 14,
-    alignItems: "center",
-  },
-  addBtnDone: {
-    backgroundColor: "#F0F0F0",
-  },
-  addBtnText: {
-    color: "#fff",
-    fontWeight: "800",
-    fontSize: 15,
-  },
-  addBtnTextDone: {
-    color: "#777",
-  },
+    // Action bar
+    actionBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 20,
+      paddingVertical: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: C.divider,
+      gap: 14,
+    },
+    statsBlock: {
+      alignItems: "center",
+    },
+    statNum: {
+      fontSize: 18,
+      fontWeight: "900",
+      color: C.text,
+    },
+    statLbl: {
+      fontSize: 11,
+      color: C.textTertiary,
+      fontWeight: "600",
+      marginTop: 1,
+    },
+    statsDivider: {
+      width: 1,
+      height: 28,
+      backgroundColor: C.border,
+    },
+    addBtn: {
+      flex: 1,
+      marginLeft: 4,
+      backgroundColor: C.buttonPrimary,
+      paddingVertical: 12,
+      borderRadius: 14,
+      alignItems: "center",
+    },
+    addBtnDone: {
+      backgroundColor: C.surface,
+    },
+    addBtnText: {
+      color: C.buttonPrimaryText,
+      fontWeight: "800",
+      fontSize: 15,
+    },
+    addBtnTextDone: {
+      color: C.textSecondary,
+    },
 
-  // Feed
-  section: {
-    marginTop: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "900",
-    paddingHorizontal: 20,
-    marginBottom: 4,
-  },
-  emptyPosts: {
-    paddingHorizontal: 20,
-    paddingTop: 32,
-    alignItems: "center",
-  },
-  emptyPostsText: {
-    color: "#999",
-    fontSize: 15,
-    textAlign: "center",
-    lineHeight: 22,
-  },
+    // Completions grid
+    gridSection: {
+      marginTop: 24,
+    },
+    gridHeader: {
+      flexDirection: "row",
+      alignItems: "baseline",
+      gap: 8,
+      paddingHorizontal: 20,
+      marginBottom: 12,
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: "900",
+      color: C.text,
+    },
+    gridCount: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: C.textTertiary,
+    },
+    grid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: GRID_GAP,
+    },
+    gridTile: {
+      width: TILE_SIZE,
+      height: TILE_SIZE,
+    },
+    gridTileImage: {
+      width: TILE_SIZE,
+      height: TILE_SIZE,
+    },
+    emptyPosts: {
+      paddingHorizontal: 20,
+      paddingTop: 40,
+      paddingBottom: 8,
+      alignItems: "center",
+    },
+    emptyPostsText: {
+      color: C.textTertiary,
+      fontSize: 15,
+      textAlign: "center",
+      lineHeight: 22,
+    },
 
-  // Similar
-  similarScroll: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    gap: 10,
-  },
-  similarCard: {
-    width: 140,
-    height: 190,
-    borderRadius: 14,
-    overflow: "hidden",
-    backgroundColor: "#222",
-  },
-  similarImage: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
-  similarOverlay: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 90,
-    backgroundColor: "rgba(0,0,0,0.55)",
-  },
-  similarContent: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 10,
-  },
-  similarTitle: {
-    color: "#fff",
-    fontSize: 13,
-    fontWeight: "800",
-    lineHeight: 17,
-  },
+    // Similar
+    section: {
+      marginTop: 32,
+    },
+    similarScroll: {
+      paddingHorizontal: 20,
+      paddingTop: 12,
+      gap: 10,
+    },
+    similarCard: {
+      width: 140,
+      height: 190,
+      borderRadius: 14,
+      overflow: "hidden",
+      backgroundColor: "#1A1A1A",
+    },
+    similarImage: {
+      width: "100%",
+      height: "100%",
+      resizeMode: "cover",
+    },
+    similarOverlay: {
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: 90,
+      backgroundColor: "rgba(0,0,0,0.55)",
+    },
+    similarContent: {
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      padding: 10,
+    },
+    similarTitle: {
+      color: "#fff",
+      fontSize: 13,
+      fontWeight: "800",
+      lineHeight: 17,
+    },
 
-  bottomPad: {
-    height: 48,
-  },
-});
+    bottomPad: {
+      height: 48,
+    },
+  });
+}

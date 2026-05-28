@@ -15,7 +15,7 @@ import {
   where,
 } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
     Alert,
     Image,
@@ -30,6 +30,7 @@ import {
 import { auth, db, storage } from "../../lib/firebaseConfig";
 import { createNotification } from "../../lib/notifications";
 import VideoPlayer from "../../components/VideoPlayer";
+import { ThemeColors, useTheme } from "../../lib/theme";
 
 const MILESTONES: Record<number, string> = {
   1: "You completed your first experience! 🎉",
@@ -97,6 +98,9 @@ type SelectedMedia = {
 };
 
 export default function CompleteItemScreen() {
+  const C = useTheme();
+  const styles = useMemo(() => makeStyles(C), [C]);
+
   const { id } = useLocalSearchParams();
   const { width } = useWindowDimensions();
 
@@ -420,6 +424,7 @@ export default function CompleteItemScreen() {
             <TextInput
               style={styles.captionInput}
               placeholder="Say something about this moment..."
+              placeholderTextColor={C.inputPlaceholder}
               value={caption}
               onChangeText={setCaption}
               multiline
@@ -435,200 +440,207 @@ export default function CompleteItemScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
+function makeStyles(C: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: C.background,
+    },
 
-  topBar: {
-    paddingTop: 60,
-    paddingHorizontal: 18,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
+    topBar: {
+      paddingTop: 60,
+      paddingHorizontal: 18,
+      paddingBottom: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: C.border,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
 
-  backText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#111",
-  },
+    backText: {
+      fontSize: 16,
+      fontWeight: "700",
+      color: C.text,
+    },
 
-  topTitle: {
-    fontSize: 17,
-    fontWeight: "900",
-  },
+    topTitle: {
+      fontSize: 17,
+      fontWeight: "900",
+      color: C.text,
+    },
 
-  actionText: {
-    fontSize: 16,
-    fontWeight: "900",
-    color: "#007AFF",
-  },
+    actionText: {
+      fontSize: 16,
+      fontWeight: "900",
+      color: "#007AFF",
+    },
 
-  actionTextDisabled: {
-    color: "#bbb",
-  },
+    actionTextDisabled: {
+      color: C.disabled,
+    },
 
-  content: {
-    flex: 1,
-  },
+    content: {
+      flex: 1,
+    },
 
-  itemBox: {
-    padding: 18,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
+    itemBox: {
+      padding: 18,
+      borderBottomWidth: 1,
+      borderBottomColor: C.border,
+    },
 
-  itemLabel: {
-    color: "#777",
-    fontSize: 12,
-    fontWeight: "800",
-    textTransform: "uppercase",
-  },
+    itemLabel: {
+      color: C.textSecondary,
+      fontSize: 12,
+      fontWeight: "800",
+      textTransform: "uppercase",
+    },
 
-  itemTitle: {
-    marginTop: 6,
-    fontSize: 20,
-    fontWeight: "900",
-  },
+    itemTitle: {
+      marginTop: 6,
+      fontSize: 20,
+      fontWeight: "900",
+      color: C.text,
+    },
 
-  category: {
-    marginTop: 4,
-    color: "#777",
-    fontWeight: "600",
-  },
+    category: {
+      marginTop: 4,
+      color: C.textSecondary,
+      fontWeight: "600",
+    },
 
-  previewScroll: {
-    width: "100%",
-    backgroundColor: "#000",
-  },
+    previewScroll: {
+      width: "100%",
+      backgroundColor: "#000",
+    },
 
-  previewPage: {
-    backgroundColor: "#000",
-    justifyContent: "center",
-    alignItems: "center",
-  },
+    previewPage: {
+      backgroundColor: "#000",
+      justifyContent: "center",
+      alignItems: "center",
+    },
 
-  captionPreviewPage: {
-    backgroundColor: "#000",
-  },
+    captionPreviewPage: {
+      backgroundColor: "#000",
+    },
 
-  previewMedia: {
-    width: "100%",
-    height: "100%",
-  },
+    previewMedia: {
+      width: "100%",
+      height: "100%",
+    },
 
-  removeButton: {
-    position: "absolute",
-    top: 14,
-    right: 14,
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "rgba(0,0,0,0.65)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
+    removeButton: {
+      position: "absolute",
+      top: 14,
+      right: 14,
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      backgroundColor: "rgba(0,0,0,0.65)",
+      alignItems: "center",
+      justifyContent: "center",
+    },
 
-  removeButtonText: {
-    color: "#fff",
-    fontSize: 24,
-    fontWeight: "900",
-    lineHeight: 26,
-  },
+    removeButtonText: {
+      color: "#fff",
+      fontSize: 24,
+      fontWeight: "900",
+      lineHeight: 26,
+    },
 
-  mediaCount: {
-    padding: 12,
-    textAlign: "center",
-    color: "#777",
-    fontWeight: "700",
-  },
+    mediaCount: {
+      padding: 12,
+      textAlign: "center",
+      color: C.textSecondary,
+      fontWeight: "700",
+    },
 
-  emptyMediaBox: {
-    margin: 18,
-    height: 330,
-    borderRadius: 24,
-    backgroundColor: "#F4F4F4",
-    justifyContent: "center",
-    alignItems: "center",
-  },
+    emptyMediaBox: {
+      margin: 18,
+      height: 330,
+      borderRadius: 24,
+      backgroundColor: C.surface,
+      justifyContent: "center",
+      alignItems: "center",
+    },
 
-  emptyMediaIcon: {
-    fontSize: 42,
-    fontWeight: "300",
-    color: "#111",
-  },
+    emptyMediaIcon: {
+      fontSize: 42,
+      fontWeight: "300",
+      color: C.text,
+    },
 
-  emptyMediaTitle: {
-    marginTop: 8,
-    fontSize: 17,
-    fontWeight: "900",
-  },
+    emptyMediaTitle: {
+      marginTop: 8,
+      fontSize: 17,
+      fontWeight: "900",
+      color: C.text,
+    },
 
-  emptyMediaSubtitle: {
-    marginTop: 4,
-    color: "#777",
-    fontWeight: "600",
-  },
+    emptyMediaSubtitle: {
+      marginTop: 4,
+      color: C.textSecondary,
+      fontWeight: "600",
+    },
 
-  addMoreButton: {
-    marginHorizontal: 18,
-    marginTop: 16,
-    backgroundColor: "#F4F4F4",
-    padding: 14,
-    borderRadius: 16,
-    alignItems: "center",
-  },
+    addMoreButton: {
+      marginHorizontal: 18,
+      marginTop: 16,
+      backgroundColor: C.surface,
+      padding: 14,
+      borderRadius: 16,
+      alignItems: "center",
+    },
 
-  addMoreText: {
-    fontWeight: "900",
-    color: "#111",
-  },
+    addMoreText: {
+      fontWeight: "900",
+      color: C.text,
+    },
 
-  captionPreview: {
-    backgroundColor: "#000",
-  },
+    captionPreview: {
+      backgroundColor: "#000",
+    },
 
-  counter: {
-    position: "absolute",
-    top: 12,
-    right: 12,
-    backgroundColor: "rgba(0,0,0,0.55)",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
-  },
+    counter: {
+      position: "absolute",
+      top: 12,
+      right: 12,
+      backgroundColor: "rgba(0,0,0,0.55)",
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 999,
+    },
 
-  counterText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "800",
-  },
+    counterText: {
+      color: "#fff",
+      fontSize: 12,
+      fontWeight: "800",
+    },
 
-  captionBox: {
-    padding: 18,
-  },
+    captionBox: {
+      padding: 18,
+    },
 
-  captionLabel: {
-    fontSize: 15,
-    fontWeight: "900",
-    marginBottom: 10,
-  },
+    captionLabel: {
+      fontSize: 15,
+      fontWeight: "900",
+      marginBottom: 10,
+      color: C.text,
+    },
 
-  captionInput: {
-    minHeight: 130,
-    fontSize: 16,
-    textAlignVertical: "top",
-  },
+    captionInput: {
+      minHeight: 130,
+      fontSize: 16,
+      textAlignVertical: "top",
+      color: C.text,
+    },
 
-  captionCount: {
-    marginTop: 8,
-    color: "#999",
-    fontWeight: "600",
-    textAlign: "right",
-  },
-});
+    captionCount: {
+      marginTop: 8,
+      color: C.textTertiary,
+      fontWeight: "600",
+      textAlign: "right",
+    },
+  });
+}

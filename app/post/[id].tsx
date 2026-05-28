@@ -8,7 +8,7 @@ import {
     query,
     where,
 } from "firebase/firestore";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
     Alert,
     Pressable,
@@ -19,8 +19,12 @@ import {
 } from "react-native";
 import { auth, db } from "../../lib/firebaseConfig";
 import PostCard from "../../components/PostCard";
+import { ThemeColors, useTheme } from "../../lib/theme";
 
 export default function PostScreen() {
+  const C = useTheme();
+  const styles = useMemo(() => makeStyles(C), [C]);
+
   const { id } = useLocalSearchParams();
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -123,30 +127,34 @@ export default function PostScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  topBar: {
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  backText: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  topTitle: {
-    fontSize: 18,
-    fontWeight: "800",
-  },
-  feed: {
-    flex: 1,
-  },
-});
+function makeStyles(C: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: C.background,
+    },
+    topBar: {
+      paddingTop: 60,
+      paddingHorizontal: 20,
+      paddingBottom: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: C.border,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    backText: {
+      fontSize: 16,
+      fontWeight: "700",
+      color: C.text,
+    },
+    topTitle: {
+      fontSize: 18,
+      fontWeight: "800",
+      color: C.text,
+    },
+    feed: {
+      flex: 1,
+    },
+  });
+}

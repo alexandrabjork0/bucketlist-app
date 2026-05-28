@@ -13,6 +13,7 @@ import {
 } from "firebase/firestore";
 import { useCallback, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Dimensions,
   Image,
@@ -53,6 +54,9 @@ export default function ProfileScreen() {
   const [createSheetOpen, setCreateSheetOpen] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState("");
   const [creating, setCreating] = useState(false);
+  const [followListType, setFollowListType] = useState<"followers" | "following" | null>(null);
+  const [followListUsers, setFollowListUsers] = useState<any[]>([]);
+  const [loadingFollowList, setLoadingFollowList] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -133,6 +137,26 @@ export default function ProfileScreen() {
         },
       },
     ]);
+  };
+
+  const openFollowList = async (type: "followers" | "following") => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+    setFollowListType(type);
+    setLoadingFollowList(true);
+    setFollowListUsers([]);
+    try {
+      const field = type === "followers" ? "followingId" : "followerId";
+      const resultField = type === "followers" ? "followerId" : "followingId";
+      const snap = await getDocs(query(collection(db, "follows"), where(field, "==", uid)));
+      const userIds = snap.docs.map((d) => d.data()[resultField] as string);
+      const profiles = await Promise.all(userIds.map((id) => getDoc(doc(db, "users", id))));
+      setFollowListUsers(
+        profiles.filter((d) => d.exists()).map((d) => ({ id: d.id, ...(d.data() as any) }))
+      );
+    } finally {
+      setLoadingFollowList(false);
+    }
   };
 
   // ── Tab renderers ──────────────────────────────────────────────────────────
@@ -228,28 +252,32 @@ export default function ProfileScreen() {
             </Pressable>
           </View>
 
-          <Text style={styles.bio}>
-            {profile?.bio || "Add your dreams here."}
-          </Text>
+          <View style={styles.statsRow}>
+            <View style={styles.stat}>
+              <Text style={styles.statNumber}>{collections.length}</Text>
+              <Text style={styles.statLabel}>Collections</Text>
+            </View>
+            <View style={styles.stat}>
+              <Text style={styles.statNumber}>{completedItems.length}</Text>
+              <Text style={styles.statLabel}>Completed</Text>
+            </View>
+            <Pressable style={styles.stat} onPress={() => openFollowList("followers")}>
+              <Text style={styles.statNumber}>{followersCount}</Text>
+              <Text style={styles.statLabel}>Followers</Text>
+            </Pressable>
+            <Pressable style={styles.stat} onPress={() => openFollowList("following")}>
+              <Text style={styles.statNumber}>{followingCount}</Text>
+              <Text style={styles.statLabel}>Following</Text>
+            </Pressable>
+          </View>
+
+          {profile?.bio ? (
+            <Text style={styles.bio}>{profile.bio}</Text>
+          ) : null}
 
           <Link href="/edit-profile" style={styles.editBtn}>
             Edit profile
           </Link>
-
-          <View style={styles.statsRow}>
-            <View style={styles.stat}>
-              <Text style={styles.statNumber}>{completedItems.length}</Text>
-              <Text style={styles.statLabel}>Posts</Text>
-            </View>
-            <View style={styles.stat}>
-              <Text style={styles.statNumber}>{followersCount}</Text>
-              <Text style={styles.statLabel}>Followers</Text>
-            </View>
-            <View style={styles.stat}>
-              <Text style={styles.statNumber}>{followingCount}</Text>
-              <Text style={styles.statLabel}>Following</Text>
-            </View>
-          </View>
         </View>
 
         {/* Tabs */}
@@ -270,6 +298,62 @@ export default function ProfileScreen() {
         {activeTab === "posts" && renderPosts()}
         {activeTab === "collections" && renderCollections()}
       </ScrollView>
+
+      {/* Followers / Following list sheet */}
+      <Modal
+        visible={followListType !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setFollowListType(null)}
+      >
+        <TouchableWithoutFeedback onPress={() => setFollowListType(null)}>
+          <View style={styles.overlay} />
+        </TouchableWithoutFeedback>
+
+        <View style={styles.followSheet}>
+          <View style={styles.sheetHandle} />
+          <View style={styles.followSheetHeader}>
+            <Text style={styles.sheetTitle}>
+              {followListType === "followers" ? "Followers" : "Following"}
+            </Text>
+            <Pressable onPress={() => setFollowListType(null)}>
+              <Text style={styles.followSheetClose}>✕</Text>
+            </Pressable>
+          </View>
+
+          {loadingFollowList ? (
+            <ActivityIndicator color={C.textSecondary} style={{ marginTop: 32 }} />
+          ) : followListUsers.length === 0 ? (
+            <Text style={styles.followSheetEmpty}>
+              {followListType === "followers" ? "No followers yet." : "Not following anyone yet."}
+            </Text>
+          ) : (
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {followListUsers.map((user) => (
+                <Pressable
+                  key={user.id}
+                  style={styles.followUserRow}
+                  onPress={() => {
+                    setFollowListType(null);
+                    router.push({ pathname: "/user/[id]", params: { id: user.id } });
+                  }}
+                >
+                  <View style={styles.followAvatar}>
+                    {user.profileImage ? (
+                      <Image source={{ uri: user.profileImage }} style={styles.followAvatarImage} />
+                    ) : (
+                      <Text style={styles.followAvatarText}>
+                        {user.username?.charAt(0)?.toUpperCase() || "?"}
+                      </Text>
+                    )}
+                  </View>
+                  <Text style={styles.followUsername}>@{user.username}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+      </Modal>
 
       {/* Create collection sheet */}
       <Modal
@@ -339,8 +423,9 @@ function makeStyles(C: ThemeColors) {
       backgroundColor: C.background,
     },
     profileHeader: {
-      padding: 24,
-      paddingTop: 80,
+      paddingHorizontal: 24,
+      paddingTop: 72,
+      paddingBottom: 8,
     },
     headerRow: {
       flexDirection: "row",
@@ -350,75 +435,82 @@ function makeStyles(C: ThemeColors) {
     headerLeft: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 16,
+      gap: 14,
     },
     menuBtn: {
-      fontSize: 26,
+      fontSize: 24,
       fontWeight: "800",
-      paddingHorizontal: 8,
-      color: C.text,
+      paddingHorizontal: 6,
+      color: C.textSecondary,
     },
     avatar: {
-      width: 86,
-      height: 86,
-      borderRadius: 43,
+      width: 80,
+      height: 80,
+      borderRadius: 40,
       backgroundColor: C.avatarBg,
       justifyContent: "center",
       alignItems: "center",
       overflow: "hidden",
     },
     avatarImage: {
-      width: 86,
-      height: 86,
-      borderRadius: 43,
+      width: 80,
+      height: 80,
+      borderRadius: 40,
     },
     avatarText: {
       color: "#fff",
-      fontSize: 34,
+      fontSize: 30,
       fontWeight: "800",
     },
     username: {
-      fontSize: 26,
+      fontSize: 20,
       fontWeight: "800",
       color: C.text,
     },
-    bio: {
-      marginTop: 24,
-      fontSize: 16,
-      lineHeight: 22,
-      color: C.textSecondary,
-    },
-    editBtn: {
-      marginTop: 18,
-      backgroundColor: C.buttonPrimary,
-      color: C.buttonPrimaryText,
-      padding: 14,
-      borderRadius: 16,
-      textAlign: "center",
-      fontWeight: "700",
-    },
     statsRow: {
-      marginTop: 28,
+      marginTop: 20,
       flexDirection: "row",
-      justifyContent: "space-between",
-      backgroundColor: C.surface,
-      padding: 18,
-      borderRadius: 22,
+      justifyContent: "space-around",
+      paddingVertical: 4,
     },
     stat: {
       alignItems: "center",
+      paddingHorizontal: 4,
+    },
+    statDivider: {
+      width: 1,
+      height: 24,
+      backgroundColor: C.border,
     },
     statNumber: {
-      fontSize: 22,
+      fontSize: 18,
       fontWeight: "800",
       textAlign: "center",
       color: C.text,
     },
     statLabel: {
-      color: C.textSecondary,
-      marginTop: 4,
-      fontSize: 13,
+      color: C.textTertiary,
+      marginTop: 3,
+      fontSize: 11,
+      fontWeight: "400",
       textAlign: "center",
+    },
+    bio: {
+      marginTop: 16,
+      fontSize: 14,
+      lineHeight: 21,
+      color: C.textSecondary,
+    },
+    editBtn: {
+      marginTop: 18,
+      borderWidth: 1,
+      borderColor: C.divider,
+      borderRadius: 10,
+      paddingVertical: 9,
+      color: C.textSecondary,
+      textAlign: "center",
+      fontWeight: "600",
+      fontSize: 14,
     },
     tabs: {
       flexDirection: "row",
@@ -548,6 +640,71 @@ function makeStyles(C: ThemeColors) {
       color: C.textSecondary,
       fontWeight: "700",
       fontSize: 15,
+    },
+
+    // Follow list sheet
+    followSheet: {
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: C.background,
+      borderTopLeftRadius: 28,
+      borderTopRightRadius: 28,
+      paddingHorizontal: 22,
+      paddingBottom: 48,
+      paddingTop: 14,
+      maxHeight: "70%",
+    },
+    followSheetHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 20,
+    },
+    followSheetClose: {
+      fontSize: 16,
+      color: C.textSecondary,
+      fontWeight: "700",
+      padding: 4,
+    },
+    followSheetEmpty: {
+      textAlign: "center",
+      color: C.textTertiary,
+      marginTop: 32,
+      fontSize: 15,
+    },
+    followUserRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 14,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: C.divider,
+    },
+    followAvatar: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: C.avatarBg,
+      justifyContent: "center",
+      alignItems: "center",
+      overflow: "hidden",
+    },
+    followAvatarImage: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+    },
+    followAvatarText: {
+      color: "#fff",
+      fontSize: 18,
+      fontWeight: "800",
+    },
+    followUsername: {
+      fontSize: 15,
+      fontWeight: "700",
+      color: C.text,
     },
   });
 }

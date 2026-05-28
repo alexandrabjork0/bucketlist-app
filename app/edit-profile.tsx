@@ -2,7 +2,7 @@ import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
     Image,
     Keyboard,
@@ -16,8 +16,12 @@ import {
     View,
 } from "react-native";
 import { auth, db, storage } from "../lib/firebaseConfig";
+import { ThemeColors, useTheme } from "../lib/theme";
 
 export default function EditProfileScreen() {
+  const C = useTheme();
+  const styles = useMemo(() => makeStyles(C), [C]);
+
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [image, setImage] = useState<string | null>(null);
@@ -144,88 +148,93 @@ export default function EditProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FAFAFA",
-    justifyContent: "center",
-    padding: 24,
-  },
-  card: {
-    backgroundColor: "#FFFFFF",
-    padding: 26,
-    borderRadius: 28,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
-    elevation: 5,
-  },
-  title: {
-    fontSize: 30,
-    fontWeight: "800",
-  },
-  subtitle: {
-    color: "#777",
-    marginTop: 8,
-    marginBottom: 24,
-  },
-  label: {
-    fontWeight: "700",
-    marginBottom: 8,
-    marginTop: 8,
-  },
-  input: {
-    backgroundColor: "#F4F4F4",
-    padding: 16,
-    borderRadius: 16,
-    fontSize: 16,
-    marginBottom: 12,
-  },
-  bioInput: {
-    minHeight: 100,
-    textAlignVertical: "top",
-  },
-  button: {
-    backgroundColor: "#111",
-    padding: 17,
-    borderRadius: 18,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  buttonText: {
-    color: "#FFF",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  imagePicker: {
-    backgroundColor: "#111",
-    padding: 14,
-    borderRadius: 16,
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  imagePickerText: {
-    color: "#fff",
-    fontWeight: "700",
-  },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-  },
-  avatarPreview: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    backgroundColor: "#111",
-    alignSelf: "center",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 14,
-  },
-  avatarText: {
-    color: "#fff",
-    fontSize: 38,
-    fontWeight: "800",
-  },
-});
+function makeStyles(C: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: C.background,
+      justifyContent: "center",
+      padding: 24,
+    },
+    card: {
+      backgroundColor: C.surface,
+      padding: 26,
+      borderRadius: 28,
+      shadowColor: "#000",
+      shadowOpacity: 0.08,
+      shadowRadius: 20,
+      elevation: 5,
+    },
+    title: {
+      fontSize: 30,
+      fontWeight: "800",
+      color: C.text,
+    },
+    subtitle: {
+      color: C.textSecondary,
+      marginTop: 8,
+      marginBottom: 24,
+    },
+    label: {
+      fontWeight: "700",
+      marginBottom: 8,
+      marginTop: 8,
+      color: C.text,
+    },
+    input: {
+      backgroundColor: C.inputBackground,
+      padding: 16,
+      borderRadius: 16,
+      fontSize: 16,
+      marginBottom: 12,
+      color: C.text,
+    },
+    bioInput: {
+      minHeight: 100,
+      textAlignVertical: "top",
+    },
+    button: {
+      backgroundColor: C.buttonPrimary,
+      padding: 17,
+      borderRadius: 18,
+      alignItems: "center",
+      marginTop: 8,
+    },
+    buttonText: {
+      color: C.buttonPrimaryText,
+      fontSize: 16,
+      fontWeight: "700",
+    },
+    imagePicker: {
+      backgroundColor: C.buttonPrimary,
+      padding: 14,
+      borderRadius: 16,
+      alignItems: "center",
+      marginBottom: 16,
+    },
+    imagePickerText: {
+      color: C.buttonPrimaryText,
+      fontWeight: "700",
+    },
+    profileImage: {
+      width: 100,
+      height: 100,
+      borderRadius: 50,
+    },
+    avatarPreview: {
+      width: 110,
+      height: 110,
+      borderRadius: 55,
+      backgroundColor: C.avatarBg,
+      alignSelf: "center",
+      justifyContent: "center",
+      alignItems: "center",
+      marginBottom: 14,
+    },
+    avatarText: {
+      color: "#fff",
+      fontSize: 38,
+      fontWeight: "800",
+    },
+  });
+}

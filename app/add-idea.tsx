@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { addDoc, collection, doc, increment, serverTimestamp, updateDoc } from "firebase/firestore";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
     Alert,
     Keyboard,
@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import CollectionPickerSheet from "../components/CollectionPickerSheet";
 import { auth, db } from "../lib/firebaseConfig";
+import { ThemeColors, useTheme } from "../lib/theme";
 
 const CATEGORIES = [
   "Travel",
@@ -32,6 +33,9 @@ const CATEGORIES = [
 ];
 
 export default function AddIdeaScreen() {
+  const C = useTheme();
+  const styles = useMemo(() => makeStyles(C), [C]);
+
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
   const [customCategory, setCustomCategory] = useState("");
@@ -130,7 +134,7 @@ export default function AddIdeaScreen() {
           <TextInput
             style={styles.input}
             placeholder="Example: Sleep in a glass igloo"
-            placeholderTextColor="#999"
+            placeholderTextColor={C.inputPlaceholder}
             value={title}
             onChangeText={setTitle}
             returnKeyType="done"
@@ -170,7 +174,7 @@ export default function AddIdeaScreen() {
             <TextInput
               style={styles.input}
               placeholder="Write your category"
-              placeholderTextColor="#999"
+              placeholderTextColor={C.inputPlaceholder}
               value={customCategory}
               onChangeText={setCustomCategory}
               returnKeyType="done"
@@ -213,106 +217,112 @@ export default function AddIdeaScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 24,
-    paddingTop: 90,
-    backgroundColor: "#fff",
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "800",
-  },
-  subtitle: {
-    marginTop: 8,
-    color: "#777",
-    fontSize: 15,
-    lineHeight: 21,
-    marginBottom: 24,
-  },
-  input: {
-    backgroundColor: "#F4F4F4",
-    padding: 16,
-    borderRadius: 16,
-    fontSize: 16,
-    marginBottom: 14,
-  },
-  label: {
-    fontSize: 15,
-    fontWeight: "800",
-    marginBottom: 10,
-  },
-  categoryGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    marginBottom: 18,
-  },
-  categoryPill: {
-    backgroundColor: "#F4F4F4",
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-  },
-  categoryPillActive: {
-    backgroundColor: "#111",
-  },
-  categoryPillText: {
-    color: "#555",
-    fontWeight: "800",
-  },
-  categoryPillTextActive: {
-    color: "#fff",
-  },
-  checkboxRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginTop: 4,
-    marginBottom: 18,
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 7,
-    borderWidth: 2,
-    borderColor: "#111",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  checkboxChecked: {
-    backgroundColor: "#111",
-  },
-  checkmark: {
-    color: "#fff",
-    fontWeight: "900",
-  },
-  checkboxTitle: {
-    fontWeight: "800",
-    fontSize: 15,
-  },
-  checkboxSubtitle: {
-    color: "#777",
-    fontSize: 13,
-    marginTop: 2,
-  },
-  button: {
-    marginTop: 8,
-    backgroundColor: "#111",
-    padding: 16,
-    borderRadius: 18,
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "800",
-    fontSize: 16,
-  },
-  cancelText: {
-    marginTop: 18,
-    textAlign: "center",
-    color: "#777",
-    fontWeight: "700",
-  },
-});
+function makeStyles(C: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      padding: 24,
+      paddingTop: 90,
+      backgroundColor: C.background,
+    },
+    title: {
+      fontSize: 28,
+      fontWeight: "800",
+      color: C.text,
+    },
+    subtitle: {
+      marginTop: 8,
+      color: C.textSecondary,
+      fontSize: 15,
+      lineHeight: 21,
+      marginBottom: 24,
+    },
+    input: {
+      backgroundColor: C.inputBackground,
+      padding: 16,
+      borderRadius: 16,
+      fontSize: 16,
+      marginBottom: 14,
+      color: C.text,
+    },
+    label: {
+      fontSize: 15,
+      fontWeight: "800",
+      marginBottom: 10,
+      color: C.text,
+    },
+    categoryGrid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 10,
+      marginBottom: 18,
+    },
+    categoryPill: {
+      backgroundColor: C.surface,
+      paddingVertical: 10,
+      paddingHorizontal: 14,
+      borderRadius: 999,
+    },
+    categoryPillActive: {
+      backgroundColor: C.buttonPrimary,
+    },
+    categoryPillText: {
+      color: C.textSecondary,
+      fontWeight: "800",
+    },
+    categoryPillTextActive: {
+      color: C.buttonPrimaryText,
+    },
+    checkboxRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      marginTop: 4,
+      marginBottom: 18,
+    },
+    checkbox: {
+      width: 24,
+      height: 24,
+      borderRadius: 7,
+      borderWidth: 2,
+      borderColor: C.text,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    checkboxChecked: {
+      backgroundColor: C.buttonPrimary,
+    },
+    checkmark: {
+      color: C.buttonPrimaryText,
+      fontWeight: "900",
+    },
+    checkboxTitle: {
+      fontWeight: "800",
+      fontSize: 15,
+      color: C.text,
+    },
+    checkboxSubtitle: {
+      color: C.textSecondary,
+      fontSize: 13,
+      marginTop: 2,
+    },
+    button: {
+      marginTop: 8,
+      backgroundColor: C.buttonPrimary,
+      padding: 16,
+      borderRadius: 18,
+      alignItems: "center",
+    },
+    buttonText: {
+      color: C.buttonPrimaryText,
+      fontWeight: "800",
+      fontSize: 16,
+    },
+    cancelText: {
+      marginTop: 18,
+      textAlign: "center",
+      color: C.textSecondary,
+      fontWeight: "700",
+    },
+  });
+}
