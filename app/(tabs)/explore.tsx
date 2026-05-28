@@ -2,14 +2,10 @@ import { router } from "expo-router";
 import {
   addDoc,
   collection,
-  doc,
   getDocs,
-  increment,
   limit,
   query,
   serverTimestamp,
-  updateDoc,
-  where,
 } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -27,7 +23,6 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
-import CollectionPickerSheet from "../../components/CollectionPickerSheet";
 import { auth, db } from "../../lib/firebaseConfig";
 import { ThemeColors, useTheme } from "../../lib/theme";
 import { migrateIdeasToExperiences } from "../../lib/migration";
@@ -83,41 +78,16 @@ export default function ExploreScreen() {
   const [people, setPeople] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
 
-  const [userExperienceIds, setUserExperienceIds] = useState<Set<string>>(new Set());
-
   const [sheetOpen, setSheetOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newCategory, setNewCategory] = useState("");
   const [newCustomCategory, setNewCustomCategory] = useState("");
   const [newIsPrivate, setNewIsPrivate] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [collectionPickerVisible, setCollectionPickerVisible] = useState(false);
-  const [pendingExperience, setPendingExperience] = useState<Experience | null>(null);
 
   useEffect(() => {
-    fetchData();
+    Promise.all([fetchExperiences(), fetchPeople()]);
   }, []);
-
-  const fetchData = async () => {
-    await Promise.all([fetchExperiences(), fetchPeople(), fetchUserExperienceIds()]);
-  };
-
-  const fetchUserExperienceIds = async () => {
-    if (!auth.currentUser) return;
-    const snap = await getDocs(
-      query(
-        collection(db, "userBucketlistItems"),
-        where("userId", "==", auth.currentUser.uid),
-        where("completed", "==", false)
-      )
-    );
-    const ids = new Set<string>();
-    snap.docs.forEach((d) => {
-      const eid = d.data().experienceId;
-      if (eid) ids.add(eid);
-    });
-    setUserExperienceIds(ids);
-  };
 
   const fetchExperiences = async () => {
     const expSnap = await getDocs(query(collection(db, "experiences"), limit(1)));
@@ -232,50 +202,6 @@ export default function ExploreScreen() {
     }
   };
 
-  const addToBucketlist = (exp: Experience) => {
-    if (!auth.currentUser) {
-      Alert.alert("Not logged in", "You need to log in first.");
-      return;
-    }
-    setPendingExperience(exp);
-    setCollectionPickerVisible(true);
-  };
-
-  const handleCollectionSelected = async (collectionId: string, collectionName: string) => {
-    setCollectionPickerVisible(false);
-    const exp = pendingExperience;
-    setPendingExperience(null);
-    if (!auth.currentUser || !exp) return;
-
-    await addDoc(collection(db, "userBucketlistItems"), {
-      userId: auth.currentUser.uid,
-      collectionId,
-      title: exp.title,
-      category: exp.category,
-      completed: false,
-      imageUrl: null,
-      caption: "",
-      media: [],
-      createdAt: serverTimestamp(),
-      completedAt: null,
-      fromExplore: true,
-      experienceId: exp.id,
-    });
-
-    await Promise.all([
-      updateDoc(doc(db, "experiences", exp.id), {
-        savesCount: increment(1),
-      }).catch(() => {}),
-      updateDoc(doc(db, "collections", collectionId), {
-        itemCount: increment(1),
-        updatedAt: serverTimestamp(),
-      }).catch(() => {}),
-    ]);
-
-    setUserExperienceIds((prev) => new Set([...prev, exp.id]));
-    Alert.alert("Saved", `Added to "${collectionName}"`);
-  };
-
   const trending = experiences.slice(0, 6);
 
   const filtered = experiences.filter((exp) => {
@@ -374,22 +300,12 @@ export default function ExploreScreen() {
           <View style={styles.masonry}>
             <View style={styles.masonryCol}>
               {leftCol.map((exp) => (
-                <ExperienceTile
-                  key={exp.id}
-                  exp={exp}
-                  onAdd={addToBucketlist}
-                  isAdded={userExperienceIds.has(exp.id)}
-                />
+                <ExperienceTile key={exp.id} exp={exp} />
               ))}
             </View>
             <View style={styles.masonryCol}>
               {rightCol.map((exp) => (
-                <ExperienceTile
-                  key={exp.id}
-                  exp={exp}
-                  onAdd={addToBucketlist}
-                  isAdded={userExperienceIds.has(exp.id)}
-                />
+                <ExperienceTile key={exp.id} exp={exp} />
               ))}
             </View>
             
@@ -547,24 +463,11 @@ export default function ExploreScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
-      <CollectionPickerSheet
-        visible={collectionPickerVisible}
-        onClose={() => { setCollectionPickerVisible(false); setPendingExperience(null); }}
-        onSelect={handleCollectionSelected}
-      />
     </View>
   );
 }
 
-function ExperienceTile({
-  exp,
-  onAdd,
-  isAdded,
-}: {
-  exp: Experience;
-  onAdd: (exp: Experience) => void;
-  isAdded: boolean;
-}) {
+function ExperienceTile({ exp }: { exp: Experience }) {
   const C = useTheme();
   const ts = useMemo(() => makeTileStyles(C), [C]);
   return (
@@ -588,18 +491,6 @@ function ExperienceTile({
         {exp.savesCount > 0 && (
           <Text style={ts.tileSaves}>{exp.savesCount} saved</Text>
         )}
-        <Pressable
-          style={[ts.tileAddBtn, isAdded && ts.tileAddBtnDone]}
-          onPress={(e) => {
-            e.stopPropagation();
-            if (!isAdded) onAdd(exp);
-          }}
-          disabled={isAdded}
-        >
-          <Text style={[ts.tileAddText, isAdded && ts.tileAddTextDone]}>
-            {isAdded ? "Added ✓" : "+ Add"}
-          </Text>
-        </Pressable>
       </View>
     </Pressable>
   );
@@ -641,24 +532,6 @@ function makeTileStyles(C: ThemeColors) {
       fontSize: 11,
       color: C.textTertiary,
       fontWeight: "500",
-    },
-    tileAddBtn: {
-      marginTop: 8,
-      backgroundColor: C.buttonPrimary,
-      paddingVertical: 7,
-      borderRadius: 10,
-      alignItems: "center",
-    },
-    tileAddBtnDone: {
-      backgroundColor: C.surface,
-    },
-    tileAddText: {
-      color: C.buttonPrimaryText,
-      fontWeight: "700",
-      fontSize: 12,
-    },
-    tileAddTextDone: {
-      color: C.textSecondary,
     },
   });
 }
