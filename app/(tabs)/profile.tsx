@@ -204,17 +204,6 @@ export default function ProfileScreen() {
       nestedScrollEnabled
     >
       <View style={styles.collectionsGrid}>
-        {/* New collection card — inline with the grid */}
-        <Pressable
-          style={[styles.newCollCard, { width: CARD_WIDTH, height: CARD_WIDTH }]}
-          onPress={() => setCreateSheetOpen(true)}
-        >
-          <View style={styles.newCollIconCircle}>
-            <Text style={styles.newCollPlus}>+</Text>
-          </View>
-          <Text style={styles.newCollCardText}>New{"\n"}collection</Text>
-        </Pressable>
-
         {collections.map((coll) => (
           <CollectionCard
             key={coll.id}
@@ -264,11 +253,32 @@ export default function ProfileScreen() {
     </ScrollView>
   );
 
+  const openMenu = () =>
+    Alert.alert("Profile options", "", [
+      {
+        text: "Log out",
+        style: "destructive",
+        onPress: async () => signOut(auth),
+      },
+      { text: "Cancel", style: "cancel" },
+    ]);
+
   // ── Root render ────────────────────────────────────────────────────────────
 
   return (
     <>
       <View style={styles.container}>
+        {/* Top header bar */}
+        <View style={styles.topBar}>
+          <Pressable onPress={() => setCreateSheetOpen(true)} style={styles.topBarBtn} hitSlop={8}>
+            <Text style={styles.topBarPlus}>+</Text>
+          </Pressable>
+          <View style={{ flex: 1 }} />
+          <Pressable onPress={openMenu} style={styles.topBarBtn} hitSlop={8}>
+            <Text style={styles.topBarMenu}>⋯</Text>
+          </Pressable>
+        </View>
+
         {/* Profile header */}
         <View style={styles.profileHeader}>
           <View style={styles.headerRow}>
@@ -284,21 +294,6 @@ export default function ProfileScreen() {
               </View>
               <Text style={styles.username}>@{profile?.username || "loading"}</Text>
             </View>
-
-            <Pressable
-              onPress={() =>
-                Alert.alert("Profile options", "", [
-                  {
-                    text: "Log out",
-                    style: "destructive",
-                    onPress: async () => signOut(auth),
-                  },
-                  { text: "Cancel", style: "cancel" },
-                ])
-              }
-            >
-              <Text style={styles.menuBtn}>⋯</Text>
-            </Pressable>
           </View>
 
           <View style={styles.statsRow}>
@@ -502,9 +497,31 @@ function makeStyles(C: ThemeColors) {
       flex: 1,
       backgroundColor: C.background,
     },
+    topBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 16,
+      paddingTop: 52,
+      paddingBottom: 8,
+    },
+    topBarBtn: {
+      padding: 6,
+    },
+    topBarPlus: {
+      fontSize: 28,
+      fontWeight: "300",
+      color: C.text,
+      lineHeight: 30,
+    },
+    topBarMenu: {
+      fontSize: 24,
+      fontWeight: "800",
+      color: C.text,
+      lineHeight: 24,
+    },
     profileHeader: {
       paddingHorizontal: 24,
-      paddingTop: 72,
+      paddingTop: 8,
       paddingBottom: 8,
     },
     headerRow: {
@@ -516,12 +533,6 @@ function makeStyles(C: ThemeColors) {
       flexDirection: "row",
       alignItems: "center",
       gap: 14,
-    },
-    menuBtn: {
-      fontSize: 24,
-      fontWeight: "800",
-      paddingHorizontal: 6,
-      color: C.textSecondary,
     },
     avatar: {
       width: 80,
@@ -626,39 +637,6 @@ function makeStyles(C: ThemeColors) {
       flexWrap: "wrap",
       gap: CARD_GAP,
       paddingHorizontal: CARD_PAD,
-    },
-
-    // New collection card
-    newCollCard: {
-      borderRadius: 14,
-      backgroundColor: C.surface,
-      borderWidth: 1,
-      borderColor: C.border,
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 10,
-    },
-    newCollIconCircle: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
-      borderWidth: 1.5,
-      borderColor: C.textTertiary,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    newCollPlus: {
-      fontSize: 26,
-      fontWeight: "300",
-      color: C.textTertiary,
-      lineHeight: 30,
-    },
-    newCollCardText: {
-      fontSize: 12,
-      fontWeight: "700",
-      color: C.textTertiary,
-      textAlign: "center",
-      lineHeight: 17,
     },
 
     // Cover photo picker
