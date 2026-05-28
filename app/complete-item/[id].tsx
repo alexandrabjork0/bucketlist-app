@@ -243,9 +243,9 @@ export default function CompleteItemScreen() {
       const firstImageUrl = cleanMedia.find((m: any) => m.type === "image")?.url;
 
       if (item?.experienceId) {
-        const heroUpdate: Record<string, any> = { completionsCount: increment(1) };
-        if (firstImageUrl) heroUpdate.heroImageUrl = firstImageUrl;
-        updateDoc(doc(db, "experiences", item.experienceId), heroUpdate).catch(() => {});
+        updateDoc(doc(db, "experiences", item.experienceId), {
+          completionsCount: increment(1),
+        }).catch(() => {});
       }
 
       if (item?.collectionId) {
