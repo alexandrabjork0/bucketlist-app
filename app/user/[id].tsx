@@ -10,7 +10,7 @@ import {
   setDoc,
   where,
 } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Dimensions,
   Image,
@@ -24,6 +24,7 @@ import CollectionCard from "../../components/CollectionCard";
 import PostThumbnail from "../../components/PostThumbnail";
 import { auth, db } from "../../lib/firebaseConfig";
 import { createNotification } from "../../lib/notifications";
+import { ThemeColors, useTheme } from "../../lib/theme";
 
 type ActiveTab = "posts" | "collections";
 
@@ -33,6 +34,9 @@ const CARD_PAD = 16;
 const CARD_WIDTH = Math.floor((SCREEN_WIDTH - CARD_PAD * 2 - CARD_GAP) / 2);
 
 export default function UserProfileScreen() {
+  const C = useTheme();
+  const styles = useMemo(() => makeStyles(C), [C]);
+
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [profile, setProfile] = useState<any>(null);
@@ -74,7 +78,6 @@ export default function UserProfileScreen() {
     setFollowersCount(followersSnap.size);
     setFollowingCount(followingSnap.size);
 
-    // Only show public collections on other users' profiles
     setPublicCollections(
       collectionsSnap.docs
         .map((d) => ({ id: d.id, ...d.data() }))
@@ -117,8 +120,9 @@ export default function UserProfileScreen() {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Header */}
       <View style={styles.profileHeader}>
+
+        {/* Avatar row + back button */}
         <View style={styles.headerRow}>
           <View style={styles.headerLeft}>
             <View style={styles.avatar}>
@@ -133,28 +137,20 @@ export default function UserProfileScreen() {
             <Text style={styles.username}>@{profile?.username || "loading"}</Text>
           </View>
 
-          <Pressable onPress={() => router.back()}>
+          <Pressable onPress={() => router.back()} hitSlop={12}>
             <Text style={styles.backBtn}>‹</Text>
           </Pressable>
         </View>
 
-        <Text style={styles.bio}>{profile?.bio || "No bio yet."}</Text>
-
-        {!isOwnProfile && (
-          <Pressable
-            style={[styles.followBtn, isFollowing && styles.followingBtn]}
-            onPress={handleFollowToggle}
-          >
-            <Text style={[styles.followBtnText, isFollowing && styles.followingBtnText]}>
-              {isFollowing ? "Following" : "Follow"}
-            </Text>
-          </Pressable>
-        )}
-
+        {/* Stats — same floating style as own profile */}
         <View style={styles.statsRow}>
           <View style={styles.stat}>
+            <Text style={styles.statNumber}>{publicCollections.length}</Text>
+            <Text style={styles.statLabel}>Collections</Text>
+          </View>
+          <View style={styles.stat}>
             <Text style={styles.statNumber}>{posts.length}</Text>
-            <Text style={styles.statLabel}>Posts</Text>
+            <Text style={styles.statLabel}>Completed</Text>
           </View>
           <View style={styles.stat}>
             <Text style={styles.statNumber}>{followersCount}</Text>
@@ -165,6 +161,23 @@ export default function UserProfileScreen() {
             <Text style={styles.statLabel}>Following</Text>
           </View>
         </View>
+
+        {/* Bio */}
+        {profile?.bio ? (
+          <Text style={styles.bio}>{profile.bio}</Text>
+        ) : null}
+
+        {/* Follow button — same slot as "Edit profile" on own profile */}
+        {!isOwnProfile && (
+          <Pressable
+            style={[styles.actionBtn, isFollowing && styles.actionBtnFollowing]}
+            onPress={handleFollowToggle}
+          >
+            <Text style={[styles.actionBtnText, isFollowing && styles.actionBtnTextFollowing]}>
+              {isFollowing ? "Following" : "Follow"}
+            </Text>
+          </Pressable>
+        )}
       </View>
 
       {/* Tabs */}
@@ -228,143 +241,149 @@ export default function UserProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  profileHeader: {
-    padding: 24,
-    paddingTop: 72,
-  },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  headerLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-  },
-  backBtn: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: "#111",
-    paddingHorizontal: 4,
-    marginTop: -4,
-  },
-  avatar: {
-    width: 86,
-    height: 86,
-    borderRadius: 43,
-    backgroundColor: "#111",
-    justifyContent: "center",
-    alignItems: "center",
-    overflow: "hidden",
-  },
-  avatarImage: {
-    width: 86,
-    height: 86,
-    borderRadius: 43,
-  },
-  avatarText: {
-    color: "#fff",
-    fontSize: 34,
-    fontWeight: "800",
-  },
-  username: {
-    fontSize: 26,
-    fontWeight: "800",
-  },
-  bio: {
-    marginTop: 24,
-    fontSize: 16,
-    lineHeight: 22,
-    color: "#333",
-  },
-  followBtn: {
-    marginTop: 18,
-    backgroundColor: "#111",
-    paddingVertical: 14,
-    borderRadius: 16,
-    alignItems: "center",
-  },
-  followingBtn: {
-    backgroundColor: "#fff",
-    borderWidth: 1.5,
-    borderColor: "#ddd",
-  },
-  followBtnText: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 15,
-  },
-  followingBtnText: {
-    color: "#111",
-  },
-  statsRow: {
-    marginTop: 28,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    backgroundColor: "#F4F4F4",
-    padding: 18,
-    borderRadius: 22,
-  },
-  stat: {
-    alignItems: "center",
-  },
-  statNumber: {
-    fontSize: 22,
-    fontWeight: "800",
-    textAlign: "center",
-  },
-  statLabel: {
-    color: "#777",
-    marginTop: 4,
-    fontSize: 13,
-    textAlign: "center",
-  },
-  tabs: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  tabActive: {
-    borderBottomWidth: 3,
-    borderBottomColor: "#111",
-  },
-  tabText: {
-    fontSize: 13,
-    fontWeight: "800",
-    color: "#999",
-  },
-  tabTextActive: {
-    color: "#111",
-  },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
-  emptyText: {
-    color: "#777",
-    textAlign: "center",
-    marginTop: 24,
-    paddingHorizontal: 24,
-    lineHeight: 22,
-  },
-  collectionsScene: {
-    paddingTop: 20,
-  },
-  collectionsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: CARD_GAP,
-    paddingHorizontal: CARD_PAD,
-  },
-});
+function makeStyles(C: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: C.background,
+    },
+    profileHeader: {
+      paddingHorizontal: 24,
+      paddingTop: 72,
+      paddingBottom: 8,
+    },
+    headerRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    headerLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 14,
+    },
+    backBtn: {
+      fontSize: 28,
+      fontWeight: "700",
+      color: C.textSecondary,
+      paddingHorizontal: 6,
+      marginTop: -2,
+    },
+    avatar: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: C.avatarBg,
+      justifyContent: "center",
+      alignItems: "center",
+      overflow: "hidden",
+    },
+    avatarImage: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+    },
+    avatarText: {
+      color: "#fff",
+      fontSize: 30,
+      fontWeight: "800",
+    },
+    username: {
+      fontSize: 20,
+      fontWeight: "800",
+      color: C.text,
+    },
+    statsRow: {
+      marginTop: 20,
+      flexDirection: "row",
+      justifyContent: "space-around",
+      paddingVertical: 4,
+    },
+    stat: {
+      alignItems: "center",
+      paddingHorizontal: 4,
+    },
+    statNumber: {
+      fontSize: 18,
+      fontWeight: "800",
+      textAlign: "center",
+      color: C.text,
+    },
+    statLabel: {
+      color: C.textTertiary,
+      marginTop: 3,
+      fontSize: 11,
+      fontWeight: "400",
+      textAlign: "center",
+    },
+    bio: {
+      marginTop: 16,
+      fontSize: 14,
+      lineHeight: 21,
+      color: C.textSecondary,
+    },
+    actionBtn: {
+      marginTop: 18,
+      backgroundColor: C.buttonPrimary,
+      borderRadius: 10,
+      paddingVertical: 10,
+      alignItems: "center",
+    },
+    actionBtnFollowing: {
+      backgroundColor: "transparent",
+      borderWidth: 1,
+      borderColor: C.divider,
+    },
+    actionBtnText: {
+      color: C.buttonPrimaryText,
+      fontWeight: "700",
+      fontSize: 14,
+    },
+    actionBtnTextFollowing: {
+      color: C.textSecondary,
+    },
+    tabs: {
+      flexDirection: "row",
+      borderBottomWidth: 1,
+      borderBottomColor: C.border,
+      backgroundColor: C.background,
+    },
+    tab: {
+      flex: 1,
+      paddingVertical: 14,
+      alignItems: "center",
+    },
+    tabActive: {
+      borderBottomWidth: 3,
+      borderBottomColor: C.text,
+    },
+    tabText: {
+      fontSize: 13,
+      fontWeight: "800",
+      color: C.textTertiary,
+    },
+    tabTextActive: {
+      color: C.text,
+    },
+    grid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+    },
+    emptyText: {
+      color: C.textSecondary,
+      textAlign: "center",
+      marginTop: 24,
+      paddingHorizontal: 24,
+      lineHeight: 22,
+    },
+    collectionsScene: {
+      paddingTop: 20,
+    },
+    collectionsGrid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: CARD_GAP,
+      paddingHorizontal: CARD_PAD,
+    },
+  });
+}
