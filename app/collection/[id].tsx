@@ -125,26 +125,25 @@ export default function CollectionDetailScreen() {
         {/* Header */}
         <View style={[styles.header, { height: HEADER_HEIGHT }]}>
           <CollectionCover images={coll.coverImages ?? []} size={SCREEN_WIDTH} name={coll.name} />
-          <View style={styles.headerGradient} />
-
           <Pressable style={styles.backBtn} onPress={() => router.back()}>
             <Text style={styles.backBtnText}>‹</Text>
           </Pressable>
+        </View>
 
-          <View style={styles.headerContent}>
-            {coll.isPrivate && <Text style={styles.privateLbl}>Private</Text>}
-            <Text style={styles.headerName}>{coll.name}</Text>
-            {total > 0 ? (
-              <View style={styles.progressRow}>
-                <View style={styles.progressTrack}>
-                  <View style={[styles.progressFill, { width: `${progress * 100}%` as any }]} />
-                </View>
-                <Text style={styles.progressLbl}>{done}/{total}</Text>
+        {/* Header meta */}
+        <View style={styles.headerMeta}>
+          {coll.isPrivate && <Text style={styles.privateLbl}>Private</Text>}
+          <Text style={styles.headerName}>{coll.name}</Text>
+          {total > 0 ? (
+            <View style={styles.progressRow}>
+              <View style={styles.progressTrack}>
+                <View style={[styles.progressFill, { width: `${progress * 100}%` as any }]} />
               </View>
-            ) : (
-              <Text style={styles.progressLbl}>No items yet</Text>
-            )}
-          </View>
+              <Text style={styles.progressLbl}>{done}/{total}</Text>
+            </View>
+          ) : (
+            <Text style={styles.progressLbl}>No items yet</Text>
+          )}
         </View>
 
         {/* Sub-tabs */}
@@ -216,9 +215,9 @@ export default function CollectionDetailScreen() {
                 >
                   <Text style={styles.itemTitle} numberOfLines={2}>{item.title}</Text>
                   <View style={styles.itemMeta}>
-                    <View style={styles.catPill}>
-                      <Text style={styles.catPillText}>{item.category}</Text>
-                    </View>
+                    {item.category ? (
+                      <Text style={styles.itemCat} numberOfLines={1}>{item.category}</Text>
+                    ) : null}
                     {item.completed ? (
                       <Text style={styles.doneBadge}>Done</Text>
                     ) : isOwner ? (
@@ -260,18 +259,9 @@ function makeStyles(C: ThemeColors) {
       fontSize: 16,
     },
 
-    // Header — image overlay stays dark regardless of theme
     header: {
       width: "100%",
       overflow: "hidden",
-    },
-    headerGradient: {
-      position: "absolute",
-      bottom: 0,
-      left: 0,
-      right: 0,
-      height: "72%",
-      backgroundColor: "rgba(0,0,0,0.56)",
     },
     backBtn: {
       position: "absolute",
@@ -291,25 +281,23 @@ function makeStyles(C: ThemeColors) {
       lineHeight: 28,
       marginTop: -2,
     },
-    headerContent: {
-      position: "absolute",
-      bottom: 0,
-      left: 0,
-      right: 0,
-      padding: 20,
+    headerMeta: {
+      paddingHorizontal: 20,
+      paddingTop: 18,
+      paddingBottom: 4,
     },
     privateLbl: {
-      color: "rgba(255,255,255,0.65)",
       fontSize: 11,
       fontWeight: "800",
+      color: C.textTertiary,
       textTransform: "uppercase",
       letterSpacing: 1,
       marginBottom: 6,
     },
     headerName: {
-      color: "#fff",
       fontSize: 30,
       fontWeight: "900",
+      color: C.text,
       lineHeight: 36,
     },
     progressRow: {
@@ -321,19 +309,19 @@ function makeStyles(C: ThemeColors) {
     progressTrack: {
       flex: 1,
       height: 4,
-      backgroundColor: "rgba(255,255,255,0.28)",
+      backgroundColor: C.border,
       borderRadius: 2,
       overflow: "hidden",
     },
     progressFill: {
       height: 4,
-      backgroundColor: "#fff",
+      backgroundColor: C.text,
       borderRadius: 2,
     },
     progressLbl: {
-      color: "rgba(255,255,255,0.82)",
       fontSize: 13,
       fontWeight: "800",
+      color: C.textSecondary,
     },
 
     // Sub-tabs
@@ -386,20 +374,20 @@ function makeStyles(C: ThemeColors) {
       alignItems: "center",
       gap: 12,
       paddingVertical: 12,
-      borderBottomWidth: 1,
+      borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: C.divider,
     },
     itemThumb: {
-      width: 52,
-      height: 52,
-      borderRadius: 10,
+      width: 64,
+      height: 64,
+      borderRadius: 12,
       resizeMode: "cover",
     },
     itemThumbFallback: {
-      width: 52,
-      height: 52,
-      borderRadius: 10,
-      backgroundColor: C.surfaceElevated,
+      width: 64,
+      height: 64,
+      borderRadius: 12,
+      backgroundColor: C.surface,
     },
     itemInfo: {
       flex: 1,
@@ -416,16 +404,10 @@ function makeStyles(C: ThemeColors) {
       gap: 8,
       marginTop: 5,
     },
-    catPill: {
-      backgroundColor: C.surface,
-      paddingHorizontal: 8,
-      paddingVertical: 3,
-      borderRadius: 999,
-    },
-    catPillText: {
-      fontSize: 11,
-      fontWeight: "700",
-      color: C.textSecondary,
+    itemCat: {
+      fontSize: 12,
+      fontWeight: "500",
+      color: C.textTertiary,
     },
     doneBadge: {
       fontSize: 12,

@@ -165,24 +165,23 @@ export default function ExperienceScreen() {
       <ScrollView showsVerticalScrollIndicator={false} bounces>
 
         {/* ── Hero ── */}
-        <View style={[styles.hero, { height: HERO_HEIGHT }]}>
+        <View style={styles.hero}>
           {experience.heroImageUrl ? (
             <Image source={{ uri: experience.heroImageUrl }} style={styles.heroImage} />
           ) : (
             <View style={[styles.heroImage, { backgroundColor: heroBg }]} />
           )}
-          <View style={styles.heroGradient} />
-
           <Pressable style={styles.backBtn} onPress={() => router.back()}>
             <Text style={styles.backBtnText}>‹</Text>
           </Pressable>
+        </View>
 
-          <View style={styles.heroContent}>
-            <Text style={styles.heroCat}>{experience.category}</Text>
-            <Text style={styles.heroTitle} numberOfLines={3}>
-              {experience.title}
-            </Text>
-          </View>
+        {/* ── Hero meta ── */}
+        <View style={styles.heroMeta}>
+          <Text style={styles.heroCat}>{experience.category}</Text>
+          <Text style={styles.heroTitle} numberOfLines={3}>
+            {experience.title}
+          </Text>
         </View>
 
         {/* ── Action bar ── */}
@@ -253,15 +252,17 @@ export default function ExperienceScreen() {
                     router.push({ pathname: "/experience/[id]", params: { id: exp.id } })
                   }
                 >
-                  {exp.heroImageUrl ? (
-                    <Image source={{ uri: exp.heroImageUrl }} style={styles.similarImage} />
-                  ) : (
-                    <View
-                      style={[styles.similarImage, { backgroundColor: CATEGORY_BG[exp.category] ?? "#333" }]}
-                    />
-                  )}
-                  <View style={styles.similarOverlay} />
-                  <View style={styles.similarContent}>
+                  <View style={styles.similarImageWrapper}>
+                    {exp.heroImageUrl ? (
+                      <Image source={{ uri: exp.heroImageUrl }} style={styles.similarImage} />
+                    ) : (
+                      <View
+                        style={[styles.similarImage, { backgroundColor: CATEGORY_BG[exp.category] ?? C.surface }]}
+                      />
+                    )}
+                  </View>
+                  <View style={styles.similarMeta}>
+                    <Text style={styles.similarCat} numberOfLines={1}>{exp.category}</Text>
                     <Text style={styles.similarTitle} numberOfLines={2}>{exp.title}</Text>
                   </View>
                 </Pressable>
@@ -299,24 +300,14 @@ function makeStyles(C: ThemeColors) {
       fontSize: 16,
     },
 
-    // Hero — always dark regardless of theme
     hero: {
       width: "100%",
-      backgroundColor: "#1A1A1A",
       overflow: "hidden",
     },
     heroImage: {
-      width: "100%",
-      height: "100%",
+      width: SCREEN_WIDTH,
+      height: HERO_HEIGHT,
       resizeMode: "cover",
-    },
-    heroGradient: {
-      position: "absolute",
-      bottom: 0,
-      left: 0,
-      right: 0,
-      height: 280,
-      backgroundColor: "rgba(0,0,0,0.65)",
     },
     backBtn: {
       position: "absolute",
@@ -336,26 +327,23 @@ function makeStyles(C: ThemeColors) {
       lineHeight: 28,
       marginTop: -2,
     },
-    heroContent: {
-      position: "absolute",
-      bottom: 0,
-      left: 0,
-      right: 0,
-      padding: 20,
-      paddingBottom: 24,
+    heroMeta: {
+      paddingHorizontal: 20,
+      paddingTop: 18,
+      paddingBottom: 4,
     },
     heroCat: {
-      color: "rgba(255,255,255,0.7)",
       fontSize: 12,
       fontWeight: "800",
+      color: C.textTertiary,
       textTransform: "uppercase",
       letterSpacing: 1,
       marginBottom: 6,
     },
     heroTitle: {
-      color: "#fff",
       fontSize: 32,
       fontWeight: "900",
+      color: C.text,
       lineHeight: 38,
     },
 
@@ -457,35 +445,34 @@ function makeStyles(C: ThemeColors) {
     },
     similarCard: {
       width: 140,
-      height: 190,
+    },
+    similarImageWrapper: {
+      width: 140,
+      aspectRatio: 3 / 4,
       borderRadius: 14,
       overflow: "hidden",
-      backgroundColor: "#1A1A1A",
     },
     similarImage: {
       width: "100%",
       height: "100%",
       resizeMode: "cover",
     },
-    similarOverlay: {
-      position: "absolute",
-      bottom: 0,
-      left: 0,
-      right: 0,
-      height: 90,
-      backgroundColor: "rgba(0,0,0,0.55)",
+    similarMeta: {
+      paddingTop: 7,
+      paddingHorizontal: 2,
     },
-    similarContent: {
-      position: "absolute",
-      bottom: 0,
-      left: 0,
-      right: 0,
-      padding: 10,
+    similarCat: {
+      fontSize: 10,
+      fontWeight: "700",
+      color: C.textTertiary,
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
+      marginBottom: 2,
     },
     similarTitle: {
-      color: "#fff",
       fontSize: 13,
       fontWeight: "800",
+      color: C.text,
       lineHeight: 17,
     },
 
