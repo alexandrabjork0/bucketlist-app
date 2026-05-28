@@ -6,7 +6,7 @@ import {
   serverTimestamp,
   where,
 } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -22,6 +22,7 @@ import {
   View,
 } from "react-native";
 import { auth, db } from "../lib/firebaseConfig";
+import { ThemeColors, useTheme } from "../lib/theme";
 import CollectionCover from "./CollectionCover";
 
 interface CollectionRow {
@@ -45,6 +46,9 @@ export default function CollectionPickerSheet({
   onSelect,
   savedCollectionIds = [],
 }: Props) {
+  const C = useTheme();
+  const styles = useMemo(() => makeStyles(C), [C]);
+
   const [collections, setCollections] = useState<CollectionRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [showNew, setShowNew] = useState(false);
@@ -119,7 +123,7 @@ export default function CollectionPickerSheet({
               <TextInput
                 style={styles.newInput}
                 placeholder="e.g. Japan 2027, Dream Honeymoon…"
-                placeholderTextColor="#aaa"
+                placeholderTextColor={C.inputPlaceholder}
                 value={newName}
                 onChangeText={setNewName}
                 autoFocus
@@ -189,151 +193,155 @@ export default function CollectionPickerSheet({
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-  },
-  sheetWrapper: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  sheet: {
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-    paddingTop: 14,
-    maxHeight: "82%",
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#E0E0E0",
-    alignSelf: "center",
-    marginBottom: 18,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "800",
-    marginBottom: 16,
-  },
-  newCollRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-    marginBottom: 4,
-  },
-  newIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 12,
-    backgroundColor: "#F0F0F0",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  newIconText: {
-    fontSize: 24,
-    fontWeight: "300",
-    color: "#555",
-  },
-  newCollText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#111",
-  },
-  newRow: {
-    flexDirection: "row",
-    gap: 10,
-    marginBottom: 12,
-    alignItems: "center",
-  },
-  newInput: {
-    flex: 1,
-    backgroundColor: "#F4F4F4",
-    padding: 13,
-    borderRadius: 12,
-    fontSize: 15,
-  },
-  createBtn: {
-    backgroundColor: "#111",
-    paddingHorizontal: 16,
-    paddingVertical: 13,
-    borderRadius: 12,
-  },
-  createBtnOff: {
-    backgroundColor: "#ccc",
-  },
-  createBtnText: {
-    color: "#fff",
-    fontWeight: "800",
-    fontSize: 14,
-  },
-  list: {
-    flexGrow: 0,
-    maxHeight: 340,
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 10,
-    gap: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f8f8f8",
-  },
-  rowDim: {
-    opacity: 0.45,
-  },
-  thumb: {
-    borderRadius: 10,
-    overflow: "hidden",
-  },
-  rowInfo: {
-    flex: 1,
-  },
-  rowName: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#111",
-  },
-  rowCount: {
-    fontSize: 12,
-    color: "#999",
-    marginTop: 2,
-    fontWeight: "600",
-  },
-  check: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: "#111",
-    width: 28,
-    textAlign: "center",
-  },
-  checkDone: {
-    color: "#2ecc71",
-    fontSize: 18,
-  },
-  empty: {
-    color: "#999",
-    textAlign: "center",
-    marginVertical: 20,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  cancel: {
-    alignItems: "center",
-    marginTop: 16,
-  },
-  cancelText: {
-    color: "#777",
-    fontWeight: "700",
-    fontSize: 15,
-  },
-});
+function makeStyles(C: ThemeColors) {
+  return StyleSheet.create({
+    overlay: {
+      flex: 1,
+      backgroundColor: C.overlay,
+    },
+    sheetWrapper: {
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      right: 0,
+    },
+    sheet: {
+      backgroundColor: C.background,
+      borderTopLeftRadius: 28,
+      borderTopRightRadius: 28,
+      paddingHorizontal: 20,
+      paddingBottom: 40,
+      paddingTop: 14,
+      maxHeight: "82%",
+    },
+    handle: {
+      width: 40,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: C.handle,
+      alignSelf: "center",
+      marginBottom: 18,
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: "800",
+      marginBottom: 16,
+      color: C.text,
+    },
+    newCollRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 14,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: C.divider,
+      marginBottom: 4,
+    },
+    newIcon: {
+      width: 52,
+      height: 52,
+      borderRadius: 12,
+      backgroundColor: C.surface,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    newIconText: {
+      fontSize: 24,
+      fontWeight: "300",
+      color: C.textSecondary,
+    },
+    newCollText: {
+      fontSize: 16,
+      fontWeight: "700",
+      color: C.text,
+    },
+    newRow: {
+      flexDirection: "row",
+      gap: 10,
+      marginBottom: 12,
+      alignItems: "center",
+    },
+    newInput: {
+      flex: 1,
+      backgroundColor: C.inputBackground,
+      padding: 13,
+      borderRadius: 12,
+      fontSize: 15,
+      color: C.text,
+    },
+    createBtn: {
+      backgroundColor: C.buttonPrimary,
+      paddingHorizontal: 16,
+      paddingVertical: 13,
+      borderRadius: 12,
+    },
+    createBtnOff: {
+      backgroundColor: C.disabled,
+    },
+    createBtnText: {
+      color: C.buttonPrimaryText,
+      fontWeight: "800",
+      fontSize: 14,
+    },
+    list: {
+      flexGrow: 0,
+      maxHeight: 340,
+    },
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: 10,
+      gap: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: C.divider,
+    },
+    rowDim: {
+      opacity: 0.45,
+    },
+    thumb: {
+      borderRadius: 10,
+      overflow: "hidden",
+    },
+    rowInfo: {
+      flex: 1,
+    },
+    rowName: {
+      fontSize: 15,
+      fontWeight: "700",
+      color: C.text,
+    },
+    rowCount: {
+      fontSize: 12,
+      color: C.textTertiary,
+      marginTop: 2,
+      fontWeight: "600",
+    },
+    check: {
+      fontSize: 20,
+      fontWeight: "800",
+      color: C.text,
+      width: 28,
+      textAlign: "center",
+    },
+    checkDone: {
+      color: C.accent,
+      fontSize: 18,
+    },
+    empty: {
+      color: C.textTertiary,
+      textAlign: "center",
+      marginVertical: 20,
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    cancel: {
+      alignItems: "center",
+      marginTop: 16,
+    },
+    cancelText: {
+      color: C.textSecondary,
+      fontWeight: "700",
+      fontSize: 15,
+    },
+  });
+}

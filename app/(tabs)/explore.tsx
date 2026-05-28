@@ -11,7 +11,7 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Image,
@@ -29,6 +29,7 @@ import {
 } from "react-native";
 import CollectionPickerSheet from "../../components/CollectionPickerSheet";
 import { auth, db } from "../../lib/firebaseConfig";
+import { ThemeColors, useTheme } from "../../lib/theme";
 import { migrateIdeasToExperiences } from "../../lib/migration";
 
 type Experience = {
@@ -74,6 +75,9 @@ const CATEGORIES = [
 const CREATE_CATEGORIES = CATEGORIES.filter((c) => c !== "All");
 
 export default function ExploreScreen() {
+  const C = useTheme();
+  const styles = useMemo(() => makeStyles(C), [C]);
+
   const [search, setSearch] = useState("");
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [people, setPeople] = useState<any[]>([]);
@@ -303,7 +307,7 @@ export default function ExploreScreen() {
         <TextInput
           style={styles.searchInput}
           placeholder="Search experiences, people..."
-          placeholderTextColor="#999"
+          placeholderTextColor={C.inputPlaceholder}
           value={search}
           onChangeText={setSearch}
         />
@@ -329,12 +333,7 @@ export default function ExploreScreen() {
                   {exp.heroImageUrl ? (
                     <Image source={{ uri: exp.heroImageUrl }} style={styles.trendingImage} />
                   ) : (
-                    <View
-                      style={[
-                        styles.trendingImage,
-                        { backgroundColor: CATEGORY_COLORS[exp.category] ?? "#F4F4F4" },
-                      ]}
-                    />
+                    <View style={[styles.trendingImage, { backgroundColor: C.surface }]} />
                   )}
                   <View style={styles.trendingOverlay}>
                     <Text style={styles.trendingCat}>{exp.category}</Text>
@@ -469,7 +468,7 @@ export default function ExploreScreen() {
             <TextInput
               style={styles.sheetInput}
               placeholder="e.g. Sleep in a glass igloo"
-              placeholderTextColor="#999"
+              placeholderTextColor={C.inputPlaceholder}
               value={newTitle}
               onChangeText={setNewTitle}
               returnKeyType="done"
@@ -510,7 +509,7 @@ export default function ExploreScreen() {
               <TextInput
                 style={[styles.sheetInput, { marginTop: 10 }]}
                 placeholder="Write your category"
-                placeholderTextColor="#999"
+                placeholderTextColor={C.inputPlaceholder}
                 value={newCustomCategory}
                 onChangeText={setNewCustomCategory}
                 returnKeyType="done"
@@ -566,41 +565,38 @@ function ExperienceTile({
   onAdd: (exp: Experience) => void;
   isAdded: boolean;
 }) {
+  const C = useTheme();
+  const ts = useMemo(() => makeTileStyles(C), [C]);
   return (
     <Pressable
-      style={styles.tile}
+      style={ts.tile}
       onPress={() =>
         router.push({ pathname: "/experience/[id]", params: { id: exp.id } })
       }
     >
       {exp.heroImageUrl ? (
-        <Image source={{ uri: exp.heroImageUrl }} style={styles.tileImage} />
+        <Image source={{ uri: exp.heroImageUrl }} style={ts.tileImage} />
       ) : (
-        <View
-          style={[
-            styles.tileImage,
-            { backgroundColor: CATEGORY_COLORS[exp.category] ?? "#F4F4F4" },
-          ]}
-        />
+        <View style={[ts.tileImage, { backgroundColor: C.surface }]} />
       )}
 
-      <View style={styles.tileBody}>
-        <Text style={styles.tileCat}>{exp.category}</Text>
-        <Text style={styles.tileTitle} numberOfLines={3}>
+      <View style={ts.tileBody}>
+        <Text style={ts.tileCat}>{exp.category}</Text>
+        <Text style={ts.tileTitle} numberOfLines={3}>
           {exp.title}
         </Text>
         {exp.savesCount > 0 && (
-          <Text style={styles.tileSaves}>{exp.savesCount} saved</Text>
+          <Text style={ts.tileSaves}>{exp.savesCount} saved</Text>
         )}
         <Pressable
-          style={[styles.tileAddBtn, isAdded && styles.tileAddBtnDone]}
+          style={[ts.tileAddBtn, isAdded && ts.tileAddBtnDone]}
           onPress={(e) => {
             e.stopPropagation();
             if (!isAdded) onAdd(exp);
           }}
           disabled={isAdded}
         >
-          <Text style={[styles.tileAddText, isAdded && styles.tileAddTextDone]}>
+          <Text style={[ts.tileAddText, isAdded && ts.tileAddTextDone]}>
             {isAdded ? "Added ✓" : "+ Add"}
           </Text>
         </Pressable>
@@ -609,354 +605,369 @@ function ExperienceTile({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  top: {
-    paddingTop: 70,
-    paddingHorizontal: 18,
-    paddingBottom: 4,
-    backgroundColor: "#fff",
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "900",
-  },
-  searchInput: {
-    marginTop: 14,
-    backgroundColor: "#F4F4F4",
-    padding: 14,
-    borderRadius: 16,
-    fontSize: 16,
-  },
+function makeTileStyles(C: ThemeColors) {
+  return StyleSheet.create({
+    tile: {
+      borderRadius: 16,
+      backgroundColor: C.surface,
+      overflow: "hidden",
+    },
+    tileImage: {
+      width: "100%",
+      aspectRatio: 1,
+    },
+    tileBody: {
+      padding: 10,
+    },
+    tileCat: {
+      fontSize: 10,
+      fontWeight: "800",
+      textTransform: "uppercase",
+      color: C.textTertiary,
+    },
+    tileTitle: {
+      fontSize: 13,
+      fontWeight: "700",
+      color: C.text,
+      marginTop: 3,
+      lineHeight: 18,
+    },
+    tileSaves: {
+      marginTop: 4,
+      fontSize: 11,
+      color: C.textSecondary,
+      fontWeight: "600",
+    },
+    tileAddBtn: {
+      marginTop: 8,
+      backgroundColor: C.buttonPrimary,
+      paddingVertical: 7,
+      borderRadius: 10,
+      alignItems: "center",
+    },
+    tileAddBtnDone: {
+      backgroundColor: C.surfaceElevated,
+    },
+    tileAddText: {
+      color: C.buttonPrimaryText,
+      fontWeight: "700",
+      fontSize: 12,
+    },
+    tileAddTextDone: {
+      color: C.textSecondary,
+    },
+  });
+}
 
-  section: {
-    marginTop: 22,
-  },
-  sectionLabel: {
-    fontSize: 17,
-    fontWeight: "900",
-    paddingHorizontal: 18,
-    marginBottom: 12,
-  },
+function makeStyles(C: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: C.background,
+    },
+    top: {
+      paddingTop: 70,
+      paddingHorizontal: 18,
+      paddingBottom: 4,
+      backgroundColor: C.background,
+    },
+    title: {
+      fontSize: 28,
+      fontWeight: "900",
+      color: C.text,
+    },
+    searchInput: {
+      marginTop: 14,
+      backgroundColor: C.inputBackground,
+      padding: 14,
+      borderRadius: 16,
+      fontSize: 16,
+      color: C.text,
+    },
 
-  trendingScroll: {
-    paddingHorizontal: 18,
-    gap: 12,
-  },
-  trendingCard: {
-    width: 150,
-    borderRadius: 16,
-    overflow: "hidden",
-    backgroundColor: "#F4F4F4",
-  },
-  trendingImage: {
-    width: 150,
-    height: 120,
-  },
-  trendingOverlay: {
-    padding: 10,
-  },
-  trendingCat: {
-    fontSize: 10,
-    fontWeight: "800",
-    textTransform: "uppercase",
-    color: "#999",
-  },
-  trendingTitle: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#111",
-    marginTop: 3,
-    lineHeight: 18,
-  },
-  trendingCount: {
-    marginTop: 4,
-    fontSize: 11,
-    color: "#777",
-    fontWeight: "600",
-  },
+    section: {
+      marginTop: 22,
+    },
+    sectionLabel: {
+      fontSize: 17,
+      fontWeight: "900",
+      paddingHorizontal: 18,
+      marginBottom: 12,
+      color: C.text,
+    },
 
-  chipsScroll: {
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    gap: 8,
-  },
-  chip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: "#F4F4F4",
-    borderRadius: 999,
-  },
-  chipActive: {
-    backgroundColor: "#111",
-  },
-  chipText: {
-    color: "#555",
-    fontWeight: "700",
-    fontSize: 13,
-  },
-  chipTextActive: {
-    color: "#fff",
-  },
+    trendingScroll: {
+      paddingHorizontal: 18,
+      gap: 12,
+    },
+    trendingCard: {
+      width: 150,
+      borderRadius: 16,
+      overflow: "hidden",
+      backgroundColor: C.surface,
+    },
+    trendingImage: {
+      width: 150,
+      height: 120,
+    },
+    trendingOverlay: {
+      padding: 10,
+    },
+    trendingCat: {
+      fontSize: 10,
+      fontWeight: "800",
+      textTransform: "uppercase",
+      color: C.textTertiary,
+    },
+    trendingTitle: {
+      fontSize: 13,
+      fontWeight: "700",
+      color: C.text,
+      marginTop: 3,
+      lineHeight: 18,
+    },
+    trendingCount: {
+      marginTop: 4,
+      fontSize: 11,
+      color: C.textSecondary,
+      fontWeight: "600",
+    },
 
-  masonry: {
-    flexDirection: "row",
-    paddingHorizontal: 12,
-    gap: 8,
-  },
-  masonryCol: {
-    flex: 1,
-    gap: 8,
-  },
-  tile: {
-    borderRadius: 16,
-    backgroundColor: "#F4F4F4",
-    overflow: "hidden",
-  },
-  tileImage: {
-    width: "100%",
-    aspectRatio: 1,
-  },
-  tileBody: {
-    padding: 10,
-  },
-  tileCat: {
-    fontSize: 10,
-    fontWeight: "800",
-    textTransform: "uppercase",
-    color: "#999",
-  },
-  tileTitle: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#111",
-    marginTop: 3,
-    lineHeight: 18,
-  },
-  tileSaves: {
-    marginTop: 4,
-    fontSize: 11,
-    color: "#777",
-    fontWeight: "600",
-  },
-  tileAddBtn: {
-    marginTop: 8,
-    backgroundColor: "#111",
-    paddingVertical: 7,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  tileAddBtnDone: {
-    backgroundColor: "#E8E8E8",
-  },
-  tileAddText: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 12,
-  },
-  tileAddTextDone: {
-    color: "#777",
-  },
+    chipsScroll: {
+      paddingHorizontal: 18,
+      paddingVertical: 14,
+      gap: 8,
+    },
+    chip: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      backgroundColor: C.surface,
+      borderRadius: 999,
+    },
+    chipActive: {
+      backgroundColor: C.buttonPrimary,
+    },
+    chipText: {
+      color: C.textSecondary,
+      fontWeight: "700",
+      fontSize: 13,
+    },
+    chipTextActive: {
+      color: C.buttonPrimaryText,
+    },
 
-  emptyText: {
-    paddingHorizontal: 20,
-    paddingTop: 30,
-    color: "#777",
-    textAlign: "center",
-    fontWeight: "600",
-  },
+    masonry: {
+      flexDirection: "row",
+      paddingHorizontal: 12,
+      gap: 8,
+    },
+    masonryCol: {
+      flex: 1,
+      gap: 8,
+    },
 
-  peopleSection: {
-    marginTop: 28,
-  },
-  peopleScroll: {
-    paddingHorizontal: 18,
-    gap: 12,
-  },
-  personCard: {
-    alignItems: "center",
-    width: 80,
-  },
-  personAvatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#eee",
-  },
-  personAvatarFallback: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#111",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  personAvatarText: {
-    color: "#fff",
-    fontWeight: "900",
-    fontSize: 20,
-  },
-  personUsername: {
-    marginTop: 6,
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#111",
-    textAlign: "center",
-  },
+    emptyText: {
+      paddingHorizontal: 20,
+      paddingTop: 30,
+      color: C.textSecondary,
+      textAlign: "center",
+      fontWeight: "600",
+    },
 
-  bottomPad: {
-    height: 100,
-  },
+    peopleSection: {
+      marginTop: 28,
+    },
+    peopleScroll: {
+      paddingHorizontal: 18,
+      gap: 12,
+    },
+    personCard: {
+      alignItems: "center",
+      width: 80,
+    },
+    personAvatar: {
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      backgroundColor: C.surface,
+    },
+    personAvatarFallback: {
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      backgroundColor: C.avatarBg,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    personAvatarText: {
+      color: "#fff",
+      fontWeight: "900",
+      fontSize: 20,
+    },
+    personUsername: {
+      marginTop: 6,
+      fontSize: 11,
+      fontWeight: "700",
+      color: C.text,
+      textAlign: "center",
+    },
 
-  fab: {
-    position: "absolute",
-    bottom: 28,
-    right: 22,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#111",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
-  },
-  fabIcon: {
-    color: "#fff",
-    fontSize: 28,
-    fontWeight: "300",
-    lineHeight: 32,
-  },
+    bottomPad: {
+      height: 100,
+    },
 
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-  },
-  sheetWrapper: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  sheet: {
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: 22,
-    paddingBottom: 40,
-    paddingTop: 14,
-  },
-  sheetHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#E0E0E0",
-    alignSelf: "center",
-    marginBottom: 20,
-  },
-  sheetTitle: {
-    fontSize: 22,
-    fontWeight: "800",
-  },
-  sheetSubtitle: {
-    marginTop: 6,
-    color: "#777",
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 18,
-  },
-  sheetInput: {
-    backgroundColor: "#F4F4F4",
-    padding: 15,
-    borderRadius: 14,
-    fontSize: 16,
-  },
-  sheetLabel: {
-    fontSize: 14,
-    fontWeight: "800",
-    marginTop: 16,
-    marginBottom: 10,
-  },
-  sheetChipsScroll: {
-    gap: 8,
-  },
-  sheetChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    backgroundColor: "#F4F4F4",
-    borderRadius: 999,
-  },
-  sheetChipActive: {
-    backgroundColor: "#111",
-  },
-  sheetChipText: {
-    color: "#555",
-    fontWeight: "700",
-    fontSize: 13,
-  },
-  sheetChipTextActive: {
-    color: "#fff",
-  },
-  sheetToggleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginTop: 18,
-    marginBottom: 20,
-  },
-  sheetCheckbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 7,
-    borderWidth: 2,
-    borderColor: "#111",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  sheetCheckboxChecked: {
-    backgroundColor: "#111",
-  },
-  sheetCheckmark: {
-    color: "#fff",
-    fontWeight: "900",
-    fontSize: 13,
-  },
-  sheetToggleTitle: {
-    fontWeight: "800",
-    fontSize: 15,
-  },
-  sheetToggleSub: {
-    color: "#777",
-    fontSize: 12,
-    marginTop: 1,
-  },
-  sheetButton: {
-    backgroundColor: "#111",
-    padding: 16,
-    borderRadius: 18,
-    alignItems: "center",
-  },
-  sheetButtonDisabled: {
-    backgroundColor: "#ccc",
-  },
-  sheetButtonText: {
-    color: "#fff",
-    fontWeight: "800",
-    fontSize: 16,
-  },
-  sheetCancel: {
-    alignItems: "center",
-    marginTop: 14,
-  },
-  sheetCancelText: {
-    color: "#777",
-    fontWeight: "700",
-    fontSize: 15,
-  },
-});
+    fab: {
+      position: "absolute",
+      bottom: 28,
+      right: 22,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: C.buttonPrimary,
+      alignItems: "center",
+      justifyContent: "center",
+      shadowColor: "#000",
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 6,
+    },
+    fabIcon: {
+      color: C.buttonPrimaryText,
+      fontSize: 28,
+      fontWeight: "300",
+      lineHeight: 32,
+    },
+
+    overlay: {
+      flex: 1,
+      backgroundColor: C.overlay,
+    },
+    sheetWrapper: {
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      right: 0,
+    },
+    sheet: {
+      backgroundColor: C.background,
+      borderTopLeftRadius: 28,
+      borderTopRightRadius: 28,
+      paddingHorizontal: 22,
+      paddingBottom: 40,
+      paddingTop: 14,
+    },
+    sheetHandle: {
+      width: 40,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: C.handle,
+      alignSelf: "center",
+      marginBottom: 20,
+    },
+    sheetTitle: {
+      fontSize: 22,
+      fontWeight: "800",
+      color: C.text,
+    },
+    sheetSubtitle: {
+      marginTop: 6,
+      color: C.textSecondary,
+      fontSize: 14,
+      lineHeight: 20,
+      marginBottom: 18,
+    },
+    sheetInput: {
+      backgroundColor: C.inputBackground,
+      padding: 15,
+      borderRadius: 14,
+      fontSize: 16,
+      color: C.text,
+    },
+    sheetLabel: {
+      fontSize: 14,
+      fontWeight: "800",
+      marginTop: 16,
+      marginBottom: 10,
+      color: C.text,
+    },
+    sheetChipsScroll: {
+      gap: 8,
+    },
+    sheetChip: {
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      backgroundColor: C.surface,
+      borderRadius: 999,
+    },
+    sheetChipActive: {
+      backgroundColor: C.buttonPrimary,
+    },
+    sheetChipText: {
+      color: C.textSecondary,
+      fontWeight: "700",
+      fontSize: 13,
+    },
+    sheetChipTextActive: {
+      color: C.buttonPrimaryText,
+    },
+    sheetToggleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      marginTop: 18,
+      marginBottom: 20,
+    },
+    sheetCheckbox: {
+      width: 24,
+      height: 24,
+      borderRadius: 7,
+      borderWidth: 2,
+      borderColor: C.text,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    sheetCheckboxChecked: {
+      backgroundColor: C.buttonPrimary,
+      borderColor: C.buttonPrimary,
+    },
+    sheetCheckmark: {
+      color: C.buttonPrimaryText,
+      fontWeight: "900",
+      fontSize: 13,
+    },
+    sheetToggleTitle: {
+      fontWeight: "800",
+      fontSize: 15,
+      color: C.text,
+    },
+    sheetToggleSub: {
+      color: C.textSecondary,
+      fontSize: 12,
+      marginTop: 1,
+    },
+    sheetButton: {
+      backgroundColor: C.buttonPrimary,
+      padding: 16,
+      borderRadius: 18,
+      alignItems: "center",
+    },
+    sheetButtonDisabled: {
+      backgroundColor: C.disabled,
+    },
+    sheetButtonText: {
+      color: C.buttonPrimaryText,
+      fontWeight: "800",
+      fontSize: 16,
+    },
+    sheetCancel: {
+      alignItems: "center",
+      marginTop: 14,
+    },
+    sheetCancelText: {
+      color: C.textSecondary,
+      fontWeight: "700",
+      fontSize: 15,
+    },
+  });
+}

@@ -1,6 +1,8 @@
 import { router } from "expo-router";
+import { useMemo } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { auth } from "../lib/firebaseConfig";
+import { ThemeColors, useTheme } from "../lib/theme";
 import MediaCarousel from "./MediaCarousel";
 import PostActions from "./PostActions";
 import PostComments from "./PostComments";
@@ -30,6 +32,9 @@ type Props = {
 };
 
 export default function PostCard({ post, author, onSave, saveDone, onDelete }: Props) {
+  const C = useTheme();
+  const styles = useMemo(() => makeStyles(C), [C]);
+
   const goToProfile = () => {
     if (author.userId === auth.currentUser?.uid) {
       router.push("/profile");
@@ -113,101 +118,106 @@ export default function PostCard({ post, author, onSave, saveDone, onDelete }: P
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: 32,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 14,
-    paddingTop: 14,
-    paddingBottom: 8,
-  },
-  headerLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  avatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-  },
-  avatarFallback: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "#111",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  avatarInitial: {
-    color: "#fff",
-    fontWeight: "800",
-    fontSize: 14,
-  },
-  username: {
-    fontWeight: "800",
-    fontSize: 15,
-  },
-  menuButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  menuText: {
-    fontSize: 26,
-    fontWeight: "900",
-    color: "#111",
-    lineHeight: 26,
-  },
-  category: {
-    paddingHorizontal: 14,
-    paddingBottom: 10,
-    color: "#777",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  body: {
-    padding: 14,
-  },
-  title: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#777",
-    marginBottom: 4,
-  },
-  caption: {
-    fontSize: 15,
-    lineHeight: 21,
-    marginTop: 4,
-  },
-  captionUsername: {
-    fontWeight: "800",
-  },
-  date: {
-    marginTop: 10,
-    color: "#999",
-    fontSize: 12,
-    textTransform: "uppercase",
-  },
-  saveButton: {
-    marginTop: 16,
-    backgroundColor: "#111",
-    paddingVertical: 13,
-    borderRadius: 999,
-    alignItems: "center",
-  },
-  saveButtonText: {
-    color: "#fff",
-    fontWeight: "800",
-    fontSize: 15,
-  },
-  savedButton: {
-    backgroundColor: "#F4F4F4",
-  },
-  savedButtonText: {
-    color: "#111",
-  },
-});
+function makeStyles(C: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      marginBottom: 32,
+    },
+    headerRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 14,
+      paddingTop: 14,
+      paddingBottom: 8,
+    },
+    headerLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+    },
+    avatar: {
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+    },
+    avatarFallback: {
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      backgroundColor: C.avatarBg,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    avatarInitial: {
+      color: "#fff",
+      fontWeight: "800",
+      fontSize: 14,
+    },
+    username: {
+      fontWeight: "800",
+      fontSize: 15,
+      color: C.text,
+    },
+    menuButton: {
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+    },
+    menuText: {
+      fontSize: 26,
+      fontWeight: "900",
+      color: C.text,
+      lineHeight: 26,
+    },
+    category: {
+      paddingHorizontal: 14,
+      paddingBottom: 10,
+      color: C.textSecondary,
+      fontSize: 14,
+      fontWeight: "600",
+    },
+    body: {
+      padding: 14,
+    },
+    title: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: C.textSecondary,
+      marginBottom: 4,
+    },
+    caption: {
+      fontSize: 15,
+      lineHeight: 21,
+      marginTop: 4,
+      color: C.text,
+    },
+    captionUsername: {
+      fontWeight: "800",
+      color: C.text,
+    },
+    date: {
+      marginTop: 10,
+      color: C.textTertiary,
+      fontSize: 12,
+      textTransform: "uppercase",
+    },
+    saveButton: {
+      marginTop: 16,
+      backgroundColor: C.buttonPrimary,
+      paddingVertical: 13,
+      borderRadius: 999,
+      alignItems: "center",
+    },
+    saveButtonText: {
+      color: C.buttonPrimaryText,
+      fontWeight: "800",
+      fontSize: 15,
+    },
+    savedButton: {
+      backgroundColor: C.surface,
+    },
+    savedButtonText: {
+      color: C.textSecondary,
+    },
+  });
+}

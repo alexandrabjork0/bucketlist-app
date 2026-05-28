@@ -11,7 +11,7 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Dimensions,
@@ -25,6 +25,7 @@ import {
 import CollectionCover from "../../components/CollectionCover";
 import PostThumbnail from "../../components/PostThumbnail";
 import { auth, db } from "../../lib/firebaseConfig";
+import { ThemeColors, useTheme } from "../../lib/theme";
 
 type SubTab = "all" | "completed" | "todo";
 
@@ -32,6 +33,9 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const HEADER_HEIGHT = SCREEN_WIDTH * 0.65;
 
 export default function CollectionDetailScreen() {
+  const C = useTheme();
+  const styles = useMemo(() => makeStyles(C), [C]);
+
   const { id } = useLocalSearchParams<{ id: string }>();
   const [coll, setColl] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
@@ -233,207 +237,211 @@ export default function CollectionDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  dimText: {
-    color: "#999",
-    fontSize: 16,
-  },
+function makeStyles(C: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: C.background,
+    },
+    center: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: C.background,
+    },
+    dimText: {
+      color: C.textTertiary,
+      fontSize: 16,
+    },
 
-  // Header
-  header: {
-    width: "100%",
-    overflow: "hidden",
-  },
-  headerGradient: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: "72%",
-    backgroundColor: "rgba(0,0,0,0.56)",
-  },
-  backBtn: {
-    position: "absolute",
-    top: 56,
-    left: 18,
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: "rgba(0,0,0,0.35)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  backBtnText: {
-    color: "#fff",
-    fontSize: 24,
-    fontWeight: "700",
-    lineHeight: 28,
-    marginTop: -2,
-  },
-  headerContent: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 20,
-  },
-  privateLbl: {
-    color: "rgba(255,255,255,0.65)",
-    fontSize: 11,
-    fontWeight: "800",
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    marginBottom: 6,
-  },
-  headerName: {
-    color: "#fff",
-    fontSize: 30,
-    fontWeight: "900",
-    lineHeight: 36,
-  },
-  progressRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginTop: 10,
-  },
-  progressTrack: {
-    flex: 1,
-    height: 4,
-    backgroundColor: "rgba(255,255,255,0.28)",
-    borderRadius: 2,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: 4,
-    backgroundColor: "#fff",
-    borderRadius: 2,
-  },
-  progressLbl: {
-    color: "rgba(255,255,255,0.82)",
-    fontSize: 13,
-    fontWeight: "800",
-  },
+    // Header — image overlay stays dark regardless of theme
+    header: {
+      width: "100%",
+      overflow: "hidden",
+    },
+    headerGradient: {
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: "72%",
+      backgroundColor: "rgba(0,0,0,0.56)",
+    },
+    backBtn: {
+      position: "absolute",
+      top: 56,
+      left: 18,
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      backgroundColor: "rgba(0,0,0,0.35)",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    backBtnText: {
+      color: "#fff",
+      fontSize: 24,
+      fontWeight: "700",
+      lineHeight: 28,
+      marginTop: -2,
+    },
+    headerContent: {
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      padding: 20,
+    },
+    privateLbl: {
+      color: "rgba(255,255,255,0.65)",
+      fontSize: 11,
+      fontWeight: "800",
+      textTransform: "uppercase",
+      letterSpacing: 1,
+      marginBottom: 6,
+    },
+    headerName: {
+      color: "#fff",
+      fontSize: 30,
+      fontWeight: "900",
+      lineHeight: 36,
+    },
+    progressRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      marginTop: 10,
+    },
+    progressTrack: {
+      flex: 1,
+      height: 4,
+      backgroundColor: "rgba(255,255,255,0.28)",
+      borderRadius: 2,
+      overflow: "hidden",
+    },
+    progressFill: {
+      height: 4,
+      backgroundColor: "#fff",
+      borderRadius: 2,
+    },
+    progressLbl: {
+      color: "rgba(255,255,255,0.82)",
+      fontSize: 13,
+      fontWeight: "800",
+    },
 
-  // Sub-tabs
-  subTabs: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  subTab: {
-    flex: 1,
-    paddingVertical: 13,
-    alignItems: "center",
-  },
-  subTabActive: {
-    borderBottomWidth: 2,
-    borderBottomColor: "#111",
-  },
-  subTabText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#aaa",
-  },
-  subTabTextActive: {
-    color: "#111",
-  },
+    // Sub-tabs
+    subTabs: {
+      flexDirection: "row",
+      borderBottomWidth: 1,
+      borderBottomColor: C.border,
+      backgroundColor: C.background,
+    },
+    subTab: {
+      flex: 1,
+      paddingVertical: 13,
+      alignItems: "center",
+    },
+    subTabActive: {
+      borderBottomWidth: 2,
+      borderBottomColor: C.text,
+    },
+    subTabText: {
+      fontSize: 12,
+      fontWeight: "700",
+      color: C.textTertiary,
+    },
+    subTabTextActive: {
+      color: C.text,
+    },
 
-  // Content
-  content: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-  },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginHorizontal: -16,
-  },
-  emptyText: {
-    color: "#999",
-    textAlign: "center",
-    marginTop: 40,
-    fontSize: 15,
-    lineHeight: 22,
-    paddingHorizontal: 24,
-  },
+    // Content
+    content: {
+      paddingHorizontal: 16,
+      paddingTop: 16,
+    },
+    grid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      marginHorizontal: -16,
+    },
+    emptyText: {
+      color: C.textTertiary,
+      textAlign: "center",
+      marginTop: 40,
+      fontSize: 15,
+      lineHeight: 22,
+      paddingHorizontal: 24,
+    },
 
-  // List item
-  itemRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F4F4F4",
-  },
-  itemThumb: {
-    width: 52,
-    height: 52,
-    borderRadius: 10,
-    resizeMode: "cover",
-  },
-  itemThumbFallback: {
-    width: 52,
-    height: 52,
-    borderRadius: 10,
-    backgroundColor: "#E8E8E8",
-  },
-  itemInfo: {
-    flex: 1,
-  },
-  itemTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#111",
-    lineHeight: 20,
-  },
-  itemMeta: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginTop: 5,
-  },
-  catPill: {
-    backgroundColor: "#F0F0F0",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 999,
-  },
-  catPillText: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#666",
-  },
-  doneBadge: {
-    fontSize: 12,
-    color: "#2ecc71",
-    fontWeight: "800",
-  },
-  tapHint: {
-    fontSize: 12,
-    color: "#aaa",
-    fontWeight: "600",
-  },
-  deleteBtn: {
-    width: 32,
-    height: 32,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  deleteBtnText: {
-    fontSize: 24,
-    color: "#ccc",
-    fontWeight: "300",
-    lineHeight: 28,
-  },
-});
+    // List item
+    itemRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: C.divider,
+    },
+    itemThumb: {
+      width: 52,
+      height: 52,
+      borderRadius: 10,
+      resizeMode: "cover",
+    },
+    itemThumbFallback: {
+      width: 52,
+      height: 52,
+      borderRadius: 10,
+      backgroundColor: C.surfaceElevated,
+    },
+    itemInfo: {
+      flex: 1,
+    },
+    itemTitle: {
+      fontSize: 15,
+      fontWeight: "700",
+      color: C.text,
+      lineHeight: 20,
+    },
+    itemMeta: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      marginTop: 5,
+    },
+    catPill: {
+      backgroundColor: C.surface,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 999,
+    },
+    catPillText: {
+      fontSize: 11,
+      fontWeight: "700",
+      color: C.textSecondary,
+    },
+    doneBadge: {
+      fontSize: 12,
+      color: C.accent,
+      fontWeight: "800",
+    },
+    tapHint: {
+      fontSize: 12,
+      color: C.textTertiary,
+      fontWeight: "600",
+    },
+    deleteBtn: {
+      width: 32,
+      height: 32,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    deleteBtnText: {
+      fontSize: 24,
+      color: C.border,
+      fontWeight: "300",
+      lineHeight: 28,
+    },
+  });
+}

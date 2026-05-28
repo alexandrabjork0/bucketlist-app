@@ -1,4 +1,6 @@
+import { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { ThemeColors, useTheme } from "../lib/theme";
 import CollectionCover from "./CollectionCover";
 
 export interface CollectionData {
@@ -20,6 +22,9 @@ interface Props {
 }
 
 export default function CollectionCard({ collection, cardWidth, onPress, onLongPress, ownerUsername }: Props) {
+  const C = useTheme();
+  const styles = useMemo(() => makeStyles(C), [C]);
+
   const { name, isPrivate, coverImages = [], itemCount, completedCount = 0, itemIds } = collection;
   const total = itemCount ?? (itemIds?.length ?? 0);
   const progress = total > 0 ? completedCount / total : 0;
@@ -59,56 +64,58 @@ export default function CollectionCard({ collection, cardWidth, onPress, onLongP
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    borderRadius: 16,
-    overflow: "hidden",
-    backgroundColor: "#F4F4F4",
-  },
-  lockBadge: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-    backgroundColor: "rgba(0,0,0,0.45)",
-    borderRadius: 999,
-    width: 26,
-    height: 26,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  lockIcon: {
-    fontSize: 12,
-  },
-  info: {
-    padding: 10,
-  },
-  owner: {
-    fontSize: 11,
-    color: "#aaa",
-    fontWeight: "600",
-    marginBottom: 2,
-  },
-  name: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: "#111",
-  },
-  count: {
-    fontSize: 12,
-    color: "#888",
-    marginTop: 2,
-    fontWeight: "600",
-  },
-  track: {
-    marginTop: 6,
-    height: 3,
-    backgroundColor: "#E4E4E4",
-    borderRadius: 2,
-    overflow: "hidden",
-  },
-  fill: {
-    height: 3,
-    backgroundColor: "#111",
-    borderRadius: 2,
-  },
-});
+function makeStyles(C: ThemeColors) {
+  return StyleSheet.create({
+    card: {
+      borderRadius: 16,
+      overflow: "hidden",
+      backgroundColor: C.surface,
+    },
+    lockBadge: {
+      position: "absolute",
+      top: 8,
+      right: 8,
+      backgroundColor: "rgba(0,0,0,0.45)",
+      borderRadius: 999,
+      width: 26,
+      height: 26,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    lockIcon: {
+      fontSize: 12,
+    },
+    info: {
+      padding: 10,
+    },
+    owner: {
+      fontSize: 11,
+      color: C.textTertiary,
+      fontWeight: "600",
+      marginBottom: 2,
+    },
+    name: {
+      fontSize: 14,
+      fontWeight: "800",
+      color: C.text,
+    },
+    count: {
+      fontSize: 12,
+      color: C.textSecondary,
+      marginTop: 2,
+      fontWeight: "600",
+    },
+    track: {
+      marginTop: 6,
+      height: 3,
+      backgroundColor: C.border,
+      borderRadius: 2,
+      overflow: "hidden",
+    },
+    fill: {
+      height: 3,
+      backgroundColor: C.buttonPrimary,
+      borderRadius: 2,
+    },
+  });
+}

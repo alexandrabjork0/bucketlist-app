@@ -16,7 +16,7 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Dimensions,
   Image,
@@ -30,6 +30,7 @@ import CollectionCard from "../../components/CollectionCard";
 import CollectionPickerSheet from "../../components/CollectionPickerSheet";
 import { auth, db } from "../../lib/firebaseConfig";
 import { createNotification } from "../../lib/notifications";
+import { ThemeColors, useTheme } from "../../lib/theme";
 
 const { width: SW } = Dimensions.get("window");
 const TILE_W = 150;
@@ -55,12 +56,15 @@ function SectionHeader({
   onSeeAll?: () => void;
   subtle?: boolean;
 }) {
+  const C = useTheme();
   return (
     <View style={sh.row}>
-      <Text style={[sh.title, subtle && sh.subtleTitle]}>{title}</Text>
+      <Text style={[sh.title, { color: subtle ? C.textTertiary : C.text }, subtle && sh.subtleTitle]}>
+        {title}
+      </Text>
       {onSeeAll && (
         <Pressable onPress={onSeeAll}>
-          <Text style={sh.link}>See all →</Text>
+          <Text style={[sh.link, { color: C.textSecondary }]}>See all →</Text>
         </Pressable>
       )}
     </View>
@@ -78,19 +82,16 @@ const sh = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: "900",
-    color: "#111",
   },
   subtleTitle: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#bbb",
     textTransform: "uppercase",
     letterSpacing: 0.6,
   },
   link: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#888",
   },
 });
 
@@ -124,7 +125,7 @@ const tt = StyleSheet.create({
     height: TILE_H,
     borderRadius: 16,
     overflow: "hidden",
-    backgroundColor: "#222",
+    backgroundColor: "#1A1A1A",
     marginRight: 10,
   },
   image: {
@@ -182,12 +183,13 @@ function PersonCard({
   isFollowing: boolean;
   onFollow: () => void;
 }) {
+  const C = useTheme();
   return (
     <Pressable
-      style={pc.card}
+      style={[pc.card, { backgroundColor: C.surface }]}
       onPress={() => router.push({ pathname: "/user/[id]", params: { id: person.id } })}
     >
-      <View style={pc.avatar}>
+      <View style={[pc.avatar, { backgroundColor: C.avatarBg }]}>
         {person.profileImage ? (
           <Image source={{ uri: person.profileImage }} style={pc.avatarImg} />
         ) : (
@@ -196,12 +198,12 @@ function PersonCard({
           </Text>
         )}
       </View>
-      <Text style={pc.username} numberOfLines={1}>@{person.username || "user"}</Text>
+      <Text style={[pc.username, { color: C.text }]} numberOfLines={1}>@{person.username || "user"}</Text>
       <Pressable
-        style={[pc.followBtn, isFollowing && pc.followingBtn]}
+        style={[pc.followBtn, { backgroundColor: C.buttonPrimary }, isFollowing && { backgroundColor: "transparent", borderWidth: 1, borderColor: C.border }]}
         onPress={(e) => { e.stopPropagation?.(); onFollow(); }}
       >
-        <Text style={[pc.followText, isFollowing && pc.followingText]}>
+        <Text style={[pc.followText, { color: C.buttonPrimaryText }, isFollowing && { color: C.textSecondary }]}>
           {isFollowing ? "Following" : "Follow"}
         </Text>
       </Pressable>
@@ -216,14 +218,12 @@ const pc = StyleSheet.create({
     marginRight: 12,
     paddingVertical: 16,
     paddingHorizontal: 8,
-    backgroundColor: "#F8F8F8",
     borderRadius: 16,
   },
   avatar: {
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: "#222",
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",
@@ -242,28 +242,17 @@ const pc = StyleSheet.create({
   username: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#111",
     textAlign: "center",
     marginBottom: 10,
   },
   followBtn: {
-    backgroundColor: "#111",
     paddingVertical: 6,
     paddingHorizontal: 14,
     borderRadius: 999,
   },
-  followingBtn: {
-    backgroundColor: "transparent",
-    borderWidth: 1,
-    borderColor: "#ddd",
-  },
   followText: {
-    color: "#fff",
     fontSize: 11,
     fontWeight: "800",
-  },
-  followingText: {
-    color: "#888",
   },
 });
 
@@ -282,6 +271,7 @@ function ActivityCard({
   youHaveThisSaved: boolean;
   onSave?: () => void;
 }) {
+  const C = useTheme();
   const imageUrl = post.imageUrl || post.media?.[0]?.url;
 
   const shortDate = () => {
@@ -292,7 +282,7 @@ function ActivityCard({
 
   return (
     <Pressable
-      style={ac.card}
+      style={[ac.card, { backgroundColor: C.surface }]}
       onPress={() =>
         router.push({ pathname: "/user/[id]", params: { id: author.userId } })
       }
@@ -302,34 +292,34 @@ function ActivityCard({
           {author.profileImage ? (
             <Image source={{ uri: author.profileImage }} style={ac.avatar} />
           ) : (
-            <View style={ac.avatarFallback}>
+            <View style={[ac.avatarFallback, { backgroundColor: C.avatarBg }]}>
               <Text style={ac.avatarText}>
                 {author.username?.charAt(0)?.toUpperCase() || "?"}
               </Text>
             </View>
           )}
-          <Text style={ac.username} numberOfLines={1}>@{author.username || "user"}</Text>
+          <Text style={[ac.username, { color: C.textSecondary }]} numberOfLines={1}>@{author.username || "user"}</Text>
         </View>
-        <Text style={ac.title} numberOfLines={2}>{post.title}</Text>
-        <Text style={ac.meta}>
+        <Text style={[ac.title, { color: C.text }]} numberOfLines={2}>{post.title}</Text>
+        <Text style={[ac.meta, { color: C.textTertiary }]}>
           {[post.category, shortDate()].filter(Boolean).join(" · ")}
         </Text>
         {youHaveThisSaved && (
-          <Text style={ac.savedNote}>You have this saved too ✓</Text>
+          <Text style={[ac.savedNote, { color: C.accent }]}>You have this saved too ✓</Text>
         )}
         {onSave && (
-          <Pressable style={ac.saveBtn} onPress={onSave}>
-            <Text style={ac.saveBtnText}>+ Save</Text>
+          <Pressable style={[ac.saveBtn, { backgroundColor: C.buttonPrimary }]} onPress={onSave}>
+            <Text style={[ac.saveBtnText, { color: C.buttonPrimaryText }]}>+ Save</Text>
           </Pressable>
         )}
         {!onSave && isSaved && (
-          <Text style={ac.savedPill}>Saved ✓</Text>
+          <Text style={[ac.savedPill, { color: C.textTertiary }]}>Saved ✓</Text>
         )}
       </View>
       {imageUrl ? (
         <Image source={{ uri: imageUrl }} style={ac.thumb} resizeMode="cover" />
       ) : (
-        <View style={[ac.thumb, ac.thumbFallback]} />
+        <View style={[ac.thumb, { backgroundColor: C.surfaceElevated }]} />
       )}
     </Pressable>
   );
@@ -339,7 +329,6 @@ const ac = StyleSheet.create({
   card: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F8F8F8",
     borderRadius: 14,
     padding: 12,
     marginHorizontal: 18,
@@ -365,7 +354,6 @@ const ac = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: "#222",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -377,43 +365,36 @@ const ac = StyleSheet.create({
   username: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#777",
     flex: 1,
   },
   title: {
     fontSize: 15,
     fontWeight: "800",
-    color: "#111",
     lineHeight: 20,
   },
   meta: {
     fontSize: 12,
-    color: "#aaa",
     fontWeight: "500",
   },
   savedNote: {
     fontSize: 11,
-    color: "#16a34a",
     fontWeight: "600",
     marginTop: 2,
   },
   saveBtn: {
     alignSelf: "flex-start",
     marginTop: 6,
-    backgroundColor: "#111",
     paddingVertical: 5,
     paddingHorizontal: 12,
     borderRadius: 999,
   },
   saveBtnText: {
-    color: "#fff",
     fontSize: 12,
     fontWeight: "700",
   },
   savedPill: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#aaa",
     marginTop: 4,
   },
   thumb: {
@@ -422,14 +403,14 @@ const ac = StyleSheet.create({
     borderRadius: 10,
     flexShrink: 0,
   },
-  thumbFallback: {
-    backgroundColor: "#E0E0E0",
-  },
 });
 
 // ── Main screen ──────────────────────────────────────────────────────────────
 
 export default function HomeScreen() {
+  const C = useTheme();
+  const styles = useMemo(() => makeHomeStyles(C), [C]);
+
   const [user, setUser] = useState<User | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const didLoadRef = useRef(false);
@@ -917,73 +898,75 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  content: {
-    paddingTop: 72,
-    paddingBottom: 20,
-  },
+function makeHomeStyles(C: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: C.background,
+    },
+    content: {
+      paddingTop: 72,
+      paddingBottom: 20,
+    },
 
-  // Header
-  header: {
-    paddingHorizontal: 18,
-    marginBottom: 28,
-  },
-  greeting: {
-    fontSize: 26,
-    fontWeight: "900",
-    color: "#111",
-    lineHeight: 32,
-  },
-  subGreeting: {
-    marginTop: 6,
-    fontSize: 15,
-    color: "#888",
-    fontWeight: "500",
-    lineHeight: 21,
-  },
+    // Header
+    header: {
+      paddingHorizontal: 18,
+      marginBottom: 28,
+    },
+    greeting: {
+      fontSize: 26,
+      fontWeight: "900",
+      color: C.text,
+      lineHeight: 32,
+    },
+    subGreeting: {
+      marginTop: 6,
+      fontSize: 15,
+      color: C.textSecondary,
+      fontWeight: "500",
+      lineHeight: 21,
+    },
 
-  // Sections
-  section: {
-    marginBottom: 32,
-  },
-  hScroll: {
-    paddingHorizontal: 18,
-    paddingBottom: 4,
-  },
+    // Sections
+    section: {
+      marginBottom: 32,
+    },
+    hScroll: {
+      paddingHorizontal: 18,
+      paddingBottom: 4,
+    },
 
-  // Empty state
-  emptyState: {
-    marginTop: 60,
-    alignItems: "center",
-    paddingHorizontal: 40,
-  },
-  emptyTitle: {
-    fontSize: 22,
-    fontWeight: "900",
-    color: "#111",
-    textAlign: "center",
-  },
-  emptySub: {
-    marginTop: 10,
-    fontSize: 15,
-    color: "#888",
-    textAlign: "center",
-    lineHeight: 22,
-  },
-  emptyBtn: {
-    marginTop: 24,
-    backgroundColor: "#111",
-    paddingVertical: 14,
-    paddingHorizontal: 28,
-    borderRadius: 999,
-  },
-  emptyBtnText: {
-    color: "#fff",
-    fontWeight: "800",
-    fontSize: 15,
-  },
-});
+    // Empty state
+    emptyState: {
+      marginTop: 60,
+      alignItems: "center",
+      paddingHorizontal: 40,
+    },
+    emptyTitle: {
+      fontSize: 22,
+      fontWeight: "900",
+      color: C.text,
+      textAlign: "center",
+    },
+    emptySub: {
+      marginTop: 10,
+      fontSize: 15,
+      color: C.textSecondary,
+      textAlign: "center",
+      lineHeight: 22,
+    },
+    emptyBtn: {
+      marginTop: 24,
+      backgroundColor: C.buttonPrimary,
+      paddingVertical: 14,
+      paddingHorizontal: 28,
+      borderRadius: 999,
+    },
+    emptyBtnText: {
+      color: C.buttonPrimaryText,
+      fontWeight: "800",
+      fontSize: 15,
+    },
+  });
+}

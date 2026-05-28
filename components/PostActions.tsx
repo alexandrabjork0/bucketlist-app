@@ -6,12 +6,16 @@ import {
     runTransaction,
     serverTimestamp,
 } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { auth, db } from "../lib/firebaseConfig";
 import { createNotification } from "../lib/notifications";
+import { ThemeColors, useTheme } from "../lib/theme";
 
 export default function PostActions({ postId, authorId }: { postId: string; authorId: string }) {
+  const C = useTheme();
+  const styles = useMemo(() => makeStyles(C), [C]);
+
   const user = auth.currentUser;
 
   const [liked, setLiked] = useState(false);
@@ -77,7 +81,7 @@ export default function PostActions({ postId, authorId }: { postId: string; auth
         <Ionicons
           name={liked ? "heart" : "heart-outline"}
           size={28}
-          color={liked ? "#ff3040" : "#111"}
+          color={liked ? "#ff3040" : C.text}
         />
       </Pressable>
       <Text style={styles.likesText}>
@@ -87,18 +91,20 @@ export default function PostActions({ postId, authorId }: { postId: string; auth
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    marginTop: 12,
-    marginBottom: 4,
-  },
-  iconButton: {
-    paddingVertical: 4,
-    marginBottom: 6,
-  },
-  likesText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#111",
-  },
-});
+function makeStyles(C: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      marginTop: 12,
+      marginBottom: 4,
+    },
+    iconButton: {
+      paddingVertical: 4,
+      marginBottom: 6,
+    },
+    likesText: {
+      fontSize: 14,
+      fontWeight: "700",
+      color: C.text,
+    },
+  });
+}

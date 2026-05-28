@@ -11,7 +11,7 @@ import {
     runTransaction,
     serverTimestamp,
 } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
     Modal,
     Pressable,
@@ -23,8 +23,12 @@ import {
 } from "react-native";
 import { auth, db } from "../lib/firebaseConfig";
 import { createNotification } from "../lib/notifications";
+import { ThemeColors, useTheme } from "../lib/theme";
   
   export default function PostComments({ postId, authorId }: { postId: string; authorId: string }) {
+    const C = useTheme();
+    const styles = useMemo(() => makeStyles(C), [C]);
+
     const [comments, setComments] = useState<any[]>([]);
     const [text, setText] = useState("");
     const [expanded, setExpanded] = useState(false);
@@ -78,7 +82,7 @@ import { createNotification } from "../lib/notifications";
     return (
       <View style={styles.container}>
         <Pressable onPress={() => setExpanded(true)} style={styles.bubbleRow}>
-          <Ionicons name="chatbubble-outline" size={25} color="#111" />
+          <Ionicons name="chatbubble-outline" size={25} color={C.text} />
           <Text style={styles.countText}>
             {comments.length} {comments.length === 1 ? "comment" : "comments"}
           </Text>
@@ -139,91 +143,99 @@ import { createNotification } from "../lib/notifications";
     );
   }
 
-  const styles = StyleSheet.create({
-    container: {
-      marginTop: 8,
-    },
-    bubbleRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 8,
-      marginBottom: 8,
-    },
-    countText: {
-      fontSize: 14,
-      fontWeight: "700",
-      color: "#111",
-    },
-    comment: {
-      fontSize: 14,
-      marginBottom: 4,
-    },
-    username: {
-      fontWeight: "700",
-    },
-    addCommentText: {
-      fontSize: 14,
-      color: "#999",
-      marginTop: 6,
-    },
-    inputRow: {
-      flexDirection: "row",
-      marginTop: 8,
-      alignItems: "center",
-      gap: 8,
-    },
-    input: {
-      flex: 1,
-      backgroundColor: "#f2f2f2",
-      borderRadius: 16,
-      padding: 8,
-    },
-    post: {
-      marginLeft: 8,
-      fontWeight: "700",
-    },
-    modalOverlay: {
-      flex: 1,
-      backgroundColor: "rgba(0,0,0,0.45)",
-      justifyContent: "flex-end",
-    },
-    modalContent: {
-      backgroundColor: "#fff",
-      borderTopLeftRadius: 22,
-      borderTopRightRadius: 22,
-      paddingTop: 10,
-      paddingHorizontal: 16,
-      paddingBottom: 30,
-      maxHeight: "75%",
-    },
-    modalHandle: {
-      width: 42,
-      height: 4,
-      borderRadius: 2,
-      backgroundColor: "#ccc",
-      alignSelf: "center",
-      marginBottom: 12,
-    },
-    modalHeader: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 14,
-    },
-    modalTitle: {
-      fontSize: 18,
-      fontWeight: "800",
-    },
-    closeText: {
-      fontWeight: "700",
-      color: "#777",
-    },
-    commentsList: {
-      marginBottom: 12,
-    },
-    modalComment: {
-      fontSize: 15,
-      marginBottom: 12,
-      lineHeight: 21,
-    },
-  });
+  function makeStyles(C: ThemeColors) {
+    return StyleSheet.create({
+      container: {
+        marginTop: 8,
+      },
+      bubbleRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        marginBottom: 8,
+      },
+      countText: {
+        fontSize: 14,
+        fontWeight: "700",
+        color: C.text,
+      },
+      comment: {
+        fontSize: 14,
+        marginBottom: 4,
+        color: C.text,
+      },
+      username: {
+        fontWeight: "700",
+        color: C.text,
+      },
+      addCommentText: {
+        fontSize: 14,
+        color: C.textTertiary,
+        marginTop: 6,
+      },
+      inputRow: {
+        flexDirection: "row",
+        marginTop: 8,
+        alignItems: "center",
+        gap: 8,
+      },
+      input: {
+        flex: 1,
+        backgroundColor: C.inputBackground,
+        borderRadius: 16,
+        padding: 8,
+        color: C.text,
+      },
+      post: {
+        marginLeft: 8,
+        fontWeight: "700",
+        color: C.text,
+      },
+      modalOverlay: {
+        flex: 1,
+        backgroundColor: C.overlay,
+        justifyContent: "flex-end",
+      },
+      modalContent: {
+        backgroundColor: C.background,
+        borderTopLeftRadius: 22,
+        borderTopRightRadius: 22,
+        paddingTop: 10,
+        paddingHorizontal: 16,
+        paddingBottom: 30,
+        maxHeight: "75%",
+      },
+      modalHandle: {
+        width: 42,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: C.handle,
+        alignSelf: "center",
+        marginBottom: 12,
+      },
+      modalHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 14,
+      },
+      modalTitle: {
+        fontSize: 18,
+        fontWeight: "800",
+        color: C.text,
+      },
+      closeText: {
+        fontWeight: "700",
+        color: C.textSecondary,
+      },
+      commentsList: {
+        marginBottom: 12,
+      },
+      modalComment: {
+        fontSize: 15,
+        marginBottom: 12,
+        lineHeight: 21,
+        color: C.text,
+      },
+    });
+  }
