@@ -8,6 +8,7 @@ export interface CollectionData {
   name: string;
   isPrivate?: boolean;
   coverImages?: string[];
+  coverPhoto?: string;
   itemCount?: number;
   completedCount?: number;
   itemIds?: string[]; // legacy field, kept for backward compat
@@ -25,7 +26,7 @@ export default function CollectionCard({ collection, cardWidth, onPress, onLongP
   const C = useTheme();
   const styles = useMemo(() => makeStyles(C), [C]);
 
-  const { name, isPrivate, coverImages = [], itemCount, completedCount = 0, itemIds } = collection;
+  const { name, isPrivate, coverImages = [], coverPhoto, itemCount, completedCount = 0, itemIds } = collection;
   const total = itemCount ?? (itemIds?.length ?? 0);
   const progress = total > 0 ? completedCount / total : 0;
   const fillWidth = Math.round(progress * (cardWidth - 20));
@@ -37,7 +38,7 @@ export default function CollectionCard({ collection, cardWidth, onPress, onLongP
       onLongPress={onLongPress}
     >
       <View style={styles.imageWrapper}>
-        <CollectionCover images={coverImages} size={cardWidth} name={name} />
+        <CollectionCover images={coverImages} coverPhoto={coverPhoto} size={cardWidth} name={name} />
         {isPrivate && (
           <View style={styles.lockBadge}>
             <Text style={styles.lockIcon}>🔒</Text>

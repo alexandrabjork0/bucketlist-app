@@ -15,11 +15,22 @@ interface Props {
   images: string[];
   size: number;
   name?: string;
+  coverPhoto?: string;
 }
 
-export default function CollectionCover({ images, size, name = "" }: Props) {
+export default function CollectionCover({ images, size, name = "", coverPhoto }: Props) {
   const C = useTheme();
   const gap = C.background;
+
+  if (coverPhoto) {
+    return (
+      <Image
+        source={{ uri: coverPhoto }}
+        style={{ width: size, height: size }}
+        resizeMode="cover"
+      />
+    );
+  }
 
   const imgs = images.slice(0, 4);
   const half = Math.floor((size - 2) / 2);

@@ -1,3 +1,4 @@
+import * as ImagePicker from "expo-image-picker";
 import { Link, router, useFocusEffect } from "expo-router";
 import { signOut } from "firebase/auth";
 import {
@@ -11,7 +12,8 @@ import {
   serverTimestamp,
   where,
 } from "firebase/firestore";
-import { useCallback, useMemo, useState } from "react";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -31,10 +33,10 @@ import {
 } from "react-native";
 import CollectionCard from "../../components/CollectionCard";
 import PostThumbnail from "../../components/PostThumbnail";
-import { auth, db } from "../../lib/firebaseConfig";
+import { auth, db, storage } from "../../lib/firebaseConfig";
 import { ThemeColors, useTheme } from "../../lib/theme";
 
-type ActiveTab = "posts" | "collections";
+type ActiveTab = "collections" | "posts";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CARD_GAP = 12;
@@ -44,15 +46,17 @@ const CARD_WIDTH = Math.floor((SCREEN_WIDTH - CARD_PAD * 2 - CARD_GAP) / 2);
 export default function ProfileScreen() {
   const C = useTheme();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const pagerRef = useRef<ScrollView>(null);
 
   const [profile, setProfile] = useState<any>(null);
   const [completedItems, setCompletedItems] = useState<any[]>([]);
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
-  const [activeTab, setActiveTab] = useState<ActiveTab>("posts");
+  const [activeTab, setActiveTab] = useState<ActiveTab>("collections");
   const [collections, setCollections] = useState<any[]>([]);
   const [createSheetOpen, setCreateSheetOpen] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState("");
+  const [newCollectionCover, setNewCollectionCover] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [followListType, setFollowListType] = useState<"followers" | "following" | null>(null);
   const [followListUsers, setFollowListUsers] = useState<any[]>([]);
@@ -102,15 +106,39 @@ export default function ProfileScreen() {
     setCollections(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
   };
 
+  const pickCoverPhoto = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: "images",
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets[0]) {
+      setNewCollectionCover(result.assets[0].uri);
+    }
+  };
+
   const createCollection = async () => {
     if (!auth.currentUser || !newCollectionName.trim()) return;
     setCreating(true);
     try {
+      let coverPhoto: string | undefined;
+
+      if (newCollectionCover) {
+        const uid = auth.currentUser.uid;
+        const resp = await fetch(newCollectionCover);
+        const blob = await resp.blob();
+        const storageRef = ref(storage, `collections/${uid}/${Date.now()}.jpg`);
+        await uploadBytes(storageRef, blob);
+        coverPhoto = await getDownloadURL(storageRef);
+      }
+
       await addDoc(collection(db, "collections"), {
         userId: auth.currentUser.uid,
         name: newCollectionName.trim(),
         isPrivate: false,
         coverImages: [],
+        ...(coverPhoto ? { coverPhoto } : {}),
         itemCount: 0,
         completedCount: 0,
         order: 0,
@@ -118,6 +146,7 @@ export default function ProfileScreen() {
         updatedAt: serverTimestamp(),
       });
       setNewCollectionName("");
+      setNewCollectionCover(null);
       setCreateSheetOpen(false);
       await reloadCollections();
     } finally {
@@ -137,6 +166,12 @@ export default function ProfileScreen() {
         },
       },
     ]);
+  };
+
+  const switchTab = (tab: ActiveTab) => {
+    setActiveTab(tab);
+    const index = tab === "collections" ? 0 : 1;
+    pagerRef.current?.scrollTo({ x: index * SCREEN_WIDTH, animated: true });
   };
 
   const openFollowList = async (type: "followers" | "following") => {
@@ -161,8 +196,54 @@ export default function ProfileScreen() {
 
   // ── Tab renderers ──────────────────────────────────────────────────────────
 
+  const renderCollections = () => (
+    <ScrollView
+      style={{ width: SCREEN_WIDTH }}
+      contentContainerStyle={{ paddingTop: 20, paddingBottom: 48 }}
+      showsVerticalScrollIndicator={false}
+      nestedScrollEnabled
+    >
+      <View style={styles.collectionsGrid}>
+        {/* New collection card — inline with the grid */}
+        <Pressable
+          style={[styles.newCollCard, { width: CARD_WIDTH, height: CARD_WIDTH }]}
+          onPress={() => setCreateSheetOpen(true)}
+        >
+          <View style={styles.newCollIconCircle}>
+            <Text style={styles.newCollPlus}>+</Text>
+          </View>
+          <Text style={styles.newCollCardText}>New{"\n"}collection</Text>
+        </Pressable>
+
+        {collections.map((coll) => (
+          <CollectionCard
+            key={coll.id}
+            collection={coll}
+            cardWidth={CARD_WIDTH}
+            onPress={() =>
+              router.push({ pathname: "/collection/[id]", params: { id: coll.id } })
+            }
+            onLongPress={() => deleteCollection(coll.id, coll.name)}
+          />
+        ))}
+      </View>
+
+      {collections.length === 0 && (
+        <Text style={styles.emptyText}>
+          Collections are your personal boards — Japan 2027, Dream Honeymoon, Food Goals…{"\n"}
+          Create one and start saving experiences.
+        </Text>
+      )}
+    </ScrollView>
+  );
+
   const renderPosts = () => (
-    <View style={styles.scene}>
+    <ScrollView
+      style={{ width: SCREEN_WIDTH }}
+      contentContainerStyle={{ paddingTop: 20, paddingBottom: 48 }}
+      showsVerticalScrollIndicator={false}
+      nestedScrollEnabled
+    >
       {completedItems.length === 0 ? (
         <Text style={styles.emptyText}>
           No posts yet. Complete an experience to see it here.
@@ -180,46 +261,14 @@ export default function ProfileScreen() {
           ))}
         </View>
       )}
-    </View>
-  );
-
-  const renderCollections = () => (
-    <View style={styles.scene}>
-      <Pressable
-        style={styles.newCollBtn}
-        onPress={() => setCreateSheetOpen(true)}
-      >
-        <Text style={styles.newCollBtnText}>＋ New collection</Text>
-      </Pressable>
-
-      {collections.length === 0 ? (
-        <Text style={styles.emptyText}>
-          Collections are your personal boards — Japan 2027, Dream Honeymoon, Food Goals…{"\n"}
-          Create one and start saving experiences.
-        </Text>
-      ) : (
-        <View style={styles.collectionsGrid}>
-          {collections.map((coll) => (
-            <CollectionCard
-              key={coll.id}
-              collection={coll}
-              cardWidth={CARD_WIDTH}
-              onPress={() =>
-                router.push({ pathname: "/collection/[id]", params: { id: coll.id } })
-              }
-              onLongPress={() => deleteCollection(coll.id, coll.name)}
-            />
-          ))}
-        </View>
-      )}
-    </View>
+    </ScrollView>
   );
 
   // ── Root render ────────────────────────────────────────────────────────────
 
   return (
     <>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <View style={styles.container}>
         {/* Profile header */}
         <View style={styles.profileHeader}>
           <View style={styles.headerRow}>
@@ -271,22 +320,20 @@ export default function ProfileScreen() {
             </Pressable>
           </View>
 
-          {profile?.bio ? (
-            <Text style={styles.bio}>{profile.bio}</Text>
-          ) : null}
+          {profile?.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
 
           <Link href="/edit-profile" style={styles.editBtn}>
             Edit profile
           </Link>
         </View>
 
-        {/* Tabs */}
+        {/* Tab bar */}
         <View style={styles.tabs}>
-          {(["posts", "collections"] as ActiveTab[]).map((tab) => (
+          {(["collections", "posts"] as ActiveTab[]).map((tab) => (
             <Pressable
               key={tab}
               style={[styles.tab, activeTab === tab && styles.tabActive]}
-              onPress={() => setActiveTab(tab)}
+              onPress={() => switchTab(tab)}
             >
               <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -295,9 +342,23 @@ export default function ProfileScreen() {
           ))}
         </View>
 
-        {activeTab === "posts" && renderPosts()}
-        {activeTab === "collections" && renderCollections()}
-      </ScrollView>
+        {/* Horizontal swipeable pages */}
+        <ScrollView
+          ref={pagerRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          scrollEventThrottle={16}
+          onMomentumScrollEnd={(e) => {
+            const page = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+            setActiveTab(page === 0 ? "collections" : "posts");
+          }}
+          style={{ flex: 1 }}
+        >
+          {renderCollections()}
+          {renderPosts()}
+        </ScrollView>
+      </View>
 
       {/* Followers / Following list sheet */}
       <Modal
@@ -360,12 +421,16 @@ export default function ProfileScreen() {
         visible={createSheetOpen}
         transparent
         animationType="slide"
-        onRequestClose={() => setCreateSheetOpen(false)}
+        onRequestClose={() => {
+          setCreateSheetOpen(false);
+          setNewCollectionCover(null);
+        }}
       >
         <TouchableWithoutFeedback
           onPress={() => {
             Keyboard.dismiss();
             setCreateSheetOpen(false);
+            setNewCollectionCover(null);
           }}
         >
           <View style={styles.overlay} />
@@ -381,6 +446,18 @@ export default function ProfileScreen() {
             <Text style={styles.sheetSubtitle}>
               Give your collection a name — Japan 2027, Dream Honeymoon, Food Goals…
             </Text>
+
+            {/* Cover photo picker */}
+            <Pressable style={styles.coverPickerBtn} onPress={pickCoverPhoto}>
+              {newCollectionCover ? (
+                <Image source={{ uri: newCollectionCover }} style={styles.coverPreview} />
+              ) : (
+                <View style={styles.coverPickerEmpty}>
+                  <Text style={styles.coverPickerIcon}>+</Text>
+                  <Text style={styles.coverPickerLabel}>Cover photo</Text>
+                </View>
+              )}
+            </Pressable>
 
             <TextInput
               style={styles.sheetInput}
@@ -405,7 +482,10 @@ export default function ProfileScreen() {
 
             <Pressable
               style={styles.sheetCancel}
-              onPress={() => setCreateSheetOpen(false)}
+              onPress={() => {
+                setCreateSheetOpen(false);
+                setNewCollectionCover(null);
+              }}
             >
               <Text style={styles.sheetCancelText}>Cancel</Text>
             </Pressable>
@@ -477,11 +557,6 @@ function makeStyles(C: ThemeColors) {
       alignItems: "center",
       paddingHorizontal: 4,
     },
-    statDivider: {
-      width: 1,
-      height: 24,
-      backgroundColor: C.border,
-    },
     statNumber: {
       fontSize: 18,
       fontWeight: "800",
@@ -535,11 +610,6 @@ function makeStyles(C: ThemeColors) {
     tabTextActive: {
       color: C.text,
     },
-    scene: {
-      flex: 1,
-      backgroundColor: C.background,
-      paddingTop: 20,
-    },
     grid: {
       flexDirection: "row",
       flexWrap: "wrap",
@@ -551,24 +621,81 @@ function makeStyles(C: ThemeColors) {
       lineHeight: 22,
       paddingHorizontal: 40,
     },
-    newCollBtn: {
-      backgroundColor: C.buttonPrimary,
-      padding: 15,
-      borderRadius: 16,
-      alignItems: "center",
-      marginHorizontal: CARD_PAD,
-      marginBottom: 20,
-    },
-    newCollBtnText: {
-      color: C.buttonPrimaryText,
-      fontWeight: "800",
-      fontSize: 15,
-    },
     collectionsGrid: {
       flexDirection: "row",
       flexWrap: "wrap",
       gap: CARD_GAP,
       paddingHorizontal: CARD_PAD,
+    },
+
+    // New collection card
+    newCollCard: {
+      borderRadius: 14,
+      backgroundColor: C.surface,
+      borderWidth: 1,
+      borderColor: C.border,
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 10,
+    },
+    newCollIconCircle: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      borderWidth: 1.5,
+      borderColor: C.textTertiary,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    newCollPlus: {
+      fontSize: 26,
+      fontWeight: "300",
+      color: C.textTertiary,
+      lineHeight: 30,
+    },
+    newCollCardText: {
+      fontSize: 12,
+      fontWeight: "700",
+      color: C.textTertiary,
+      textAlign: "center",
+      lineHeight: 17,
+    },
+
+    // Cover photo picker
+    coverPickerBtn: {
+      alignSelf: "center",
+      marginBottom: 16,
+      width: 100,
+      height: 100,
+      borderRadius: 14,
+      overflow: "hidden",
+    },
+    coverPreview: {
+      width: 100,
+      height: 100,
+      resizeMode: "cover",
+    },
+    coverPickerEmpty: {
+      width: 100,
+      height: 100,
+      borderRadius: 14,
+      backgroundColor: C.surface,
+      borderWidth: 1,
+      borderColor: C.border,
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6,
+    },
+    coverPickerIcon: {
+      fontSize: 22,
+      fontWeight: "300",
+      color: C.textTertiary,
+      lineHeight: 26,
+    },
+    coverPickerLabel: {
+      fontSize: 11,
+      fontWeight: "600",
+      color: C.textTertiary,
     },
 
     // Sheet
