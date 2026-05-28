@@ -124,6 +124,10 @@ export default function UserProfileScreen() {
 
         {/* Avatar row + back button */}
         <View style={styles.headerRow}>
+          <Pressable onPress={() => router.back()} hitSlop={12}>
+            <Text style={styles.backBtn}>‹</Text>
+          </Pressable>
+
           <View style={styles.headerLeft}>
             <View style={styles.avatar}>
               {profile?.profileImage ? (
@@ -136,10 +140,6 @@ export default function UserProfileScreen() {
             </View>
             <Text style={styles.username}>@{profile?.username || "loading"}</Text>
           </View>
-
-          <Pressable onPress={() => router.back()} hitSlop={12}>
-            <Text style={styles.backBtn}>‹</Text>
-          </Pressable>
         </View>
 
         {/* Stats — same floating style as own profile */}
@@ -254,8 +254,8 @@ function makeStyles(C: ThemeColors) {
     },
     headerRow: {
       flexDirection: "row",
-      justifyContent: "space-between",
       alignItems: "center",
+      gap: 12,
     },
     headerLeft: {
       flexDirection: "row",
@@ -265,8 +265,8 @@ function makeStyles(C: ThemeColors) {
     backBtn: {
       fontSize: 28,
       fontWeight: "700",
-      color: C.textSecondary,
-      paddingHorizontal: 6,
+      color: C.text,
+      paddingRight: 4,
       marginTop: -2,
     },
     avatar: {

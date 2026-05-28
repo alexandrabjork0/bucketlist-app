@@ -24,13 +24,12 @@ import {
   View,
 } from "react-native";
 import CollectionPickerSheet from "../../components/CollectionPickerSheet";
+import PostThumbnail from "../../components/PostThumbnail";
 import { auth, db } from "../../lib/firebaseConfig";
 import { ThemeColors, useTheme } from "../../lib/theme";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const HERO_HEIGHT = SCREEN_WIDTH * 1.05;
-const GRID_GAP = 2;
-const TILE_SIZE = Math.floor((SCREEN_WIDTH - GRID_GAP * 2) / 3);
 
 const CATEGORY_BG: Record<string, string> = {
   Travel: "#1a5f7a",
@@ -215,28 +214,18 @@ export default function ExperienceScreen() {
               <Text style={styles.gridCount}>{posts.length}</Text>
             </View>
             <View style={styles.grid}>
-              {posts.map((post) => {
-                const imageUrl = post.imageUrl || post.media?.[0]?.url;
-                return (
-                  <Pressable
-                    key={post.id}
-                    style={styles.gridTile}
-                    onPress={() =>
-                      router.push({ pathname: "/post/[id]", params: { id: post.id } })
-                    }
-                  >
-                    {imageUrl ? (
-                      <Image
-                        source={{ uri: imageUrl }}
-                        style={styles.gridTileImage}
-                        resizeMode="cover"
-                      />
-                    ) : (
-                      <View style={[styles.gridTileImage, { backgroundColor: C.surfaceElevated }]} />
-                    )}
-                  </Pressable>
-                );
-              })}
+              {posts.map((post) => (
+                <PostThumbnail
+                  key={post.id}
+                  post={post}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/post-feed/[id]",
+                      params: { id: post.id, mode: "experience", filterId: String(id) },
+                    })
+                  }
+                />
+              ))}
             </View>
           </View>
         ) : (
@@ -443,15 +432,6 @@ function makeStyles(C: ThemeColors) {
     grid: {
       flexDirection: "row",
       flexWrap: "wrap",
-      gap: GRID_GAP,
-    },
-    gridTile: {
-      width: TILE_SIZE,
-      height: TILE_SIZE,
-    },
-    gridTileImage: {
-      width: TILE_SIZE,
-      height: TILE_SIZE,
     },
     emptyPosts: {
       paddingHorizontal: 20,

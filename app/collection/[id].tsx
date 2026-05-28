@@ -181,7 +181,10 @@ export default function CollectionDetailScreen() {
                   key={item.id}
                   post={item}
                   onPress={() =>
-                    router.push({ pathname: "/post/[id]", params: { id: item.id } })
+                    router.push({
+                      pathname: "/post-feed/[id]",
+                      params: { id: item.id, mode: "collection", filterId: id },
+                    })
                   }
                 />
               ))}
@@ -199,7 +202,10 @@ export default function CollectionDetailScreen() {
                   style={styles.itemInfo}
                   onPress={() => {
                     if (item.completed) {
-                      router.push({ pathname: "/post/[id]", params: { id: item.id } });
+                      router.push({
+                        pathname: "/post-feed/[id]",
+                        params: { id: item.id, mode: "collection", filterId: id },
+                      });
                     } else if (isOwner) {
                       router.push({
                         pathname: "/complete-item/[id]",

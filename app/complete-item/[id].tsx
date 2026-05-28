@@ -473,7 +473,7 @@ function makeStyles(C: ThemeColors) {
     actionText: {
       fontSize: 16,
       fontWeight: "900",
-      color: "#007AFF",
+      color: C.text,
     },
 
     actionTextDisabled: {

@@ -11,7 +11,7 @@ import {
     updateDoc,
     where,
 } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
@@ -21,17 +21,23 @@ import {
     Text,
     View,
 } from "react-native";
+import CollectionPickerSheet from "../../components/CollectionPickerSheet";
 import { auth, db } from "../../lib/firebaseConfig";
 import { createNotification } from "../../lib/notifications";
 import PostCard from "../../components/PostCard";
+import { ThemeColors, useTheme } from "../../lib/theme";
 
 export default function ExplorePostScreen() {
+  const C = useTheme();
+  const styles = useMemo(() => makeStyles(C), [C]);
+
   const { id } = useLocalSearchParams();
 
   const [post, setPost] = useState<any>(null);
   const [author, setAuthor] = useState<any>(null);
   const [isSaved, setIsSaved] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [pickerVisible, setPickerVisible] = useState(false);
 
   useEffect(() => {
     const loadPost = async () => {
@@ -74,11 +80,18 @@ export default function ExplorePostScreen() {
     loadPost();
   }, [id]);
 
-  const saveToBucketlist = async () => {
+  const saveToBucketlist = () => {
+    if (!auth.currentUser || !post) return;
+    setPickerVisible(true);
+  };
+
+  const handleCollectionSelected = async (collectionId: string, collectionName: string) => {
+    setPickerVisible(false);
     if (!auth.currentUser || !post) return;
 
     await addDoc(collection(db, "userBucketlistItems"), {
       userId: auth.currentUser.uid,
+      collectionId,
       title: post.title,
       category: post.category,
       completed: false,
@@ -99,8 +112,12 @@ export default function ExplorePostScreen() {
       }).catch(() => {});
     }
 
+    updateDoc(doc(db, "collections", collectionId), {
+      itemCount: increment(1),
+      updatedAt: serverTimestamp(),
+    }).catch(() => {});
+
     setIsSaved(true);
-    Alert.alert("Added", `${post.title} was added to your bucketlist.`);
 
     createNotification({
       recipientId: post.userId,
@@ -113,7 +130,7 @@ export default function ExplorePostScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator />
+        <ActivityIndicator color={C.textSecondary} />
       </View>
     );
   }
@@ -129,62 +146,75 @@ export default function ExplorePostScreen() {
   const isOwnPost = post.userId === auth.currentUser?.uid;
 
   return (
-    <View style={styles.container}>
-      <View style={styles.topBar}>
-        <Pressable onPress={() => router.back()}>
-          <Text style={styles.backText}>Back</Text>
-        </Pressable>
+    <>
+      <View style={styles.container}>
+        <View style={styles.topBar}>
+          <Pressable onPress={() => router.back()}>
+            <Text style={styles.backText}>Back</Text>
+          </Pressable>
 
-        <Text style={styles.topTitle}>Post</Text>
+          <Text style={styles.topTitle}>Post</Text>
 
-        <View style={{ width: 45 }} />
+          <View style={{ width: 45 }} />
+        </View>
+
+        <ScrollView style={styles.feed}>
+          <PostCard
+            post={post}
+            author={author}
+            onSave={!isOwnPost && !isSaved ? saveToBucketlist : undefined}
+            saveDone={!isOwnPost && isSaved}
+          />
+        </ScrollView>
       </View>
 
-      <ScrollView style={styles.feed}>
-        <PostCard
-          post={post}
-          author={author}
-          onSave={!isOwnPost && !isSaved ? saveToBucketlist : undefined}
-          saveDone={!isOwnPost && isSaved}
-        />
-      </ScrollView>
-    </View>
+      <CollectionPickerSheet
+        visible={pickerVisible}
+        onClose={() => setPickerVisible(false)}
+        onSelect={handleCollectionSelected}
+      />
+    </>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  topBar: {
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  backText: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  topTitle: {
-    fontSize: 18,
-    fontWeight: "800",
-  },
-  feed: {
-    flex: 1,
-  },
-  errorText: {
-    color: "#777",
-    fontSize: 16,
-  },
-});
+function makeStyles(C: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: C.background,
+    },
+    center: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: C.background,
+    },
+    topBar: {
+      paddingTop: 60,
+      paddingHorizontal: 20,
+      paddingBottom: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: C.border,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    backText: {
+      fontSize: 16,
+      fontWeight: "700",
+      color: C.text,
+    },
+    topTitle: {
+      fontSize: 18,
+      fontWeight: "800",
+      color: C.text,
+    },
+    feed: {
+      flex: 1,
+    },
+    errorText: {
+      color: C.textTertiary,
+      fontSize: 16,
+    },
+  });
+}

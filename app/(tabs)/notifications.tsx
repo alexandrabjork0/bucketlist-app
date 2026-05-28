@@ -13,13 +13,17 @@ import {
   where,
   writeBatch,
 } from "firebase/firestore";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Dimensions, ScrollView, StyleSheet, Text, View } from "react-native";
 import { TabBar, TabView } from "react-native-tab-view";
 import NotificationRow from "../../components/NotificationRow";
 import { auth, db } from "../../lib/firebaseConfig";
+import { ThemeColors, useTheme } from "../../lib/theme";
 
 export default function NotificationsScreen() {
+  const C = useTheme();
+  const styles = useMemo(() => makeStyles(C), [C]);
+
   const [personalNotifs, setPersonalNotifs] = useState<any[]>([]);
   const [friendNotifs, setFriendNotifs] = useState<any[]>([]);
   const [tabIndex, setTabIndex] = useState(0);
@@ -122,8 +126,8 @@ export default function NotificationsScreen() {
             {...props}
             indicatorStyle={styles.tabIndicator}
             style={styles.tabBar}
-            activeColor="#111"
-            inactiveColor="#777"
+            activeColor={C.text}
+            inactiveColor={C.textTertiary}
           />
         )}
       />
@@ -131,38 +135,41 @@ export default function NotificationsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "800",
-    paddingTop: 70,
-    paddingHorizontal: 18,
-    paddingBottom: 10,
-  },
-  tabBar: {
-    backgroundColor: "#fff",
-    elevation: 0,
-    shadowOpacity: 0,
-  },
-  tabIndicator: {
-    backgroundColor: "#111",
-    height: 3,
-    borderRadius: 999,
-  },
-  scene: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  emptyText: {
-    paddingHorizontal: 20,
-    paddingTop: 40,
-    color: "#777",
-    fontSize: 15,
-    lineHeight: 22,
-    textAlign: "center",
-  },
-});
+function makeStyles(C: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: C.background,
+    },
+    title: {
+      fontSize: 22,
+      fontWeight: "800",
+      paddingTop: 70,
+      paddingHorizontal: 18,
+      paddingBottom: 10,
+      color: C.text,
+    },
+    tabBar: {
+      backgroundColor: C.background,
+      elevation: 0,
+      shadowOpacity: 0,
+    },
+    tabIndicator: {
+      backgroundColor: C.text,
+      height: 3,
+      borderRadius: 999,
+    },
+    scene: {
+      flex: 1,
+      backgroundColor: C.background,
+    },
+    emptyText: {
+      paddingHorizontal: 20,
+      paddingTop: 40,
+      color: C.textSecondary,
+      fontSize: 15,
+      lineHeight: 22,
+      textAlign: "center",
+    },
+  });
+}
