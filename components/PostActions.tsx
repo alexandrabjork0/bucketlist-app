@@ -1,10 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import {
-    doc,
-    increment,
-    onSnapshot,
-    runTransaction,
-    serverTimestamp,
+  doc,
+  increment,
+  onSnapshot,
+  runTransaction,
+  serverTimestamp,
 } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
@@ -12,12 +12,25 @@ import { auth, db } from "../lib/firebaseConfig";
 import { createNotification } from "../lib/notifications";
 import { ThemeColors, useTheme } from "../lib/theme";
 
-export default function PostActions({ postId, authorId }: { postId: string; authorId: string }) {
+interface Props {
+  postId: string;
+  authorId: string;
+  onCommentPress: () => void;
+  onSave?: () => void;
+  savedCount?: number;
+}
+
+export default function PostActions({
+  postId,
+  authorId,
+  onCommentPress,
+  onSave,
+  savedCount = 0,
+}: Props) {
   const C = useTheme();
   const styles = useMemo(() => makeStyles(C), [C]);
 
   const user = auth.currentUser;
-
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
 
@@ -27,19 +40,16 @@ export default function PostActions({ postId, authorId }: { postId: string; auth
     const postRef = doc(db, "userBucketlistItems", postId);
     const likeRef = doc(db, "userBucketlistItems", postId, "likes", user.uid);
 
-    const unsubscribePost = onSnapshot(postRef, (snap) => {
-      if (snap.exists()) {
-        setLikesCount(snap.data().likesCount || 0);
-      }
+    const unsubPost = onSnapshot(postRef, (snap) => {
+      if (snap.exists()) setLikesCount(snap.data().likesCount || 0);
     });
-
-    const unsubscribeLike = onSnapshot(likeRef, (snap) => {
+    const unsubLike = onSnapshot(likeRef, (snap) => {
       setLiked(snap.exists());
     });
 
     return () => {
-      unsubscribePost();
-      unsubscribeLike();
+      unsubPost();
+      unsubLike();
     };
   }, [postId, user]);
 
@@ -51,17 +61,16 @@ export default function PostActions({ postId, authorId }: { postId: string; auth
 
     const postRef = doc(db, "userBucketlistItems", postId);
     const likeRef = doc(db, "userBucketlistItems", postId, "likes", user.uid);
-
     const wasLiked = liked;
 
-    await runTransaction(db, async (transaction) => {
-      const likeDoc = await transaction.get(likeRef);
+    await runTransaction(db, async (tx) => {
+      const likeDoc = await tx.get(likeRef);
       if (likeDoc.exists()) {
-        transaction.delete(likeRef);
-        transaction.update(postRef, { likesCount: increment(-1) });
+        tx.delete(likeRef);
+        tx.update(postRef, { likesCount: increment(-1) });
       } else {
-        transaction.set(likeRef, { userId: user.uid, createdAt: serverTimestamp() });
-        transaction.update(postRef, { likesCount: increment(1) });
+        tx.set(likeRef, { userId: user.uid, createdAt: serverTimestamp() });
+        tx.update(postRef, { likesCount: increment(1) });
       }
     });
 
@@ -77,13 +86,30 @@ export default function PostActions({ postId, authorId }: { postId: string; auth
 
   return (
     <View style={styles.container}>
-      <Pressable onPress={toggleLike} style={styles.iconButton}>
-        <Ionicons
-          name={liked ? "heart" : "heart-outline"}
-          size={28}
-          color={liked ? "#ff3040" : C.text}
-        />
-      </Pressable>
+      <View style={styles.iconRow}>
+        <Pressable onPress={toggleLike} style={styles.iconBtn} hitSlop={8}>
+          <Ionicons
+            name={liked ? "heart" : "heart-outline"}
+            size={26}
+            color={liked ? "#ff3040" : C.text}
+          />
+        </Pressable>
+
+        <Pressable onPress={onCommentPress} style={styles.iconBtn} hitSlop={8}>
+          <Ionicons name="chatbubble-outline" size={24} color={C.text} />
+        </Pressable>
+
+        {onSave && (
+          <Pressable onPress={onSave} style={styles.iconBtn} hitSlop={8}>
+            <Ionicons
+              name={savedCount > 0 ? "bookmark" : "bookmark-outline"}
+              size={24}
+              color={C.text}
+            />
+          </Pressable>
+        )}
+      </View>
+
       <Text style={styles.likesText}>
         {likesCount} {likesCount === 1 ? "like" : "likes"}
       </Text>
@@ -94,15 +120,20 @@ export default function PostActions({ postId, authorId }: { postId: string; auth
 function makeStyles(C: ThemeColors) {
   return StyleSheet.create({
     container: {
-      marginTop: 12,
-      marginBottom: 4,
+      marginTop: 10,
+      marginBottom: 2,
     },
-    iconButton: {
-      paddingVertical: 4,
+    iconRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 16,
       marginBottom: 6,
     },
+    iconBtn: {
+      padding: 2,
+    },
     likesText: {
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: "700",
       color: C.text,
     },

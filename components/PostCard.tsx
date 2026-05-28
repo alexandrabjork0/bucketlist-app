@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { auth } from "../lib/firebaseConfig";
 import { ThemeColors, useTheme } from "../lib/theme";
@@ -34,6 +34,7 @@ type Props = {
 export default function PostCard({ post, author, onSave, savedCount = 0, onDelete }: Props) {
   const C = useTheme();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const [commentOpen, setCommentOpen] = useState(false);
 
   const goToProfile = () => {
     if (author.userId === auth.currentUser?.uid) {
@@ -87,7 +88,13 @@ export default function PostCard({ post, author, onSave, savedCount = 0, onDelet
       <View style={styles.body}>
         <Text style={styles.title}>{post.title}</Text>
 
-        <PostActions postId={post.id} authorId={author.userId} />
+        <PostActions
+            postId={post.id}
+            authorId={author.userId}
+            onCommentPress={() => setCommentOpen(true)}
+            onSave={onSave}
+            savedCount={savedCount}
+          />
 
         {post.caption ? (
           <Text style={styles.caption}>
@@ -98,20 +105,15 @@ export default function PostCard({ post, author, onSave, savedCount = 0, onDelet
           </Text>
         ) : null}
 
-        <PostComments postId={post.id} authorId={author.userId} />
+        <PostComments
+            postId={post.id}
+            authorId={author.userId}
+            expanded={commentOpen}
+            onClose={() => setCommentOpen(false)}
+          />
 
         {date ? <Text style={styles.date}>{date}</Text> : null}
 
-        {onSave && (
-          <Pressable
-            style={[styles.saveButton, savedCount > 0 && styles.savedButton]}
-            onPress={onSave}
-          >
-            <Text style={[styles.saveButtonText, savedCount > 0 && styles.savedButtonText]}>
-              {savedCount > 0 ? "Saved ▾" : "Save to collection"}
-            </Text>
-          </Pressable>
-        )}
       </View>
     </View>
   );
@@ -199,27 +201,6 @@ function makeStyles(C: ThemeColors) {
       color: C.textTertiary,
       fontSize: 12,
       textTransform: "uppercase",
-    },
-    saveButton: {
-      marginTop: 16,
-      backgroundColor: C.buttonPrimary,
-      paddingVertical: 13,
-      borderRadius: 999,
-      alignItems: "center",
-    },
-    saveButtonText: {
-      color: C.buttonPrimaryText,
-      fontWeight: "800",
-      fontSize: 15,
-    },
-    savedButton: {
-      backgroundColor: C.surface,
-      borderWidth: 1,
-      borderColor: C.border,
-    },
-    savedButtonText: {
-      color: C.textSecondary,
-      fontWeight: "700",
     },
   });
 }
