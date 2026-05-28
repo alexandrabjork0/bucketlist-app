@@ -8,6 +8,7 @@ import {
   getDocs,
   increment,
   limit,
+  onSnapshot,
   orderBy,
   query,
   serverTimestamp,
@@ -17,6 +18,7 @@ import {
   where,
 } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
 import {
   Dimensions,
   Image,
@@ -37,13 +39,6 @@ const TILE_W = 150;
 const TILE_H = 205;
 const COLL_W = 160;
 const PERSON_W = 110;
-
-function getGreeting(): string {
-  const h = new Date().getHours();
-  if (h < 12) return "Good morning";
-  if (h < 17) return "Good afternoon";
-  return "Good evening";
-}
 
 // ── Section header ──────────────────────────────────────────────────────────
 
@@ -416,8 +411,7 @@ export default function HomeScreen() {
   const didLoadRef = useRef(false);
 
   // Content sections
-  const [username, setUsername] = useState("");
-  const [completedThisYear, setCompletedThisYear] = useState(0);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [myCollections, setMyCollections] = useState<any[]>([]);
   const [friendsPosts, setFriendsPosts] = useState<any[]>([]);
   const [trending, setTrending] = useState<any[]>([]);
@@ -445,6 +439,21 @@ export default function HomeScreen() {
     return unsub;
   }, []);
 
+  // ── Unread notification count ─────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    const unsub = onSnapshot(
+      query(
+        collection(db, "notifications"),
+        where("recipientId", "==", user.uid),
+        where("read", "==", false)
+      ),
+      (snap) => setUnreadCount(snap.size)
+    );
+    return unsub;
+  }, [user?.uid]);
+
   // ── Load on auth and on tab focus ────────────────────────────────────────
 
   useEffect(() => {
@@ -467,9 +476,8 @@ export default function HomeScreen() {
     didLoadRef.current = true;
 
     // ── Phase 1: independent queries ──────────────────────────────────────
-    const [userSnap, followsSnap, myCollSnap, myItemsSnap, trendingSnap] =
+    const [followsSnap, myCollSnap, myItemsSnap, trendingSnap] =
       await Promise.all([
-        getDoc(doc(db, "users", uid)),
         getDocs(query(collection(db, "follows"), where("followerId", "==", uid))),
         getDocs(query(collection(db, "collections"), where("userId", "==", uid))),
         getDocs(query(collection(db, "userBucketlistItems"), where("userId", "==", uid))),
@@ -477,9 +485,6 @@ export default function HomeScreen() {
           query(collection(db, "experiences"), orderBy("savesCount", "desc"), limit(8))
         ),
       ]);
-
-    // User profile
-    if (userSnap.exists()) setUsername(userSnap.data().username || "");
 
     // Following
     const fIds = followsSnap.docs.map((d) => d.data().followingId as string);
@@ -492,16 +497,9 @@ export default function HomeScreen() {
         .sort((a: any, b: any) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0))
     );
 
-    // My items — drive category analysis + "you saved this" + yearly stat
+    // My items — category analysis + "you saved this"
     const myItems = myItemsSnap.docs.map((d) => d.data() as any);
     setSavedTitles(new Set(myItems.map((i: any) => i.title)));
-    const thisYear = new Date().getFullYear();
-    setCompletedThisYear(
-      myItems.filter((i: any) => {
-        if (!i.completed || !i.completedAt?.seconds) return false;
-        return new Date(i.completedAt.seconds * 1000).getFullYear() === thisYear;
-      }).length
-    );
     const catCount: Record<string, number> = {};
     myItems.forEach((i: any) => {
       if (i.category) catCount[i.category] = (catCount[i.category] || 0) + 1;
@@ -707,20 +705,16 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
       >
-        {/* ── Greeting header ── */}
-        <View style={styles.header}>
-          <Text style={styles.greeting}>
-            {getGreeting()}{username ? `, ${username}` : ""}.
-          </Text>
-          {completedThisYear > 0 ? (
-            <Text style={styles.subGreeting}>
-              {completedThisYear} experience{completedThisYear !== 1 ? "s" : ""} completed this year. Keep going.
-            </Text>
-          ) : (
-            <Text style={styles.subGreeting}>
-              Start building the life you want.
-            </Text>
-          )}
+        {/* ── Top bar ── */}
+        <View style={styles.topBar}>
+          <Text style={styles.topBarTitle}>Home</Text>
+          <Pressable
+            style={styles.bellBtn}
+            onPress={() => router.push("/notifications")}
+          >
+            <Ionicons name="notifications-outline" size={24} color={C.text} />
+            {unreadCount > 0 && <View style={styles.bellBadge} />}
+          </Pressable>
         </View>
 
         {/* ── My collections strip ── */}
@@ -905,27 +899,39 @@ function makeHomeStyles(C: ThemeColors) {
       backgroundColor: C.background,
     },
     content: {
-      paddingTop: 72,
+      paddingTop: 0,
       paddingBottom: 20,
     },
 
-    // Header
-    header: {
+    // Top bar
+    topBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
       paddingHorizontal: 18,
-      marginBottom: 28,
+      paddingTop: 60,
+      paddingBottom: 16,
+      marginBottom: 4,
     },
-    greeting: {
-      fontSize: 26,
+    topBarTitle: {
+      fontSize: 24,
       fontWeight: "900",
       color: C.text,
-      lineHeight: 32,
     },
-    subGreeting: {
-      marginTop: 6,
-      fontSize: 15,
-      color: C.textSecondary,
-      fontWeight: "500",
-      lineHeight: 21,
+    bellBtn: {
+      width: 40,
+      height: 40,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    bellBadge: {
+      position: "absolute",
+      top: 8,
+      right: 8,
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: "#ff3040",
     },
 
     // Sections
