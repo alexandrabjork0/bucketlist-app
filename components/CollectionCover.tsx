@@ -1,4 +1,5 @@
 import { Image, StyleSheet, Text, View } from "react-native";
+import { useTheme } from "../lib/theme";
 
 const PALETTE = [
   "#C9B8A8", "#A8B8C9", "#A8C9B8", "#C9C0A8",
@@ -17,6 +18,9 @@ interface Props {
 }
 
 export default function CollectionCover({ images, size, name = "" }: Props) {
+  const C = useTheme();
+  const gap = C.background;
+
   const imgs = images.slice(0, 4);
   const half = Math.floor((size - 2) / 2);
 
@@ -46,7 +50,7 @@ export default function CollectionCover({ images, size, name = "" }: Props) {
     return (
       <View style={{ width: size, height: size, flexDirection: "row" }}>
         <Image source={{ uri: imgs[0] }} style={{ width: half, height: size }} resizeMode="cover" />
-        <View style={{ width: 2, height: size, backgroundColor: "#fff" }} />
+        <View style={{ width: 2, height: size, backgroundColor: gap }} />
         <Image source={{ uri: imgs[1] }} style={{ flex: 1, height: size }} resizeMode="cover" />
       </View>
     );
@@ -59,10 +63,10 @@ export default function CollectionCover({ images, size, name = "" }: Props) {
     return (
       <View style={{ width: size, height: size, flexDirection: "row" }}>
         <Image source={{ uri: imgs[0] }} style={{ width: leftW, height: size }} resizeMode="cover" />
-        <View style={{ width: 2, height: size, backgroundColor: "#fff" }} />
+        <View style={{ width: 2, height: size, backgroundColor: gap }} />
         <View style={{ width: rightW }}>
           <Image source={{ uri: imgs[1] }} style={{ width: rightW, height: rightH }} resizeMode="cover" />
-          <View style={{ height: 2, backgroundColor: "#fff" }} />
+          <View style={{ height: 2, backgroundColor: gap }} />
           <Image source={{ uri: imgs[2] }} style={{ width: rightW, flex: 1 }} resizeMode="cover" />
         </View>
       </View>
@@ -74,13 +78,13 @@ export default function CollectionCover({ images, size, name = "" }: Props) {
     <View style={{ width: size, height: size }}>
       <View style={{ flexDirection: "row", height: half }}>
         <Image source={{ uri: imgs[0] }} style={{ flex: 1, height: half }} resizeMode="cover" />
-        <View style={{ width: 2, height: half, backgroundColor: "#fff" }} />
+        <View style={{ width: 2, height: half, backgroundColor: gap }} />
         <Image source={{ uri: imgs[1] }} style={{ flex: 1, height: half }} resizeMode="cover" />
       </View>
-      <View style={{ height: 2, backgroundColor: "#fff" }} />
+      <View style={{ height: 2, backgroundColor: gap }} />
       <View style={{ flexDirection: "row", height: half }}>
         <Image source={{ uri: imgs[2] }} style={{ flex: 1, height: half }} resizeMode="cover" />
-        <View style={{ width: 2, height: half, backgroundColor: "#fff" }} />
+        <View style={{ width: 2, height: half, backgroundColor: gap }} />
         <Image source={{ uri: imgs[3] }} style={{ flex: 1, height: half }} resizeMode="cover" />
       </View>
     </View>

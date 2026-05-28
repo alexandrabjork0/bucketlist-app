@@ -93,19 +93,21 @@ const sh = StyleSheet.create({
 // ── Trending / recommended experience tile ───────────────────────────────────
 
 function ExperienceTile({ exp, onPress }: { exp: any; onPress: () => void }) {
+  const C = useTheme();
   return (
     <Pressable style={tt.card} onPress={onPress}>
-      {exp.heroImageUrl ? (
-        <Image source={{ uri: exp.heroImageUrl }} style={tt.image} resizeMode="cover" />
-      ) : (
-        <View style={[tt.image, tt.imageFallback]} />
-      )}
-      <View style={tt.gradient} />
-      <View style={tt.content}>
-        <Text style={tt.cat}>{exp.category}</Text>
-        <Text style={tt.title} numberOfLines={2}>{exp.title}</Text>
+      <View style={[tt.imageWrapper, { backgroundColor: C.surfaceElevated }]}>
+        {exp.heroImageUrl ? (
+          <Image source={{ uri: exp.heroImageUrl }} style={tt.image} resizeMode="cover" />
+        ) : (
+          <View style={tt.image} />
+        )}
+      </View>
+      <View style={tt.meta}>
+        <Text style={[tt.cat, { color: C.textTertiary }]}>{exp.category}</Text>
+        <Text style={[tt.title, { color: C.text }]} numberOfLines={2}>{exp.title}</Text>
         {(exp.savesCount > 0 || exp.completionsCount > 0) && (
-          <Text style={tt.meta}>
+          <Text style={[tt.saves, { color: C.textTertiary }]}>
             {exp.savesCount > 0 ? `${exp.savesCount} saved` : `${exp.completionsCount} completed`}
           </Text>
         )}
@@ -117,53 +119,37 @@ function ExperienceTile({ exp, onPress }: { exp: any; onPress: () => void }) {
 const tt = StyleSheet.create({
   card: {
     width: TILE_W,
-    height: TILE_H,
-    borderRadius: 16,
-    overflow: "hidden",
-    backgroundColor: "#1A1A1A",
     marginRight: 10,
+  },
+  imageWrapper: {
+    width: TILE_W,
+    aspectRatio: 3 / 4,
+    borderRadius: 14,
+    overflow: "hidden",
   },
   image: {
     width: "100%",
     height: "100%",
   },
-  imageFallback: {
-    backgroundColor: "#333",
-  },
-  gradient: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: "65%",
-    backgroundColor: "rgba(0,0,0,0.62)",
-  },
-  content: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 12,
+  meta: {
+    paddingTop: 8,
+    paddingHorizontal: 2,
   },
   cat: {
-    color: "rgba(255,255,255,0.65)",
     fontSize: 10,
-    fontWeight: "800",
+    fontWeight: "700",
     textTransform: "uppercase",
     letterSpacing: 0.8,
-    marginBottom: 3,
+    marginBottom: 2,
   },
   title: {
-    color: "#fff",
     fontSize: 13,
-    fontWeight: "900",
+    fontWeight: "800",
     lineHeight: 17,
   },
-  meta: {
-    color: "rgba(255,255,255,0.55)",
+  saves: {
     fontSize: 11,
-    fontWeight: "600",
-    marginTop: 4,
+    marginTop: 3,
   },
 });
 
@@ -181,7 +167,7 @@ function PersonCard({
   const C = useTheme();
   return (
     <Pressable
-      style={[pc.card, { backgroundColor: C.surface }]}
+      style={pc.card}
       onPress={() => router.push({ pathname: "/user/[id]", params: { id: person.id } })}
     >
       <View style={[pc.avatar, { backgroundColor: C.avatarBg }]}>
@@ -211,23 +197,22 @@ const pc = StyleSheet.create({
     width: PERSON_W,
     alignItems: "center",
     marginRight: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 8,
-    borderRadius: 16,
+    paddingVertical: 4,
+    paddingHorizontal: 4,
   },
   avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",
     marginBottom: 8,
   },
   avatarImg: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
   },
   avatarText: {
     color: "#fff",
@@ -277,7 +262,7 @@ function ActivityCard({
 
   return (
     <Pressable
-      style={[ac.card, { backgroundColor: C.surface }]}
+      style={[ac.card, { borderBottomColor: C.divider }]}
       onPress={() =>
         router.push({ pathname: "/user/[id]", params: { id: author.userId } })
       }
@@ -324,11 +309,10 @@ const ac = StyleSheet.create({
   card: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 14,
-    padding: 12,
-    marginHorizontal: 18,
-    marginBottom: 10,
-    gap: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    gap: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   left: {
     flex: 1,
@@ -341,20 +325,20 @@ const ac = StyleSheet.create({
     marginBottom: 2,
   },
   avatar: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
   },
   avatarFallback: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
   },
   avatarText: {
     color: "#fff",
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: "800",
   },
   username: {
@@ -393,9 +377,9 @@ const ac = StyleSheet.create({
     marginTop: 4,
   },
   thumb: {
-    width: 72,
-    height: 72,
-    borderRadius: 10,
+    width: 80,
+    height: 80,
+    borderRadius: 12,
     flexShrink: 0,
   },
 });

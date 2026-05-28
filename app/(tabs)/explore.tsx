@@ -330,18 +330,18 @@ export default function ExploreScreen() {
                     router.push({ pathname: "/experience/[id]", params: { id: exp.id } })
                   }
                 >
-                  {exp.heroImageUrl ? (
-                    <Image source={{ uri: exp.heroImageUrl }} style={styles.trendingImage} />
-                  ) : (
-                    <View style={[styles.trendingImage, { backgroundColor: C.surface }]} />
-                  )}
-                  <View style={styles.trendingOverlay}>
-                    <Text style={styles.trendingCat}>{exp.category}</Text>
-                    <Text numberOfLines={2} style={styles.trendingTitle}>
+                  <View style={[styles.trendingImageWrapper, { backgroundColor: C.surfaceElevated }]}>
+                    {exp.heroImageUrl && (
+                      <Image source={{ uri: exp.heroImageUrl }} style={styles.trendingImage} resizeMode="cover" />
+                    )}
+                  </View>
+                  <View style={styles.trendingMeta}>
+                    <Text style={[styles.trendingCat, { color: C.textTertiary }]}>{exp.category}</Text>
+                    <Text numberOfLines={2} style={[styles.trendingTitle, { color: C.text }]}>
                       {exp.title}
                     </Text>
                     {exp.savesCount > 0 && (
-                      <Text style={styles.trendingCount}>{exp.savesCount} saved</Text>
+                      <Text style={[styles.trendingCount, { color: C.textTertiary }]}>{exp.savesCount} saved</Text>
                     )}
                   </View>
                 </Pressable>
@@ -574,11 +574,11 @@ function ExperienceTile({
         router.push({ pathname: "/experience/[id]", params: { id: exp.id } })
       }
     >
-      {exp.heroImageUrl ? (
-        <Image source={{ uri: exp.heroImageUrl }} style={ts.tileImage} />
-      ) : (
-        <View style={[ts.tileImage, { backgroundColor: C.surface }]} />
-      )}
+      <View style={[ts.tileImageWrapper, { backgroundColor: C.surfaceElevated }]}>
+        {exp.heroImageUrl && (
+          <Image source={{ uri: exp.heroImageUrl }} style={ts.tileImage} resizeMode="cover" />
+        )}
+      </View>
 
       <View style={ts.tileBody}>
         <Text style={ts.tileCat}>{exp.category}</Text>
@@ -607,36 +607,40 @@ function ExperienceTile({
 
 function makeTileStyles(C: ThemeColors) {
   return StyleSheet.create({
-    tile: {
-      borderRadius: 16,
-      backgroundColor: C.surface,
+    tile: {},
+    tileImageWrapper: {
+      width: "100%",
+      aspectRatio: 3 / 4,
+      borderRadius: 14,
       overflow: "hidden",
     },
     tileImage: {
       width: "100%",
-      aspectRatio: 1,
+      height: "100%",
     },
     tileBody: {
-      padding: 10,
+      paddingTop: 8,
+      paddingHorizontal: 2,
     },
     tileCat: {
       fontSize: 10,
-      fontWeight: "800",
+      fontWeight: "700",
       textTransform: "uppercase",
+      letterSpacing: 0.6,
       color: C.textTertiary,
     },
     tileTitle: {
       fontSize: 13,
-      fontWeight: "700",
+      fontWeight: "800",
       color: C.text,
       marginTop: 3,
-      lineHeight: 18,
+      lineHeight: 17,
     },
     tileSaves: {
-      marginTop: 4,
+      marginTop: 3,
       fontSize: 11,
-      color: C.textSecondary,
-      fontWeight: "600",
+      color: C.textTertiary,
+      fontWeight: "500",
     },
     tileAddBtn: {
       marginTop: 8,
@@ -646,7 +650,7 @@ function makeTileStyles(C: ThemeColors) {
       alignItems: "center",
     },
     tileAddBtnDone: {
-      backgroundColor: C.surfaceElevated,
+      backgroundColor: C.surface,
     },
     tileAddText: {
       color: C.buttonPrimaryText,
@@ -702,35 +706,36 @@ function makeStyles(C: ThemeColors) {
     },
     trendingCard: {
       width: 150,
-      borderRadius: 16,
+    },
+    trendingImageWrapper: {
+      width: 150,
+      aspectRatio: 3 / 4,
+      borderRadius: 14,
       overflow: "hidden",
-      backgroundColor: C.surface,
     },
     trendingImage: {
-      width: 150,
-      height: 120,
+      width: "100%",
+      height: "100%",
     },
-    trendingOverlay: {
-      padding: 10,
+    trendingMeta: {
+      paddingTop: 8,
+      paddingHorizontal: 2,
     },
     trendingCat: {
       fontSize: 10,
-      fontWeight: "800",
+      fontWeight: "700",
       textTransform: "uppercase",
-      color: C.textTertiary,
+      letterSpacing: 0.8,
+      marginBottom: 2,
     },
     trendingTitle: {
       fontSize: 13,
-      fontWeight: "700",
-      color: C.text,
-      marginTop: 3,
-      lineHeight: 18,
+      fontWeight: "800",
+      lineHeight: 17,
     },
     trendingCount: {
-      marginTop: 4,
+      marginTop: 3,
       fontSize: 11,
-      color: C.textSecondary,
-      fontWeight: "600",
     },
 
     chipsScroll: {

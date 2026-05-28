@@ -32,11 +32,11 @@ export default function CollectionCard({ collection, cardWidth, onPress, onLongP
 
   return (
     <Pressable
-      style={[styles.card, { width: cardWidth }]}
+      style={{ width: cardWidth }}
       onPress={onPress}
       onLongPress={onLongPress}
     >
-      <View style={{ width: cardWidth, height: cardWidth, overflow: "hidden" }}>
+      <View style={styles.imageWrapper}>
         <CollectionCover images={coverImages} size={cardWidth} name={name} />
         {isPrivate && (
           <View style={styles.lockBadge}>
@@ -46,18 +46,22 @@ export default function CollectionCard({ collection, cardWidth, onPress, onLongP
       </View>
       <View style={styles.info}>
         {ownerUsername && (
-          <Text style={styles.owner} numberOfLines={1}>@{ownerUsername}</Text>
+          <Text style={[styles.owner, { color: C.textTertiary }]} numberOfLines={1}>
+            @{ownerUsername}
+          </Text>
         )}
-        <Text style={styles.name} numberOfLines={1}>{name}</Text>
+        <Text style={[styles.name, { color: C.text }]} numberOfLines={1}>{name}</Text>
         {total > 0 ? (
           <>
-            <Text style={styles.count}>{completedCount}/{total} completed</Text>
-            <View style={styles.track}>
-              <View style={[styles.fill, { width: fillWidth }]} />
+            <Text style={[styles.count, { color: C.textTertiary }]}>
+              {completedCount}/{total} done
+            </Text>
+            <View style={[styles.track, { backgroundColor: C.border }]}>
+              <View style={[styles.fill, { width: fillWidth, backgroundColor: C.text }]} />
             </View>
           </>
         ) : (
-          <Text style={styles.count}>No items yet</Text>
+          <Text style={[styles.count, { color: C.textTertiary }]}>Empty</Text>
         )}
       </View>
     </Pressable>
@@ -66,10 +70,9 @@ export default function CollectionCard({ collection, cardWidth, onPress, onLongP
 
 function makeStyles(C: ThemeColors) {
   return StyleSheet.create({
-    card: {
-      borderRadius: 16,
+    imageWrapper: {
+      borderRadius: 14,
       overflow: "hidden",
-      backgroundColor: C.surface,
     },
     lockBadge: {
       position: "absolute",
@@ -86,36 +89,35 @@ function makeStyles(C: ThemeColors) {
       fontSize: 12,
     },
     info: {
-      padding: 10,
+      paddingTop: 8,
+      paddingHorizontal: 2,
     },
     owner: {
-      fontSize: 11,
-      color: C.textTertiary,
+      fontSize: 10,
       fontWeight: "600",
       marginBottom: 2,
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     name: {
       fontSize: 14,
       fontWeight: "800",
-      color: C.text,
+      lineHeight: 18,
     },
     count: {
-      fontSize: 12,
-      color: C.textSecondary,
+      fontSize: 11,
       marginTop: 2,
-      fontWeight: "600",
+      fontWeight: "500",
     },
     track: {
       marginTop: 6,
-      height: 3,
-      backgroundColor: C.border,
-      borderRadius: 2,
+      height: 2,
+      borderRadius: 1,
       overflow: "hidden",
     },
     fill: {
-      height: 3,
-      backgroundColor: C.buttonPrimary,
-      borderRadius: 2,
+      height: 2,
+      borderRadius: 1,
     },
   });
 }
