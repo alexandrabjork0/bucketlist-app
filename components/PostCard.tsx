@@ -104,7 +104,7 @@ export default function PostCard({ post, author, onSave, saveDone, onDelete }: P
             disabled={!!saveDone}
           >
             <Text style={[styles.saveButtonText, saveDone && styles.savedButtonText]}>
-              {saveDone ? "Added to your list" : "Add this to my list"}
+              {saveDone ? "Saved ✓" : "Save to collection"}
             </Text>
           </Pressable>
         )}

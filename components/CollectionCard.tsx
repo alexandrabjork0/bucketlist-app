@@ -16,9 +16,10 @@ interface Props {
   cardWidth: number;
   onPress: () => void;
   onLongPress?: () => void;
+  ownerUsername?: string;
 }
 
-export default function CollectionCard({ collection, cardWidth, onPress, onLongPress }: Props) {
+export default function CollectionCard({ collection, cardWidth, onPress, onLongPress, ownerUsername }: Props) {
   const { name, isPrivate, coverImages = [], itemCount, completedCount = 0, itemIds } = collection;
   const total = itemCount ?? (itemIds?.length ?? 0);
   const progress = total > 0 ? completedCount / total : 0;
@@ -39,6 +40,9 @@ export default function CollectionCard({ collection, cardWidth, onPress, onLongP
         )}
       </View>
       <View style={styles.info}>
+        {ownerUsername && (
+          <Text style={styles.owner} numberOfLines={1}>@{ownerUsername}</Text>
+        )}
         <Text style={styles.name} numberOfLines={1}>{name}</Text>
         {total > 0 ? (
           <>
@@ -77,6 +81,12 @@ const styles = StyleSheet.create({
   },
   info: {
     padding: 10,
+  },
+  owner: {
+    fontSize: 11,
+    color: "#aaa",
+    fontWeight: "600",
+    marginBottom: 2,
   },
   name: {
     fontSize: 14,
