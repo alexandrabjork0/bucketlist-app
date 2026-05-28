@@ -6,10 +6,12 @@ import {
   limit,
   query,
   serverTimestamp,
+  where,
 } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
+  Dimensions,
   Image,
   Keyboard,
   KeyboardAvoidingView,
@@ -36,20 +38,9 @@ type Experience = {
   completionsCount: number;
 };
 
-const CATEGORY_COLORS: Record<string, string> = {
-  Travel: "#E8F4FD",
-  Adventure: "#FEF3C7",
-  "Food & Drink": "#FCE7F3",
-  Health: "#D1FAE5",
-  Creative: "#EDE9FE",
-  Learning: "#FEF9C3",
-  Sports: "#DBEAFE",
-  Nature: "#DCFCE7",
-  Culture: "#FEE2E2",
-  Events: "#FFF7ED",
-  "Personal Growth": "#F3E8FF",
-  Other: "#F4F4F4",
-};
+const { width: SCREEN_W } = Dimensions.get("window");
+const FEATURED_W = Math.round(SCREEN_W * 0.52);
+const REC_W = Math.round(SCREEN_W * 0.42);
 
 const CATEGORIES = [
   "All",
@@ -69,13 +60,130 @@ const CATEGORIES = [
 
 const CREATE_CATEGORIES = CATEGORIES.filter((c) => c !== "All");
 
+// ── Cinematic card with overlay text ────────────────────────────────────────
+
+function FeaturedCard({ exp, width }: { exp: Experience; width: number }) {
+  const C = useTheme();
+  const height = Math.round(width * 1.42);
+  return (
+    <Pressable
+      style={{ width, marginRight: 10 }}
+      onPress={() => router.push({ pathname: "/experience/[id]", params: { id: exp.id } })}
+    >
+      <View style={[fc.image, { width, height, backgroundColor: C.surfaceElevated }]}>
+        {exp.heroImageUrl && (
+          <Image source={{ uri: exp.heroImageUrl }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+        )}
+      </View>
+      <View style={fc.body}>
+        <Text style={[fc.cat, { color: C.textTertiary }]}>{exp.category}</Text>
+        <Text style={[fc.title, { color: C.text }]} numberOfLines={2}>{exp.title}</Text>
+        {exp.savesCount > 0 && (
+          <Text style={[fc.saves, { color: C.textTertiary }]}>{exp.savesCount} saved</Text>
+        )}
+      </View>
+    </Pressable>
+  );
+}
+
+const fc = StyleSheet.create({
+  image: {
+    borderRadius: 18,
+    overflow: "hidden",
+  },
+  body: {
+    paddingTop: 10,
+    paddingHorizontal: 2,
+  },
+  cat: {
+    fontSize: 10,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginBottom: 3,
+  },
+  title: {
+    fontSize: 15,
+    fontWeight: "800",
+    lineHeight: 20,
+  },
+  saves: {
+    marginTop: 4,
+    fontSize: 11,
+    fontWeight: "500",
+  },
+});
+
+// ── Small masonry tile ───────────────────────────────────────────────────────
+
+function ExperienceTile({ exp }: { exp: Experience }) {
+  const C = useTheme();
+  const ts = useMemo(() => makeTileStyles(C), [C]);
+  return (
+    <Pressable
+      style={ts.tile}
+      onPress={() => router.push({ pathname: "/experience/[id]", params: { id: exp.id } })}
+    >
+      <View style={[ts.imageWrapper, { backgroundColor: C.surfaceElevated }]}>
+        {exp.heroImageUrl && (
+          <Image source={{ uri: exp.heroImageUrl }} style={ts.image} resizeMode="cover" />
+        )}
+      </View>
+      <View style={ts.body}>
+        <Text style={ts.cat}>{exp.category}</Text>
+        <Text style={ts.title} numberOfLines={3}>{exp.title}</Text>
+        {exp.savesCount > 0 && (
+          <Text style={ts.saves}>{exp.savesCount} saved</Text>
+        )}
+      </View>
+    </Pressable>
+  );
+}
+
+function makeTileStyles(C: ThemeColors) {
+  return StyleSheet.create({
+    tile: { marginBottom: 4 },
+    imageWrapper: {
+      width: "100%",
+      aspectRatio: 3 / 4,
+      borderRadius: 14,
+      overflow: "hidden",
+    },
+    image: { width: "100%", height: "100%" },
+    body: { paddingTop: 8, paddingHorizontal: 2, paddingBottom: 4 },
+    cat: {
+      fontSize: 10,
+      fontWeight: "700",
+      textTransform: "uppercase",
+      letterSpacing: 0.5,
+      color: C.textTertiary,
+    },
+    title: {
+      fontSize: 13,
+      fontWeight: "800",
+      color: C.text,
+      marginTop: 3,
+      lineHeight: 17,
+    },
+    saves: {
+      marginTop: 3,
+      fontSize: 11,
+      color: C.textTertiary,
+      fontWeight: "500",
+    },
+  });
+}
+
+// ── Main screen ──────────────────────────────────────────────────────────────
+
 export default function ExploreScreen() {
   const C = useTheme();
   const styles = useMemo(() => makeStyles(C), [C]);
 
   const [search, setSearch] = useState("");
   const [experiences, setExperiences] = useState<Experience[]>([]);
-  const [people, setPeople] = useState<any[]>([]);
+  const [recommended, setRecommended] = useState<Experience[]>([]);
+  const [topCategory, setTopCategory] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -86,14 +194,13 @@ export default function ExploreScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    Promise.all([fetchExperiences(), fetchPeople()]);
+    fetchExperiences();
+    fetchPersonalized();
   }, []);
 
   const fetchExperiences = async () => {
     const expSnap = await getDocs(query(collection(db, "experiences"), limit(1)));
-    if (expSnap.empty) {
-      await migrateIdeasToExperiences();
-    }
+    if (expSnap.empty) await migrateIdeasToExperiences();
 
     const snapshot = await getDocs(query(collection(db, "experiences")));
     const fetched: Experience[] = snapshot.docs.map((d) => ({
@@ -104,19 +211,36 @@ export default function ExploreScreen() {
       savesCount: d.data().savesCount || 0,
       completionsCount: d.data().completionsCount || 0,
     }));
-
     fetched.sort((a, b) => b.savesCount - a.savesCount);
     setExperiences(fetched);
   };
 
-  const fetchPeople = async () => {
-    const snapshot = await getDocs(query(collection(db, "users"), limit(50)));
-    setPeople(
-      snapshot.docs
-        .map((d) => ({ id: d.id, ...d.data() }))
-        .filter((p: any) => p.isPrivate !== true)
-        .filter((p: any) => p.id !== auth.currentUser?.uid)
+  const fetchPersonalized = async () => {
+    if (!auth.currentUser) return;
+    const snap = await getDocs(
+      query(collection(db, "userBucketlistItems"), where("userId", "==", auth.currentUser.uid))
     );
+    const catCount: Record<string, number> = {};
+    snap.docs.forEach((d) => {
+      const cat = d.data().category;
+      if (cat) catCount[cat] = (catCount[cat] || 0) + 1;
+    });
+    const topCat = Object.entries(catCount).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "";
+    if (!topCat) return;
+    setTopCategory(topCat);
+
+    const recSnap = await getDocs(
+      query(collection(db, "experiences"), where("category", "==", topCat), limit(10))
+    );
+    const recs: Experience[] = recSnap.docs.map((d) => ({
+      id: d.id,
+      title: d.data().title || "",
+      category: d.data().category || "Other",
+      heroImageUrl: d.data().heroImageUrl || null,
+      savesCount: d.data().savesCount || 0,
+      completionsCount: d.data().completionsCount || 0,
+    }));
+    setRecommended(recs.sort((a, b) => b.savesCount - a.savesCount).slice(0, 8));
   };
 
   const openSheet = () => {
@@ -134,22 +258,16 @@ export default function ExploreScreen() {
 
   const handleCreate = async () => {
     if (!auth.currentUser) return;
-
     const finalCategory =
       newCategory === "Other" ? newCustomCategory.trim() : newCategory.trim();
-
     if (!newTitle.trim() || !finalCategory) {
       Alert.alert("Missing info", "Please add a title and category.");
       return;
     }
-
     const cleanTitle = newTitle.trim();
-
     try {
       setSubmitting(true);
-
       let experienceId: string | null = null;
-
       if (!newIsPrivate) {
         const expRef = await addDoc(collection(db, "experiences"), {
           title: cleanTitle,
@@ -168,7 +286,6 @@ export default function ExploreScreen() {
         });
         experienceId = expRef.id;
       }
-
       await addDoc(collection(db, "userBucketlistItems"), {
         userId: auth.currentUser.uid,
         title: cleanTitle,
@@ -183,7 +300,6 @@ export default function ExploreScreen() {
         isPrivate: newIsPrivate,
         experienceId,
       });
-
       closeSheet();
       Alert.alert(
         "Added",
@@ -191,10 +307,7 @@ export default function ExploreScreen() {
           ? "Your private idea was added to your list."
           : "Your idea was added to your list and Explore."
       );
-
-      if (!newIsPrivate) {
-        fetchExperiences();
-      }
+      if (!newIsPrivate) fetchExperiences();
     } catch {
       Alert.alert("Error", "Something went wrong. Please try again.");
     } finally {
@@ -202,37 +315,34 @@ export default function ExploreScreen() {
     }
   };
 
-  const trending = experiences.slice(0, 6);
+  const trending = experiences.slice(0, 8);
 
-  const filtered = experiences.filter((exp) => {
-    const matchCat = selectedCategory === "All" || exp.category === selectedCategory;
+  const matchesSearch = (exp: Experience) => {
     const q = search.toLowerCase();
-    const matchSearch =
-      !q ||
-      exp.title.toLowerCase().includes(q) ||
-      exp.category.toLowerCase().includes(q);
-    return matchCat && matchSearch;
-  });
+    return !q || exp.title.toLowerCase().includes(q) || exp.category.toLowerCase().includes(q);
+  };
 
-  const filteredPeople = people.filter((p: any) => {
-    const q = search.toLowerCase();
-    return (
-      !q ||
-      p.username?.toLowerCase().includes(q) ||
-      p.bio?.toLowerCase().includes(q)
-    );
-  });
+  // Soft filter: selected category rises to top, rest continues below for endless discovery
+  const prioritized =
+    selectedCategory === "All"
+      ? experiences.filter(matchesSearch)
+      : [
+          ...experiences.filter((e) => e.category === selectedCategory && matchesSearch(e)),
+          ...experiences.filter((e) => e.category !== selectedCategory && matchesSearch(e)),
+        ];
 
-  const leftCol = filtered.filter((_, i) => i % 2 === 0);
-  const rightCol = filtered.filter((_, i) => i % 2 !== 0);
+  const leftCol = prioritized.filter((_, i) => i % 2 === 0);
+  const rightCol = prioritized.filter((_, i) => i % 2 !== 0);
 
   return (
     <View style={styles.container}>
-      <View style={styles.top}>
-        <Text style={styles.title}>Explore</Text>
+
+      {/* ── Header ── */}
+      <View style={styles.header}>
+        <Text style={styles.pageTitle}>Explore</Text>
         <TextInput
           style={styles.searchInput}
-          placeholder="Search experiences, people..."
+          placeholder="Search experiences…"
           placeholderTextColor={C.inputPlaceholder}
           value={search}
           onChangeText={setSearch}
@@ -240,42 +350,43 @@ export default function ExploreScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
+
+        {/* ── 1. Featured / Trending ── */}
         {!search && trending.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Trending</Text>
+            <Text style={styles.sectionTitle}>Trending this week</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.trendingScroll}
+              contentContainerStyle={styles.hScroll}
             >
               {trending.map((exp) => (
-                <Pressable
-                  key={exp.id}
-                  style={styles.trendingCard}
-                  onPress={() =>
-                    router.push({ pathname: "/experience/[id]", params: { id: exp.id } })
-                  }
-                >
-                  <View style={[styles.trendingImageWrapper, { backgroundColor: C.surfaceElevated }]}>
-                    {exp.heroImageUrl && (
-                      <Image source={{ uri: exp.heroImageUrl }} style={styles.trendingImage} resizeMode="cover" />
-                    )}
-                  </View>
-                  <View style={styles.trendingMeta}>
-                    <Text style={[styles.trendingCat, { color: C.textTertiary }]}>{exp.category}</Text>
-                    <Text numberOfLines={2} style={[styles.trendingTitle, { color: C.text }]}>
-                      {exp.title}
-                    </Text>
-                    {exp.savesCount > 0 && (
-                      <Text style={[styles.trendingCount, { color: C.textTertiary }]}>{exp.savesCount} saved</Text>
-                    )}
-                  </View>
-                </Pressable>
+                <FeaturedCard key={exp.id} exp={exp} width={FEATURED_W} />
               ))}
             </ScrollView>
           </View>
         )}
 
+        {/* ── 2. Personalized ── */}
+        {!search && recommended.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>
+              Because you love{" "}
+              <Text style={styles.sectionTitleAccent}>{topCategory}</Text>
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.hScroll}
+            >
+              {recommended.map((exp) => (
+                <FeaturedCard key={exp.id} exp={exp} width={REC_W} />
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* ── 3. Category chips ── */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -287,78 +398,42 @@ export default function ExploreScreen() {
               style={[styles.chip, selectedCategory === cat && styles.chipActive]}
               onPress={() => setSelectedCategory(cat)}
             >
-              <Text
-                style={[styles.chipText, selectedCategory === cat && styles.chipTextActive]}
-              >
+              <Text style={[styles.chipText, selectedCategory === cat && styles.chipTextActive]}>
                 {cat}
               </Text>
             </Pressable>
           ))}
         </ScrollView>
 
-        {filtered.length > 0 ? (
+        {/* ── 4. Discovery grid ── */}
+        <View style={styles.gridHeader}>
+          <Text style={styles.gridLabel}>
+            {selectedCategory === "All" ? "Discover" : selectedCategory}
+          </Text>
+        </View>
+
+        {prioritized.length > 0 ? (
           <View style={styles.masonry}>
             <View style={styles.masonryCol}>
-              {leftCol.map((exp) => (
-                <ExperienceTile key={exp.id} exp={exp} />
-              ))}
+              {leftCol.map((exp) => <ExperienceTile key={exp.id} exp={exp} />)}
             </View>
             <View style={styles.masonryCol}>
-              {rightCol.map((exp) => (
-                <ExperienceTile key={exp.id} exp={exp} />
-              ))}
+              {rightCol.map((exp) => <ExperienceTile key={exp.id} exp={exp} />)}
             </View>
-            
           </View>
         ) : (
           <Text style={styles.emptyText}>No experiences found.</Text>
         )}
 
-        {filteredPeople.length > 0 && (
-          <View style={[styles.section, styles.peopleSection]}>
-            <Text style={styles.sectionLabel}>People to follow</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.peopleScroll}
-            >
-              {filteredPeople.map((person: any) => (
-                <Pressable
-                  key={person.id}
-                  style={styles.personCard}
-                  onPress={() =>
-                    person.id === auth.currentUser?.uid
-                      ? router.push("/profile")
-                      : router.push({ pathname: "/user/[id]", params: { id: person.id } })
-                  }
-                >
-                  {person.profileImage ? (
-                    <Image source={{ uri: person.profileImage }} style={styles.personAvatar} />
-                  ) : (
-                    <View style={styles.personAvatarFallback}>
-                      <Text style={styles.personAvatarText}>
-                        {person.username?.charAt(0)?.toUpperCase() || "?"}
-                      </Text>
-                    </View>
-                  )}
-                  <Text style={styles.personUsername} numberOfLines={1}>
-                    @{person.username || "user"}
-                  </Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
-        )}
-
         <View style={styles.bottomPad} />
       </ScrollView>
 
-      {/* FAB */}
+      {/* ── FAB ── */}
       <Pressable style={styles.fab} onPress={openSheet}>
         <Text style={styles.fabIcon}>＋</Text>
       </Pressable>
 
-      {/* Creation bottom sheet */}
+      {/* ── Creation sheet ── */}
       <Modal
         visible={sheetOpen}
         transparent
@@ -375,7 +450,6 @@ export default function ExploreScreen() {
         >
           <View style={styles.sheet}>
             <View style={styles.sheetHandle} />
-
             <Text style={styles.sheetTitle}>Add your own idea</Text>
             <Text style={styles.sheetSubtitle}>
               Something you want to do, visit, or experience.
@@ -400,21 +474,13 @@ export default function ExploreScreen() {
               {CREATE_CATEGORIES.map((cat) => (
                 <Pressable
                   key={cat}
-                  style={[
-                    styles.sheetChip,
-                    newCategory === cat && styles.sheetChipActive,
-                  ]}
+                  style={[styles.sheetChip, newCategory === cat && styles.sheetChipActive]}
                   onPress={() => {
                     setNewCategory(cat);
                     if (cat !== "Other") setNewCustomCategory("");
                   }}
                 >
-                  <Text
-                    style={[
-                      styles.sheetChipText,
-                      newCategory === cat && styles.sheetChipTextActive,
-                    ]}
-                  >
+                  <Text style={[styles.sheetChipText, newCategory === cat && styles.sheetChipTextActive]}>
                     {cat}
                   </Text>
                 </Pressable>
@@ -462,78 +528,8 @@ export default function ExploreScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
-
     </View>
   );
-}
-
-function ExperienceTile({ exp }: { exp: Experience }) {
-  const C = useTheme();
-  const ts = useMemo(() => makeTileStyles(C), [C]);
-  return (
-    <Pressable
-      style={ts.tile}
-      onPress={() =>
-        router.push({ pathname: "/experience/[id]", params: { id: exp.id } })
-      }
-    >
-      <View style={[ts.tileImageWrapper, { backgroundColor: C.surfaceElevated }]}>
-        {exp.heroImageUrl && (
-          <Image source={{ uri: exp.heroImageUrl }} style={ts.tileImage} resizeMode="cover" />
-        )}
-      </View>
-
-      <View style={ts.tileBody}>
-        <Text style={ts.tileCat}>{exp.category}</Text>
-        <Text style={ts.tileTitle} numberOfLines={3}>
-          {exp.title}
-        </Text>
-        {exp.savesCount > 0 && (
-          <Text style={ts.tileSaves}>{exp.savesCount} saved</Text>
-        )}
-      </View>
-    </Pressable>
-  );
-}
-
-function makeTileStyles(C: ThemeColors) {
-  return StyleSheet.create({
-    tile: {},
-    tileImageWrapper: {
-      width: "100%",
-      aspectRatio: 3 / 4,
-      borderRadius: 14,
-      overflow: "hidden",
-    },
-    tileImage: {
-      width: "100%",
-      height: "100%",
-    },
-    tileBody: {
-      paddingTop: 8,
-      paddingHorizontal: 2,
-    },
-    tileCat: {
-      fontSize: 10,
-      fontWeight: "700",
-      textTransform: "uppercase",
-      letterSpacing: 0.6,
-      color: C.textTertiary,
-    },
-    tileTitle: {
-      fontSize: 13,
-      fontWeight: "800",
-      color: C.text,
-      marginTop: 3,
-      lineHeight: 17,
-    },
-    tileSaves: {
-      marginTop: 3,
-      fontSize: 11,
-      color: C.textTertiary,
-      fontWeight: "500",
-    },
-  });
 }
 
 function makeStyles(C: ThemeColors) {
@@ -542,83 +538,58 @@ function makeStyles(C: ThemeColors) {
       flex: 1,
       backgroundColor: C.background,
     },
-    top: {
-      paddingTop: 70,
+
+    // Header
+    header: {
+      paddingTop: 66,
       paddingHorizontal: 18,
-      paddingBottom: 4,
+      paddingBottom: 10,
       backgroundColor: C.background,
     },
-    title: {
-      fontSize: 28,
+    pageTitle: {
+      fontSize: 30,
       fontWeight: "900",
       color: C.text,
+      marginBottom: 14,
     },
     searchInput: {
-      marginTop: 14,
       backgroundColor: C.inputBackground,
-      padding: 14,
-      borderRadius: 16,
-      fontSize: 16,
-      color: C.text,
-    },
-
-    section: {
-      marginTop: 22,
-    },
-    sectionLabel: {
-      fontSize: 17,
-      fontWeight: "900",
-      paddingHorizontal: 18,
-      marginBottom: 12,
-      color: C.text,
-    },
-
-    trendingScroll: {
-      paddingHorizontal: 18,
-      gap: 12,
-    },
-    trendingCard: {
-      width: 150,
-    },
-    trendingImageWrapper: {
-      width: 150,
-      aspectRatio: 3 / 4,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
       borderRadius: 14,
-      overflow: "hidden",
-    },
-    trendingImage: {
-      width: "100%",
-      height: "100%",
-    },
-    trendingMeta: {
-      paddingTop: 8,
-      paddingHorizontal: 2,
-    },
-    trendingCat: {
-      fontSize: 10,
-      fontWeight: "700",
-      textTransform: "uppercase",
-      letterSpacing: 0.8,
-      marginBottom: 2,
-    },
-    trendingTitle: {
-      fontSize: 13,
-      fontWeight: "800",
-      lineHeight: 17,
-    },
-    trendingCount: {
-      marginTop: 3,
-      fontSize: 11,
+      fontSize: 15,
+      color: C.text,
     },
 
+    // Sections
+    section: {
+      marginTop: 28,
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: "900",
+      color: C.text,
+      paddingHorizontal: 18,
+      marginBottom: 14,
+    },
+    sectionTitleAccent: {
+      color: C.textSecondary,
+    },
+    hScroll: {
+      paddingHorizontal: 18,
+      paddingBottom: 2,
+    },
+
+    // Category chips
     chipsScroll: {
       paddingHorizontal: 18,
-      paddingVertical: 14,
+      paddingTop: 24,
+      paddingBottom: 8,
       gap: 8,
     },
     chip: {
-      paddingHorizontal: 16,
-      paddingVertical: 8,
+      paddingHorizontal: 14,
+      paddingVertical: 7,
       backgroundColor: C.surface,
       borderRadius: 999,
     },
@@ -628,12 +599,23 @@ function makeStyles(C: ThemeColors) {
     chipText: {
       color: C.textSecondary,
       fontWeight: "700",
-      fontSize: 13,
+      fontSize: 12,
     },
     chipTextActive: {
       color: C.buttonPrimaryText,
     },
 
+    // Discovery grid
+    gridHeader: {
+      paddingHorizontal: 18,
+      paddingTop: 20,
+      paddingBottom: 12,
+    },
+    gridLabel: {
+      fontSize: 18,
+      fontWeight: "900",
+      color: C.text,
+    },
     masonry: {
       flexDirection: "row",
       paddingHorizontal: 12,
@@ -643,64 +625,26 @@ function makeStyles(C: ThemeColors) {
       flex: 1,
       gap: 8,
     },
-
     emptyText: {
       paddingHorizontal: 20,
-      paddingTop: 30,
+      paddingTop: 40,
       color: C.textSecondary,
       textAlign: "center",
       fontWeight: "600",
+      fontSize: 15,
     },
-
-    peopleSection: {
-      marginTop: 28,
-    },
-    peopleScroll: {
-      paddingHorizontal: 18,
-      gap: 12,
-    },
-    personCard: {
-      alignItems: "center",
-      width: 80,
-    },
-    personAvatar: {
-      width: 60,
-      height: 60,
-      borderRadius: 30,
-      backgroundColor: C.surface,
-    },
-    personAvatarFallback: {
-      width: 60,
-      height: 60,
-      borderRadius: 30,
-      backgroundColor: C.avatarBg,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    personAvatarText: {
-      color: "#fff",
-      fontWeight: "900",
-      fontSize: 20,
-    },
-    personUsername: {
-      marginTop: 6,
-      fontSize: 11,
-      fontWeight: "700",
-      color: C.text,
-      textAlign: "center",
-    },
-
     bottomPad: {
       height: 100,
     },
 
+    // FAB
     fab: {
       position: "absolute",
       bottom: 28,
       right: 22,
-      width: 56,
-      height: 56,
-      borderRadius: 28,
+      width: 54,
+      height: 54,
+      borderRadius: 27,
       backgroundColor: C.buttonPrimary,
       alignItems: "center",
       justifyContent: "center",
@@ -712,11 +656,12 @@ function makeStyles(C: ThemeColors) {
     },
     fabIcon: {
       color: C.buttonPrimaryText,
-      fontSize: 28,
+      fontSize: 26,
       fontWeight: "300",
-      lineHeight: 32,
+      lineHeight: 30,
     },
 
+    // Creation sheet
     overlay: {
       flex: 1,
       backgroundColor: C.overlay,
