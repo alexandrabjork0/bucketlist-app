@@ -28,8 +28,6 @@ export default function CollectionCard({ collection, cardWidth, onPress, onLongP
 
   const { name, isPrivate, coverImages = [], coverPhoto, itemCount, completedCount = 0, itemIds } = collection;
   const total = itemCount ?? (itemIds?.length ?? 0);
-  const progress = total > 0 ? completedCount / total : 0;
-  const fillWidth = Math.round(progress * (cardWidth - 20));
 
   return (
     <Pressable
@@ -52,18 +50,13 @@ export default function CollectionCard({ collection, cardWidth, onPress, onLongP
           </Text>
         )}
         <Text style={[styles.name, { color: C.text }]} numberOfLines={1}>{name}</Text>
-        {total > 0 ? (
-          <>
-            <Text style={[styles.count, { color: C.textTertiary }]}>
-              {completedCount}/{total} done
-            </Text>
-            <View style={[styles.track, { backgroundColor: C.border }]}>
-              <View style={[styles.fill, { width: fillWidth, backgroundColor: C.text }]} />
-            </View>
-          </>
-        ) : (
-          <Text style={[styles.count, { color: C.textTertiary }]}>Empty</Text>
-        )}
+        <Text style={[styles.count, { color: C.textTertiary }]}>
+          {total === 0
+            ? "Empty"
+            : completedCount > 0
+            ? `${total} saved · ${completedCount} completed`
+            : `${total} saved`}
+        </Text>
       </View>
     </Pressable>
   );
@@ -109,16 +102,6 @@ function makeStyles(C: ThemeColors) {
       fontSize: 11,
       marginTop: 2,
       fontWeight: "500",
-    },
-    track: {
-      marginTop: 6,
-      height: 2,
-      borderRadius: 1,
-      overflow: "hidden",
-    },
-    fill: {
-      height: 2,
-      borderRadius: 1,
     },
   });
 }

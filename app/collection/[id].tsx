@@ -101,7 +101,6 @@ export default function CollectionDetailScreen() {
           };
           if (target?.completed) updates.completedCount = increment(-1);
           updateDoc(doc(db, "collections", id), updates).catch(() => {});
-          // Update local coll state so progress bar reflects the change immediately
           setColl((prev: any) => {
             if (!prev) return prev;
             return {
@@ -151,7 +150,6 @@ export default function CollectionDetailScreen() {
 
   const total = coll ? (coll.itemCount ?? items.length) : 0;
   const done = coll ? (coll.completedCount ?? completedItems.length) : 0;
-  const progress = total > 0 ? done / total : 0;
 
   if (loading) {
     return (
@@ -267,16 +265,13 @@ export default function CollectionDetailScreen() {
         <View style={styles.headerMeta}>
           {coll.isPrivate && <Text style={styles.privateLbl}>Private</Text>}
           <Text style={styles.headerName}>{coll.name}</Text>
-          {total > 0 ? (
-            <View style={styles.progressRow}>
-              <View style={styles.progressTrack}>
-                <View style={[styles.progressFill, { width: `${progress * 100}%` as any }]} />
-              </View>
-              <Text style={styles.progressLbl}>{done}/{total}</Text>
-            </View>
-          ) : (
-            <Text style={styles.progressLbl}>No items yet</Text>
-          )}
+          <Text style={styles.metaText}>
+            {total === 0
+              ? "No items yet"
+              : done > 0
+              ? `${total} saved · ${done} completed`
+              : `${total} saved`}
+          </Text>
         </View>
 
         {/* Sub-tabs */}
@@ -444,28 +439,11 @@ function makeStyles(C: ThemeColors) {
       color: C.text,
       lineHeight: 36,
     },
-    progressRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 10,
-      marginTop: 10,
-    },
-    progressTrack: {
-      flex: 1,
-      height: 4,
-      backgroundColor: C.border,
-      borderRadius: 2,
-      overflow: "hidden",
-    },
-    progressFill: {
-      height: 4,
-      backgroundColor: C.text,
-      borderRadius: 2,
-    },
-    progressLbl: {
+    metaText: {
       fontSize: 13,
-      fontWeight: "800",
-      color: C.textSecondary,
+      fontWeight: "500",
+      color: C.textTertiary,
+      marginTop: 6,
     },
 
     // Sub-tabs

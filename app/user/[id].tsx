@@ -10,7 +10,7 @@ import {
   setDoc,
   where,
 } from "firebase/firestore";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Dimensions,
   Image,
@@ -26,7 +26,7 @@ import { auth, db } from "../../lib/firebaseConfig";
 import { createNotification } from "../../lib/notifications";
 import { ThemeColors, useTheme } from "../../lib/theme";
 
-type ActiveTab = "posts" | "collections";
+type ActiveTab = "collections" | "posts";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CARD_GAP = 12;
@@ -36,6 +36,7 @@ const CARD_WIDTH = Math.floor((SCREEN_WIDTH - CARD_PAD * 2 - CARD_GAP) / 2);
 export default function UserProfileScreen() {
   const C = useTheme();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const pagerRef = useRef<ScrollView>(null);
 
   const { id } = useLocalSearchParams<{ id: string }>();
 
@@ -45,7 +46,7 @@ export default function UserProfileScreen() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
-  const [activeTab, setActiveTab] = useState<ActiveTab>("posts");
+  const [activeTab, setActiveTab] = useState<ActiveTab>("collections");
 
   useEffect(() => {
     if (id) loadProfile(id);
@@ -116,13 +117,18 @@ export default function UserProfileScreen() {
     }
   };
 
+  const switchTab = (tab: ActiveTab) => {
+    setActiveTab(tab);
+    const index = tab === "collections" ? 0 : 1;
+    pagerRef.current?.scrollTo({ x: index * SCREEN_WIDTH, animated: true });
+  };
+
   const isOwnProfile = auth.currentUser?.uid === id;
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
+      {/* Profile header */}
       <View style={styles.profileHeader}>
-
-        {/* Avatar row + back button */}
         <View style={styles.headerRow}>
           <Pressable onPress={() => router.back()} hitSlop={12}>
             <Text style={styles.backBtn}>‹</Text>
@@ -142,7 +148,6 @@ export default function UserProfileScreen() {
           </View>
         </View>
 
-        {/* Stats — same floating style as own profile */}
         <View style={styles.statsRow}>
           <View style={styles.stat}>
             <Text style={styles.statNumber}>{publicCollections.length}</Text>
@@ -162,12 +167,8 @@ export default function UserProfileScreen() {
           </View>
         </View>
 
-        {/* Bio */}
-        {profile?.bio ? (
-          <Text style={styles.bio}>{profile.bio}</Text>
-        ) : null}
+        {profile?.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
 
-        {/* Follow button — same slot as "Edit profile" on own profile */}
         {!isOwnProfile && (
           <Pressable
             style={[styles.actionBtn, isFollowing && styles.actionBtnFollowing]}
@@ -180,13 +181,13 @@ export default function UserProfileScreen() {
         )}
       </View>
 
-      {/* Tabs */}
+      {/* Tab bar */}
       <View style={styles.tabs}>
-        {(["posts", "collections"] as ActiveTab[]).map((tab) => (
+        {(["collections", "posts"] as ActiveTab[]).map((tab) => (
           <Pressable
             key={tab}
             style={[styles.tab, activeTab === tab && styles.tabActive]}
-            onPress={() => setActiveTab(tab)}
+            onPress={() => switchTab(tab)}
           >
             <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -195,28 +196,26 @@ export default function UserProfileScreen() {
         ))}
       </View>
 
-      {/* Posts tab */}
-      {activeTab === "posts" && (
-        posts.length === 0 ? (
-          <Text style={styles.emptyText}>No posts yet.</Text>
-        ) : (
-          <View style={styles.grid}>
-            {posts.map((item) => (
-              <PostThumbnail
-                key={item.id}
-                post={item}
-                onPress={() =>
-                  router.push({ pathname: "/explore-post/[id]", params: { id: item.id } })
-                }
-              />
-            ))}
-          </View>
-        )
-      )}
-
-      {/* Collections tab */}
-      {activeTab === "collections" && (
-        <View style={styles.collectionsScene}>
+      {/* Horizontal swipeable pages */}
+      <ScrollView
+        ref={pagerRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onMomentumScrollEnd={(e) => {
+          const page = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+          setActiveTab(page === 0 ? "collections" : "posts");
+        }}
+        style={{ flex: 1 }}
+      >
+        {/* Collections page */}
+        <ScrollView
+          style={{ width: SCREEN_WIDTH }}
+          contentContainerStyle={{ paddingTop: 20, paddingBottom: 48 }}
+          showsVerticalScrollIndicator={false}
+          nestedScrollEnabled
+        >
           {publicCollections.length === 0 ? (
             <Text style={styles.emptyText}>No public collections yet.</Text>
           ) : (
@@ -233,11 +232,33 @@ export default function UserProfileScreen() {
               ))}
             </View>
           )}
-        </View>
-      )}
+        </ScrollView>
 
-      <View style={{ height: 48 }} />
-    </ScrollView>
+        {/* Posts page */}
+        <ScrollView
+          style={{ width: SCREEN_WIDTH }}
+          contentContainerStyle={{ paddingTop: 20, paddingBottom: 48 }}
+          showsVerticalScrollIndicator={false}
+          nestedScrollEnabled
+        >
+          {posts.length === 0 ? (
+            <Text style={styles.emptyText}>No posts yet.</Text>
+          ) : (
+            <View style={styles.grid}>
+              {posts.map((item) => (
+                <PostThumbnail
+                  key={item.id}
+                  post={item}
+                  onPress={() =>
+                    router.push({ pathname: "/explore-post/[id]", params: { id: item.id } })
+                  }
+                />
+              ))}
+            </View>
+          )}
+        </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -375,9 +396,6 @@ function makeStyles(C: ThemeColors) {
       marginTop: 24,
       paddingHorizontal: 24,
       lineHeight: 22,
-    },
-    collectionsScene: {
-      paddingTop: 20,
     },
     collectionsGrid: {
       flexDirection: "row",
