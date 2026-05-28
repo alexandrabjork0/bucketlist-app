@@ -13,7 +13,7 @@ import {
     TouchableWithoutFeedback,
     View,
 } from "react-native";
-import CollectionPickerSheet from "../components/CollectionPickerSheet";
+import CollectionPickerSheet, { CollectionRef } from "../components/CollectionPickerSheet";
 import { auth, db } from "../lib/firebaseConfig";
 import { ThemeColors, useTheme } from "../lib/theme";
 
@@ -60,9 +60,9 @@ export default function AddIdeaScreen() {
     setPickerVisible(true);
   };
 
-  const handleCollectionSelected = async (collectionId: string, collectionName: string) => {
+  const handleDone = async (toAdd: CollectionRef[], _toRemove: string[]) => {
     setPickerVisible(false);
-    if (!auth.currentUser) return;
+    if (!auth.currentUser || toAdd.length === 0) return;
 
     const cleanTitle = title.trim();
     const cleanCategory = (category === "Other" ? customCategory : category).trim();
@@ -88,32 +88,39 @@ export default function AddIdeaScreen() {
       experienceId = expRef.id;
     }
 
-    await addDoc(collection(db, "userBucketlistItems"), {
-      userId: auth.currentUser.uid,
-      collectionId,
-      title: cleanTitle,
-      category: cleanCategory,
-      completed: false,
-      imageUrl: null,
-      caption: "",
-      media: [],
-      createdAt: serverTimestamp(),
-      completedAt: null,
-      customIdea: true,
-      isPrivate,
-      experienceId,
-    });
+    for (const col of toAdd) {
+      await addDoc(collection(db, "userBucketlistItems"), {
+        userId: auth.currentUser.uid,
+        collectionId: col.id,
+        title: cleanTitle,
+        category: cleanCategory,
+        completed: false,
+        imageUrl: null,
+        caption: "",
+        media: [],
+        createdAt: serverTimestamp(),
+        completedAt: null,
+        customIdea: true,
+        isPrivate,
+        experienceId,
+      });
 
-    updateDoc(doc(db, "collections", collectionId), {
-      itemCount: increment(1),
-      updatedAt: serverTimestamp(),
-    }).catch(() => {});
+      updateDoc(doc(db, "collections", col.id), {
+        itemCount: increment(1),
+        updatedAt: serverTimestamp(),
+      }).catch(() => {});
+    }
 
+    const firstName = toAdd[0].name;
     Alert.alert(
       "Saved",
-      isPrivate
-        ? `Added to "${collectionName}"`
-        : `Added to "${collectionName}" and Explore.`
+      toAdd.length === 1
+        ? isPrivate
+          ? `Added to "${firstName}"`
+          : `Added to "${firstName}" and Explore.`
+        : isPrivate
+          ? `Added to ${toAdd.length} collections`
+          : `Added to ${toAdd.length} collections and Explore.`
     );
 
     router.back();
@@ -211,7 +218,7 @@ export default function AddIdeaScreen() {
       <CollectionPickerSheet
         visible={pickerVisible}
         onClose={() => setPickerVisible(false)}
-        onSelect={handleCollectionSelected}
+        onDone={handleDone}
       />
     </TouchableWithoutFeedback>
   );

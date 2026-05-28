@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import {
     addDoc,
     collection,
+    deleteDoc,
     doc,
     getDoc,
     getDocs,
@@ -14,14 +15,13 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import {
     ActivityIndicator,
-    Alert,
     Pressable,
     ScrollView,
     StyleSheet,
     Text,
     View,
 } from "react-native";
-import CollectionPickerSheet from "../../components/CollectionPickerSheet";
+import CollectionPickerSheet, { CollectionRef } from "../../components/CollectionPickerSheet";
 import { auth, db } from "../../lib/firebaseConfig";
 import { createNotification } from "../../lib/notifications";
 import PostCard from "../../components/PostCard";
@@ -35,7 +35,8 @@ export default function ExplorePostScreen() {
 
   const [post, setPost] = useState<any>(null);
   const [author, setAuthor] = useState<any>(null);
-  const [isSaved, setIsSaved] = useState(false);
+  // collectionId → docId for every copy of this post in user's bucketlist
+  const [savedItems, setSavedItems] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
   const [pickerVisible, setPickerVisible] = useState(false);
 
@@ -73,58 +74,79 @@ export default function ExplorePostScreen() {
           : { userId: (postData as any).userId }
       );
 
-      if (alreadySnap && !alreadySnap.empty) setIsSaved(true);
+      if (alreadySnap && !alreadySnap.empty) {
+        const map = new Map<string, string>();
+        alreadySnap.docs.forEach((d) => {
+          const colId = (d.data() as any).collectionId;
+          if (colId) map.set(colId, d.id);
+        });
+        setSavedItems(map);
+      }
       setLoading(false);
     };
 
     loadPost();
   }, [id]);
 
-  const saveToBucketlist = () => {
-    if (!auth.currentUser || !post) return;
-    setPickerVisible(true);
-  };
-
-  const handleCollectionSelected = async (collectionId: string, collectionName: string) => {
+  const handleDone = async (toAdd: CollectionRef[], toRemove: string[]) => {
     setPickerVisible(false);
     if (!auth.currentUser || !post) return;
 
-    await addDoc(collection(db, "userBucketlistItems"), {
-      userId: auth.currentUser.uid,
-      collectionId,
-      title: post.title,
-      category: post.category,
-      completed: false,
-      imageUrl: null,
-      caption: "",
-      media: [],
-      createdAt: serverTimestamp(),
-      completedAt: null,
-      fromPost: true,
-      inspiredByPostId: post.id,
-      inspiredByUserId: post.userId,
-      experienceId: post.experienceId || null,
-    });
+    const newMap = new Map(savedItems);
+    const isFirstSave = savedItems.size === 0 && toAdd.length > 0;
 
-    if (post.experienceId) {
-      updateDoc(doc(db, "experiences", post.experienceId), {
-        savesCount: increment(1),
+    for (const col of toAdd) {
+      const ref = await addDoc(collection(db, "userBucketlistItems"), {
+        userId: auth.currentUser.uid,
+        collectionId: col.id,
+        title: post.title,
+        category: post.category,
+        completed: false,
+        imageUrl: null,
+        caption: "",
+        media: [],
+        createdAt: serverTimestamp(),
+        completedAt: null,
+        fromPost: true,
+        inspiredByPostId: post.id,
+        inspiredByUserId: post.userId,
+        experienceId: post.experienceId || null,
+      });
+      newMap.set(col.id, ref.id);
+
+      if (post.experienceId) {
+        updateDoc(doc(db, "experiences", post.experienceId), {
+          savesCount: increment(1),
+        }).catch(() => {});
+      }
+      updateDoc(doc(db, "collections", col.id), {
+        itemCount: increment(1),
+        updatedAt: serverTimestamp(),
       }).catch(() => {});
     }
 
-    updateDoc(doc(db, "collections", collectionId), {
-      itemCount: increment(1),
-      updatedAt: serverTimestamp(),
-    }).catch(() => {});
+    for (const colId of toRemove) {
+      const docId = savedItems.get(colId);
+      if (docId) {
+        deleteDoc(doc(db, "userBucketlistItems", docId)).catch(() => {});
+        updateDoc(doc(db, "collections", colId), {
+          itemCount: increment(-1),
+          updatedAt: serverTimestamp(),
+        }).catch(() => {});
+        newMap.delete(colId);
+      }
+    }
 
-    setIsSaved(true);
+    setSavedItems(newMap);
 
-    createNotification({
-      recipientId: post.userId,
-      type: "save",
-      actorId: auth.currentUser.uid,
-      postId: post.id,
-    }).catch(() => {});
+    if (isFirstSave) {
+      createNotification({
+        recipientId: post.userId,
+        type: "save",
+        actorId: auth.currentUser.uid,
+        postId: post.id,
+      }).catch(() => {});
+    }
   };
 
   if (loading) {
@@ -162,8 +184,8 @@ export default function ExplorePostScreen() {
           <PostCard
             post={post}
             author={author}
-            onSave={!isOwnPost && !isSaved ? saveToBucketlist : undefined}
-            saveDone={!isOwnPost && isSaved}
+            onSave={!isOwnPost ? () => setPickerVisible(true) : undefined}
+            savedCount={!isOwnPost ? savedItems.size : 0}
           />
         </ScrollView>
       </View>
@@ -171,7 +193,8 @@ export default function ExplorePostScreen() {
       <CollectionPickerSheet
         visible={pickerVisible}
         onClose={() => setPickerVisible(false)}
-        onSelect={handleCollectionSelected}
+        onDone={handleDone}
+        initiallySelected={Array.from(savedItems.keys())}
       />
     </>
   );

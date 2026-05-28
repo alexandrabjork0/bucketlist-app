@@ -22,7 +22,7 @@ import {
   Text,
   View,
 } from "react-native";
-import CollectionPickerSheet from "../../components/CollectionPickerSheet";
+import CollectionPickerSheet, { CollectionRef } from "../../components/CollectionPickerSheet";
 import PostCard from "../../components/PostCard";
 import { auth, db } from "../../lib/firebaseConfig";
 import { createNotification } from "../../lib/notifications";
@@ -42,9 +42,11 @@ export default function PostFeedScreen() {
 
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [savedPostIds, setSavedPostIds] = useState<Set<string>>(new Set());
+  // postId → Map<collectionId, docId> — tracks saved state per post for this session
+  const [savedItemMaps, setSavedItemMaps] = useState<Map<string, Map<string, string>>>(new Map());
   const [pickerVisible, setPickerVisible] = useState(false);
   const [pendingPost, setPendingPost] = useState<any | null>(null);
+  const [pickerInitial, setPickerInitial] = useState<string[]>([]);
 
   useEffect(() => {
     if (filterId) load();
@@ -99,57 +101,75 @@ export default function PostFeedScreen() {
     }
   };
 
-  const handleSave = (post: any) => {
+  const handleSave = async (post: any) => {
     setPendingPost(post);
+    const existing = savedItemMaps.get(post.id);
+    setPickerInitial(existing ? Array.from(existing.keys()) : []);
     setPickerVisible(true);
   };
 
-  const handleCollectionSelected = async (
-    collectionId: string,
-    _collectionName: string
-  ) => {
+  const handleDone = async (toAdd: CollectionRef[], toRemove: string[]) => {
     setPickerVisible(false);
     const post = pendingPost;
     setPendingPost(null);
     if (!auth.currentUser || !post) return;
 
-    await addDoc(collection(db, "userBucketlistItems"), {
-      userId: auth.currentUser.uid,
-      collectionId,
-      title: post.title,
-      category: post.category,
-      completed: false,
-      imageUrl: null,
-      caption: "",
-      media: [],
-      createdAt: serverTimestamp(),
-      completedAt: null,
-      fromPost: true,
-      inspiredByPostId: post.id,
-      inspiredByUserId: post.userId,
-      experienceId: post.experienceId || null,
-    });
+    const existingMap = savedItemMaps.get(post.id) ?? new Map<string, string>();
+    const newMap = new Map(existingMap);
+    const isFirstSave = existingMap.size === 0 && toAdd.length > 0;
 
-    await Promise.all([
-      post.experienceId
-        ? updateDoc(doc(db, "experiences", post.experienceId), {
-            savesCount: increment(1),
-          }).catch(() => {})
-        : Promise.resolve(),
-      updateDoc(doc(db, "collections", collectionId), {
+    for (const col of toAdd) {
+      const ref = await addDoc(collection(db, "userBucketlistItems"), {
+        userId: auth.currentUser.uid,
+        collectionId: col.id,
+        title: post.title,
+        category: post.category,
+        completed: false,
+        imageUrl: null,
+        caption: "",
+        media: [],
+        createdAt: serverTimestamp(),
+        completedAt: null,
+        fromPost: true,
+        inspiredByPostId: post.id,
+        inspiredByUserId: post.userId,
+        experienceId: post.experienceId || null,
+      });
+      newMap.set(col.id, ref.id);
+
+      if (post.experienceId) {
+        updateDoc(doc(db, "experiences", post.experienceId), {
+          savesCount: increment(1),
+        }).catch(() => {});
+      }
+      updateDoc(doc(db, "collections", col.id), {
         itemCount: increment(1),
         updatedAt: serverTimestamp(),
-      }).catch(() => {}),
-    ]);
+      }).catch(() => {});
+    }
 
-    createNotification({
-      recipientId: post.userId,
-      type: "save",
-      actorId: auth.currentUser.uid,
-      postId: post.id,
-    }).catch(() => {});
+    for (const colId of toRemove) {
+      const docId = existingMap.get(colId);
+      if (docId) {
+        deleteDoc(doc(db, "userBucketlistItems", docId)).catch(() => {});
+        updateDoc(doc(db, "collections", colId), {
+          itemCount: increment(-1),
+          updatedAt: serverTimestamp(),
+        }).catch(() => {});
+        newMap.delete(colId);
+      }
+    }
 
-    setSavedPostIds((prev) => new Set([...prev, post.id]));
+    setSavedItemMaps((prev) => new Map([...prev, [post.id, newMap]]));
+
+    if (isFirstSave) {
+      createNotification({
+        recipientId: post.userId,
+        type: "save",
+        actorId: auth.currentUser.uid,
+        postId: post.id,
+      }).catch(() => {});
+    }
   };
 
   const handleDelete = (postId: string) => {
@@ -195,18 +215,15 @@ export default function PostFeedScreen() {
           >
             {posts.map((post) => {
               const isOwn = post.userId === auth.currentUser?.uid;
+              const postSavedMap = savedItemMaps.get(post.id);
               return (
                 <PostCard
                   key={post.id}
                   post={post}
                   author={post.author}
                   onDelete={isOwn ? () => handleDelete(post.id) : undefined}
-                  onSave={
-                    !isOwn && !savedPostIds.has(post.id)
-                      ? () => handleSave(post)
-                      : undefined
-                  }
-                  saveDone={!isOwn && savedPostIds.has(post.id)}
+                  onSave={!isOwn ? () => handleSave(post) : undefined}
+                  savedCount={!isOwn ? (postSavedMap?.size ?? 0) : 0}
                 />
               );
             })}
@@ -221,7 +238,8 @@ export default function PostFeedScreen() {
           setPickerVisible(false);
           setPendingPost(null);
         }}
-        onSelect={handleCollectionSelected}
+        onDone={handleDone}
+        initiallySelected={pickerInitial}
       />
     </>
   );

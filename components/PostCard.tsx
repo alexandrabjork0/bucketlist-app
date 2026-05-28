@@ -27,11 +27,11 @@ type Props = {
   post: Post;
   author: Author;
   onSave?: () => void;
-  saveDone?: boolean;
+  savedCount?: number;
   onDelete?: () => void;
 };
 
-export default function PostCard({ post, author, onSave, saveDone, onDelete }: Props) {
+export default function PostCard({ post, author, onSave, savedCount = 0, onDelete }: Props) {
   const C = useTheme();
   const styles = useMemo(() => makeStyles(C), [C]);
 
@@ -102,14 +102,13 @@ export default function PostCard({ post, author, onSave, saveDone, onDelete }: P
 
         {date ? <Text style={styles.date}>{date}</Text> : null}
 
-        {(onSave || saveDone) && (
+        {onSave && (
           <Pressable
-            style={[styles.saveButton, saveDone && styles.savedButton]}
+            style={[styles.saveButton, savedCount > 0 && styles.savedButton]}
             onPress={onSave}
-            disabled={!!saveDone}
           >
-            <Text style={[styles.saveButtonText, saveDone && styles.savedButtonText]}>
-              {saveDone ? "Saved ✓" : "Save to collection"}
+            <Text style={[styles.saveButtonText, savedCount > 0 && styles.savedButtonText]}>
+              {savedCount > 0 ? "Saved ▾" : "Save to collection"}
             </Text>
           </Pressable>
         )}
@@ -215,9 +214,12 @@ function makeStyles(C: ThemeColors) {
     },
     savedButton: {
       backgroundColor: C.surface,
+      borderWidth: 1,
+      borderColor: C.border,
     },
     savedButtonText: {
       color: C.textSecondary,
+      fontWeight: "700",
     },
   });
 }

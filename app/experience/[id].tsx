@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -14,7 +15,6 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Dimensions,
   Image,
   Pressable,
@@ -23,7 +23,7 @@ import {
   Text,
   View,
 } from "react-native";
-import CollectionPickerSheet from "../../components/CollectionPickerSheet";
+import CollectionPickerSheet, { CollectionRef } from "../../components/CollectionPickerSheet";
 import PostThumbnail from "../../components/PostThumbnail";
 import { auth, db } from "../../lib/firebaseConfig";
 import { ThemeColors, useTheme } from "../../lib/theme";
@@ -54,7 +54,8 @@ export default function ExperienceScreen() {
   const [experience, setExperience] = useState<any>(null);
   const [posts, setPosts] = useState<any[]>([]);
   const [similar, setSimilar] = useState<any[]>([]);
-  const [isAdded, setIsAdded] = useState(false);
+  // collectionId → docId for every copy of this experience in user's bucketlist
+  const [savedItems, setSavedItems] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
   const [pickerVisible, setPickerVisible] = useState(false);
 
@@ -92,7 +93,14 @@ export default function ExperienceScreen() {
           : Promise.resolve(null),
       ]);
 
-      if (alreadySnap && !alreadySnap.empty) setIsAdded(true);
+      if (alreadySnap && !alreadySnap.empty) {
+        const map = new Map<string, string>();
+        alreadySnap.docs.forEach((d) => {
+          const colId = (d.data() as any).collectionId;
+          if (colId) map.set(colId, d.id);
+        });
+        setSavedItems(map);
+      }
 
       // Grid only needs image + id — no author fetching needed
       const gridPosts = postsSnap.docs
@@ -114,32 +122,48 @@ export default function ExperienceScreen() {
     }
   };
 
-  const handlePickerSelect = async (collectionId: string, collectionName: string) => {
+  const handleDone = async (toAdd: CollectionRef[], toRemove: string[]) => {
     setPickerVisible(false);
     if (!auth.currentUser || !experience) return;
-    await addDoc(collection(db, "userBucketlistItems"), {
-      userId: auth.currentUser.uid,
-      collectionId,
-      title: experience.title,
-      category: experience.category,
-      completed: false,
-      imageUrl: null,
-      caption: "",
-      media: [],
-      createdAt: serverTimestamp(),
-      completedAt: null,
-      fromExplore: true,
-      experienceId: String(id),
-    });
-    await Promise.all([
-      updateDoc(doc(db, "experiences", String(id)), { savesCount: increment(1) }).catch(() => {}),
-      updateDoc(doc(db, "collections", collectionId), {
+
+    const newMap = new Map(savedItems);
+
+    for (const col of toAdd) {
+      const ref = await addDoc(collection(db, "userBucketlistItems"), {
+        userId: auth.currentUser.uid,
+        collectionId: col.id,
+        title: experience.title,
+        category: experience.category,
+        completed: false,
+        imageUrl: null,
+        caption: "",
+        media: [],
+        createdAt: serverTimestamp(),
+        completedAt: null,
+        fromExplore: true,
+        experienceId: String(id),
+      });
+      newMap.set(col.id, ref.id);
+      updateDoc(doc(db, "experiences", String(id)), { savesCount: increment(1) }).catch(() => {});
+      updateDoc(doc(db, "collections", col.id), {
         itemCount: increment(1),
         updatedAt: serverTimestamp(),
-      }).catch(() => {}),
-    ]);
-    setIsAdded(true);
-    Alert.alert("Saved", `Added to "${collectionName}"`);
+      }).catch(() => {});
+    }
+
+    for (const colId of toRemove) {
+      const docId = savedItems.get(colId);
+      if (docId) {
+        deleteDoc(doc(db, "userBucketlistItems", docId)).catch(() => {});
+        updateDoc(doc(db, "collections", colId), {
+          itemCount: increment(-1),
+          updatedAt: serverTimestamp(),
+        }).catch(() => {});
+        newMap.delete(colId);
+      }
+    }
+
+    setSavedItems(newMap);
   };
 
   if (loading) {
@@ -196,11 +220,11 @@ export default function ExperienceScreen() {
             <Text style={styles.statLbl}>completed</Text>
           </View>
           <Pressable
-            style={[styles.addBtn, isAdded && styles.addBtnDone]}
-            onPress={isAdded ? undefined : () => setPickerVisible(true)}
+            style={[styles.addBtn, savedItems.size > 0 && styles.addBtnDone]}
+            onPress={() => setPickerVisible(true)}
           >
-            <Text style={[styles.addBtnText, isAdded && styles.addBtnTextDone]}>
-              {isAdded ? "Saved ✓" : "+ Save to list"}
+            <Text style={[styles.addBtnText, savedItems.size > 0 && styles.addBtnTextDone]}>
+              {savedItems.size > 0 ? "Saved ▾" : "+ Save to list"}
             </Text>
           </Pressable>
         </View>
@@ -277,7 +301,8 @@ export default function ExperienceScreen() {
       <CollectionPickerSheet
         visible={pickerVisible}
         onClose={() => setPickerVisible(false)}
-        onSelect={handlePickerSelect}
+        onDone={handleDone}
+        initiallySelected={Array.from(savedItems.keys())}
       />
     </View>
   );

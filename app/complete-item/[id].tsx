@@ -17,19 +17,19 @@ import {
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { useEffect, useMemo, useState } from "react";
 import {
-    Alert,
-    Image,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    useWindowDimensions,
-    View,
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
 } from "react-native";
+import VideoPlayer from "../../components/VideoPlayer";
 import { auth, db, storage } from "../../lib/firebaseConfig";
 import { createNotification } from "../../lib/notifications";
-import VideoPlayer from "../../components/VideoPlayer";
 import { ThemeColors, useTheme } from "../../lib/theme";
 
 const MILESTONES: Record<number, string> = {

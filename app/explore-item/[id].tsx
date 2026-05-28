@@ -190,8 +190,8 @@ export default function ExploreItemScreen() {
               key={item.id}
               post={item}
               author={item.author}
-              onSave={!isOwnPost && !isSaved ? () => saveToBucketlist(item) : undefined}
-              saveDone={!isOwnPost && isSaved}
+              onSave={!isOwnPost ? () => saveToBucketlist(item) : undefined}
+              savedCount={!isOwnPost && isSaved ? 1 : 0}
             />
           );
         })

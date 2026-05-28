@@ -29,7 +29,7 @@ import {
   View,
 } from "react-native";
 import CollectionCard from "../../components/CollectionCard";
-import CollectionPickerSheet from "../../components/CollectionPickerSheet";
+import CollectionPickerSheet, { CollectionRef } from "../../components/CollectionPickerSheet";
 import { auth, db } from "../../lib/firebaseConfig";
 import { createNotification } from "../../lib/notifications";
 import { ThemeColors, useTheme } from "../../lib/theme";
@@ -242,12 +242,14 @@ function ActivityCard({
   post,
   author,
   isSaved,
+  savedCount = 0,
   youHaveThisSaved,
   onSave,
 }: {
   post: any;
   author: any;
   isSaved: boolean;
+  savedCount?: number;
   youHaveThisSaved: boolean;
   onSave?: () => void;
 }) {
@@ -259,6 +261,9 @@ function ActivityCard({
     const d = new Date(post.completedAt.seconds * 1000);
     return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
+
+  const hasSavedThisSession = savedCount > 0;
+  const showSavedState = isSaved || hasSavedThisSession;
 
   return (
     <Pressable
@@ -287,13 +292,18 @@ function ActivityCard({
         {youHaveThisSaved && (
           <Text style={[ac.savedNote, { color: C.accent }]}>You have this saved too ✓</Text>
         )}
-        {onSave && (
+        {onSave && !showSavedState && (
           <Pressable style={[ac.saveBtn, { backgroundColor: C.buttonPrimary }]} onPress={onSave}>
             <Text style={[ac.saveBtnText, { color: C.buttonPrimaryText }]}>+ Save</Text>
           </Pressable>
         )}
-        {!onSave && isSaved && (
-          <Text style={[ac.savedPill, { color: C.textTertiary }]}>Saved ✓</Text>
+        {onSave && showSavedState && (
+          <Pressable
+            style={[ac.saveBtn, { backgroundColor: C.surface, borderWidth: 1, borderColor: C.border }]}
+            onPress={onSave}
+          >
+            <Text style={[ac.saveBtnText, { color: C.textSecondary }]}>Saved ▾</Text>
+          </Pressable>
         )}
       </View>
       {imageUrl ? (
@@ -405,12 +415,15 @@ export default function HomeScreen() {
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [savedPostIds, setSavedPostIds] = useState<Set<string>>(new Set());
   const [savedTitles, setSavedTitles] = useState<Set<string>>(new Set());
+  // postId → Map<collectionId, docId> for posts saved in this session
+  const [savedItemMaps, setSavedItemMaps] = useState<Map<string, Map<string, string>>>(new Map());
   const [followingIds, setFollowingIds] = useState<string[]>([]);
   const [followedSuggestions, setFollowedSuggestions] = useState<Set<string>>(new Set());
 
   // Save picker
   const [pickerVisible, setPickerVisible] = useState(false);
   const [pendingPost, setPendingPost] = useState<any | null>(null);
+  const [pickerInitial, setPickerInitial] = useState<string[]>([]);
 
   // ── Auth ────────────────────────────────────────────────────────────────
 
@@ -611,48 +624,73 @@ export default function HomeScreen() {
 
   // ── Save to collection ────────────────────────────────────────────────────
 
-  const handlePickerSelect = async (collectionId: string, collectionName: string) => {
+  const handlePickerDone = async (toAdd: CollectionRef[], toRemove: string[]) => {
     setPickerVisible(false);
     const post = pendingPost;
     setPendingPost(null);
     if (!auth.currentUser || !post) return;
 
-    await addDoc(collection(db, "userBucketlistItems"), {
-      userId: auth.currentUser.uid,
-      collectionId,
-      title: post.title,
-      category: post.category,
-      completed: false,
-      imageUrl: null,
-      caption: "",
-      media: [],
-      createdAt: serverTimestamp(),
-      completedAt: null,
-      fromPost: true,
-      inspiredByPostId: post.id,
-      inspiredByUserId: post.userId,
-      experienceId: post.experienceId || null,
-    });
+    const existingMap = savedItemMaps.get(post.id) ?? new Map<string, string>();
+    const newMap = new Map(existingMap);
+    const isFirstSave = existingMap.size === 0 && toAdd.length > 0;
 
-    if (post.experienceId) {
-      updateDoc(doc(db, "experiences", post.experienceId), {
-        savesCount: increment(1),
+    for (const col of toAdd) {
+      const ref = await addDoc(collection(db, "userBucketlistItems"), {
+        userId: auth.currentUser.uid,
+        collectionId: col.id,
+        title: post.title,
+        category: post.category,
+        completed: false,
+        imageUrl: null,
+        caption: "",
+        media: [],
+        createdAt: serverTimestamp(),
+        completedAt: null,
+        fromPost: true,
+        inspiredByPostId: post.id,
+        inspiredByUserId: post.userId,
+        experienceId: post.experienceId || null,
+      });
+      newMap.set(col.id, ref.id);
+
+      if (post.experienceId) {
+        updateDoc(doc(db, "experiences", post.experienceId), {
+          savesCount: increment(1),
+        }).catch(() => {});
+      }
+      updateDoc(doc(db, "collections", col.id), {
+        itemCount: increment(1),
+        updatedAt: serverTimestamp(),
       }).catch(() => {});
     }
 
-    updateDoc(doc(db, "collections", collectionId), {
-      itemCount: increment(1),
-      updatedAt: serverTimestamp(),
-    }).catch(() => {});
+    for (const colId of toRemove) {
+      const docId = existingMap.get(colId);
+      if (docId) {
+        deleteDoc(doc(db, "userBucketlistItems", docId)).catch(() => {});
+        updateDoc(doc(db, "collections", colId), {
+          itemCount: increment(-1),
+          updatedAt: serverTimestamp(),
+        }).catch(() => {});
+        newMap.delete(colId);
+      }
+    }
 
-    setSavedPostIds((prev) => new Set([...prev, post.id]));
+    setSavedItemMaps((prev) => new Map([...prev, [post.id, newMap]]));
+    if (newMap.size > 0) {
+      setSavedPostIds((prev) => new Set([...prev, post.id]));
+    } else {
+      setSavedPostIds((prev) => { const s = new Set(prev); s.delete(post.id); return s; });
+    }
 
-    createNotification({
-      recipientId: post.userId,
-      type: "save",
-      actorId: auth.currentUser.uid,
-      postId: post.id,
-    }).catch(() => {});
+    if (isFirstSave) {
+      createNotification({
+        recipientId: post.userId,
+        type: "save",
+        actorId: auth.currentUser.uid,
+        postId: post.id,
+      }).catch(() => {});
+    }
   };
 
   // ── Follow a suggestion ───────────────────────────────────────────────────
@@ -829,6 +867,8 @@ export default function HomeScreen() {
             {friendsPosts.map((post) => {
               const isOwnPost = post.userId === user?.uid;
               const isSaved = savedPostIds.has(post.id);
+              const postSavedMap = savedItemMaps.get(post.id);
+              const savedCount = postSavedMap?.size ?? 0;
               const youHaveThisSaved = !isOwnPost && savedTitles.has(post.title);
               return (
                 <ActivityCard
@@ -836,10 +876,15 @@ export default function HomeScreen() {
                   post={post}
                   author={post.author}
                   isSaved={!isOwnPost && isSaved}
+                  savedCount={!isOwnPost ? savedCount : 0}
                   youHaveThisSaved={youHaveThisSaved}
                   onSave={
-                    !isOwnPost && !isSaved
-                      ? () => { setPendingPost(post); setPickerVisible(true); }
+                    !isOwnPost
+                      ? () => {
+                          setPendingPost(post);
+                          setPickerInitial(postSavedMap ? Array.from(postSavedMap.keys()) : []);
+                          setPickerVisible(true);
+                        }
                       : undefined
                   }
                 />
@@ -870,7 +915,8 @@ export default function HomeScreen() {
       <CollectionPickerSheet
         visible={pickerVisible}
         onClose={() => { setPickerVisible(false); setPendingPost(null); }}
-        onSelect={handlePickerSelect}
+        onDone={handlePickerDone}
+        initiallySelected={pickerInitial}
       />
     </>
   );
