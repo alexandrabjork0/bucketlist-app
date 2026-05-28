@@ -2,8 +2,6 @@ import { Link, router, useFocusEffect } from "expo-router";
 import { signOut } from "firebase/auth";
 import {
   addDoc,
-  arrayRemove,
-  arrayUnion,
   collection,
   deleteDoc,
   doc,
@@ -11,12 +9,12 @@ import {
   getDocs,
   query,
   serverTimestamp,
-  updateDoc,
   where,
 } from "firebase/firestore";
 import { useCallback, useState } from "react";
 import {
   Alert,
+  Dimensions,
   Image,
   Keyboard,
   KeyboardAvoidingView,
@@ -30,110 +28,63 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
+import CollectionCard from "../../components/CollectionCard";
 import PostThumbnail from "../../components/PostThumbnail";
 import { auth, db } from "../../lib/firebaseConfig";
 
-type ActiveTab = "posts" | "cards" | "bucketlist" | "collections";
+type ActiveTab = "posts" | "collections";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const CARD_GAP = 12;
+const CARD_PAD = 16;
+const CARD_WIDTH = Math.floor((SCREEN_WIDTH - CARD_PAD * 2 - CARD_GAP) / 2);
 
 export default function ProfileScreen() {
   const [profile, setProfile] = useState<any>(null);
-  const [items, setItems] = useState<any[]>([]);
+  const [completedItems, setCompletedItems] = useState<any[]>([]);
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [activeTab, setActiveTab] = useState<ActiveTab>("posts");
-  const [selectedBucketlistCategory, setSelectedBucketlistCategory] =
-    useState<string | null>(null);
-
   const [collections, setCollections] = useState<any[]>([]);
-  const [activeCollectionId, setActiveCollectionId] = useState<string | null>(null);
   const [createSheetOpen, setCreateSheetOpen] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState("");
   const [creating, setCreating] = useState(false);
-  const [addToCollectionItemId, setAddToCollectionItemId] = useState<string | null>(null);
-
-  const handleLogout = async () => {
-    await signOut(auth);
-  };
-
-  const deleteCompletedPost = async (itemId: string) => {
-    Alert.alert(
-      "Delete post?",
-      "This will permanently delete this post from your profile.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            await deleteDoc(doc(db, "userBucketlistItems", itemId));
-            setItems((prev) => prev.filter((i) => i.id !== itemId));
-          },
-        },
-      ]
-    );
-  };
-
-  const deleteBucketlistItem = async (itemId: string) => {
-    Alert.alert("Delete item?", "This will remove it from your bucketlist.", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          await deleteDoc(doc(db, "userBucketlistItems", itemId));
-          setItems((prev) => prev.filter((i) => i.id !== itemId));
-        },
-      },
-    ]);
-  };
-
-  const completedItems = items
-    .filter((item) => item.completed === true)
-    .sort((a, b) => (b.completedAt?.seconds || 0) - (a.completedAt?.seconds || 0));
-
-  const uncompletedItems = items.filter((item) => item.completed !== true);
-
-  const completedCategories = Array.from(
-    new Set(completedItems.map((item) => item.category || "Other"))
-  ).sort();
-
-  const bucketlistCategories = [
-    "All",
-    ...Array.from(
-      new Set(uncompletedItems.map((item) => item.category || "Other"))
-    ).sort(),
-  ];
-
-  const visibleBucketlistItems =
-    selectedBucketlistCategory === null || selectedBucketlistCategory === "All"
-      ? uncompletedItems
-      : uncompletedItems.filter((item) => item.category === selectedBucketlistCategory);
 
   useFocusEffect(
     useCallback(() => {
-      const load = async () => {
-        if (!auth.currentUser) return;
-        const userId = auth.currentUser.uid;
-
-        const [userSnap, bucketlistSnap, followersSnap, followingSnap, collectionsSnap] =
-          await Promise.all([
-            getDoc(doc(db, "users", userId)),
-            getDocs(query(collection(db, "userBucketlistItems"), where("userId", "==", userId))),
-            getDocs(query(collection(db, "follows"), where("followingId", "==", userId))),
-            getDocs(query(collection(db, "follows"), where("followerId", "==", userId))),
-            getDocs(query(collection(db, "collections"), where("userId", "==", userId))),
-          ]);
-
-        if (userSnap.exists()) setProfile(userSnap.data());
-        setItems(bucketlistSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
-        setFollowersCount(followersSnap.size);
-        setFollowingCount(followingSnap.size);
-        setCollections(collectionsSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
-      };
-
       load();
     }, [])
   );
+
+  const load = async () => {
+    if (!auth.currentUser) return;
+    const uid = auth.currentUser.uid;
+
+    const [userSnap, postsSnap, followersSnap, followingSnap, collectionsSnap] =
+      await Promise.all([
+        getDoc(doc(db, "users", uid)),
+        getDocs(
+          query(
+            collection(db, "userBucketlistItems"),
+            where("userId", "==", uid),
+            where("completed", "==", true)
+          )
+        ),
+        getDocs(query(collection(db, "follows"), where("followingId", "==", uid))),
+        getDocs(query(collection(db, "follows"), where("followerId", "==", uid))),
+        getDocs(query(collection(db, "collections"), where("userId", "==", uid))),
+      ]);
+
+    if (userSnap.exists()) setProfile(userSnap.data());
+    setCompletedItems(
+      postsSnap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .sort((a: any, b: any) => (b.completedAt?.seconds || 0) - (a.completedAt?.seconds || 0))
+    );
+    setFollowersCount(followersSnap.size);
+    setFollowingCount(followingSnap.size);
+    setCollections(collectionsSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+  };
 
   const reloadCollections = async () => {
     if (!auth.currentUser) return;
@@ -145,13 +96,18 @@ export default function ProfileScreen() {
 
   const createCollection = async () => {
     if (!auth.currentUser || !newCollectionName.trim()) return;
+    setCreating(true);
     try {
-      setCreating(true);
       await addDoc(collection(db, "collections"), {
         userId: auth.currentUser.uid,
         name: newCollectionName.trim(),
+        isPrivate: false,
+        coverImages: [],
+        itemCount: 0,
+        completedCount: 0,
+        order: 0,
         createdAt: serverTimestamp(),
-        itemIds: [],
+        updatedAt: serverTimestamp(),
       });
       setNewCollectionName("");
       setCreateSheetOpen(false);
@@ -162,50 +118,26 @@ export default function ProfileScreen() {
   };
 
   const deleteCollection = (collId: string, name: string) => {
-    Alert.alert(`Delete "${name}"?`, "This won't delete the items, just the collection.", [
+    Alert.alert(`Delete "${name}"?`, "Items in this collection won't be deleted.", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Delete",
         style: "destructive",
         onPress: async () => {
           await deleteDoc(doc(db, "collections", collId));
-          if (activeCollectionId === collId) setActiveCollectionId(null);
-          await reloadCollections();
+          setCollections((prev) => prev.filter((c) => c.id !== collId));
         },
       },
     ]);
   };
 
-  const addItemToCollection = async (collId: string, itemId: string) => {
-    await updateDoc(doc(db, "collections", collId), { itemIds: arrayUnion(itemId) });
-    setCollections((prev) =>
-      prev.map((c) =>
-        c.id === collId
-          ? { ...c, itemIds: [...(c.itemIds || []), itemId] }
-          : c
-      )
-    );
-    setAddToCollectionItemId(null);
-  };
-
-  const removeItemFromCollection = async (collId: string, itemId: string) => {
-    await updateDoc(doc(db, "collections", collId), { itemIds: arrayRemove(itemId) });
-    setCollections((prev) =>
-      prev.map((c) =>
-        c.id === collId
-          ? { ...c, itemIds: (c.itemIds || []).filter((id: string) => id !== itemId) }
-          : c
-      )
-    );
-  };
-
-  // ─── Tab renderers ────────────────────────────────────────────────────────
+  // ── Tab renderers ──────────────────────────────────────────────────────────
 
   const renderPosts = () => (
     <View style={styles.scene}>
       {completedItems.length === 0 ? (
         <Text style={styles.emptyText}>
-          No completed items yet. Complete a bucketlist item to see it here.
+          No posts yet. Complete an experience to see it here.
         </Text>
       ) : (
         <View style={styles.grid}>
@@ -223,244 +155,50 @@ export default function ProfileScreen() {
     </View>
   );
 
-  const renderCards = () => (
+  const renderCollections = () => (
     <View style={styles.scene}>
-      {completedCategories.length === 0 ? (
-        <Text style={styles.emptyText}>No completed categories yet.</Text>
-      ) : (
-        <View style={styles.cardsGrid}>
-          {completedCategories.map((category) => {
-            const categoryItems = completedItems.filter((i) => i.category === category);
-            const thumbnail = categoryItems.find((i) => i.imageUrl)?.imageUrl;
+      <Pressable
+        style={styles.newCollBtn}
+        onPress={() => setCreateSheetOpen(true)}
+      >
+        <Text style={styles.newCollBtnText}>＋ New collection</Text>
+      </Pressable>
 
-            return (
-              <Pressable
-                key={category}
-                style={styles.cardItem}
-                onPress={() =>
-                  router.push({
-                    pathname: "/profile-category/[category]",
-                    params: { category },
-                  })
-                }
-              >
-                {thumbnail ? (
-                  <Image source={{ uri: thumbnail }} style={styles.cardImage} />
-                ) : (
-                  <View style={styles.cardImageFallback}>
-                    <Text style={styles.cardImageFallbackText}>{category[0]}</Text>
-                  </View>
-                )}
-                <View style={styles.cardTextBlock}>
-                  <Text style={styles.cardCategoryText} numberOfLines={1}>{category}</Text>
-                  <Text style={styles.cardCountText}>{categoryItems.length} posts</Text>
-                </View>
-              </Pressable>
-            );
-          })}
+      {collections.length === 0 ? (
+        <Text style={styles.emptyText}>
+          Collections are your personal boards — Japan 2027, Dream Honeymoon, Food Goals…{"\n"}
+          Create one and start saving experiences.
+        </Text>
+      ) : (
+        <View style={styles.collectionsGrid}>
+          {collections.map((coll) => (
+            <CollectionCard
+              key={coll.id}
+              collection={coll}
+              cardWidth={CARD_WIDTH}
+              onPress={() =>
+                router.push({ pathname: "/collection/[id]", params: { id: coll.id } })
+              }
+              onLongPress={() => deleteCollection(coll.id, coll.name)}
+            />
+          ))}
         </View>
       )}
     </View>
   );
 
-  const renderBucketlist = () => {
-    const displayItems =
-      selectedBucketlistCategory === null || selectedBucketlistCategory === "All"
-        ? uncompletedItems
-        : uncompletedItems.filter((i) => i.category === selectedBucketlistCategory);
-
-    const sourceLabel = (item: any) => {
-      if (item.customIdea) return "My idea";
-      if (item.fromExplore) return "From Explore";
-      if (item.fromPost) return "Inspired by post";
-      return null;
-    };
-
-    return (
-      <View style={styles.scene}>
-        {uncompletedItems.length === 0 ? (
-          <Text style={styles.emptyText}>
-            Your bucketlist is empty. Explore ideas or add your own.
-          </Text>
-        ) : (
-          <>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.bucketlistChipsScroll}
-              nestedScrollEnabled
-            >
-              {bucketlistCategories.map((cat) => (
-                <Pressable
-                  key={cat}
-                  style={[
-                    styles.bucketlistChip,
-                    (selectedBucketlistCategory ?? "All") === cat && styles.bucketlistChipActive,
-                  ]}
-                  onPress={() => setSelectedBucketlistCategory(cat)}
-                >
-                  <Text
-                    style={[
-                      styles.bucketlistChipText,
-                      (selectedBucketlistCategory ?? "All") === cat &&
-                        styles.bucketlistChipTextActive,
-                    ]}
-                  >
-                    {cat}
-                  </Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-
-            {displayItems.map((item) => {
-              const label = sourceLabel(item);
-              return (
-                <View key={item.id} style={styles.bucketlistRow}>
-                  <View style={styles.bucketlistRowLeft}>
-                    <Text style={styles.bucketlistRowTitle}>{item.title}</Text>
-                    <View style={styles.bucketlistRowMeta}>
-                      <View style={styles.categoryPill}>
-                        <Text style={styles.categoryPillText}>{item.category}</Text>
-                      </View>
-                      {label && <Text style={styles.sourceLabel}>{label}</Text>}
-                    </View>
-                    <View style={styles.itemActions}>
-                      {collections.length > 0 && (
-                        <Pressable
-                          style={styles.addToCollectionBtn}
-                          onPress={() => setAddToCollectionItemId(item.id)}
-                        >
-                          <Text style={styles.addToCollectionText}>+ Collection</Text>
-                        </Pressable>
-                      )}
-                      <Pressable onPress={() => deleteBucketlistItem(item.id)}>
-                        <Text style={styles.deleteItemText}>Delete</Text>
-                      </Pressable>
-                    </View>
-                  </View>
-
-                  <Pressable
-                    style={styles.circleBtn}
-                    onPress={() =>
-                      router.push({
-                        pathname: "/complete-item/[id]",
-                        params: { id: item.id },
-                      })
-                    }
-                  />
-                </View>
-              );
-            })}
-          </>
-        )}
-      </View>
-    );
-  };
-
-  const renderCollections = () => {
-    if (activeCollectionId) {
-      const coll = collections.find((c) => c.id === activeCollectionId);
-      if (!coll) return null;
-
-      const collItems = items.filter((i) => (coll.itemIds || []).includes(i.id));
-
-      return (
-        <View style={styles.scene}>
-          <Pressable onPress={() => setActiveCollectionId(null)}>
-            <Text style={styles.backText}>‹ Back to collections</Text>
-          </Pressable>
-
-          <Text style={styles.sectionTitle}>{coll.name}</Text>
-
-          {collItems.length === 0 ? (
-            <Text style={styles.emptyText}>No items in this collection yet.</Text>
-          ) : (
-            collItems.map((item) => (
-              <View key={item.id} style={styles.itemCard}>
-                <Pressable
-                  style={styles.itemContent}
-                  onPress={() => {
-                    if (item.completed) {
-                      router.push({ pathname: "/post/[id]", params: { id: item.id } });
-                    } else {
-                      router.push({ pathname: "/complete-item/[id]", params: { id: item.id } });
-                    }
-                  }}
-                >
-                  <Text style={styles.itemTitle}>{item.title}</Text>
-                  <Text style={styles.itemCategory}>{item.category}</Text>
-                  {item.completed ? (
-                    <Text style={styles.completedBadge}>Completed</Text>
-                  ) : (
-                    <Text style={styles.completeHint}>Tap to complete</Text>
-                  )}
-                </Pressable>
-                <Pressable onPress={() => removeItemFromCollection(activeCollectionId, item.id)}>
-                  <Text style={styles.deleteItemText}>Remove</Text>
-                </Pressable>
-              </View>
-            ))
-          )}
-        </View>
-      );
-    }
-
-    return (
-      <View style={styles.scene}>
-        <Pressable style={styles.createCollectionBtn} onPress={() => setCreateSheetOpen(true)}>
-          <Text style={styles.createCollectionText}>＋ New collection</Text>
-        </Pressable>
-
-        {collections.length === 0 ? (
-          <Text style={styles.emptyText}>
-            Collections are personal boards for grouping your ideas. Create one to get started.
-          </Text>
-        ) : (
-          <View style={styles.collectionsGrid}>
-            {collections.map((coll) => {
-              const collItems = items.filter((i) => (coll.itemIds || []).includes(i.id));
-              const coverImage = collItems.find((i) => i.imageUrl)?.imageUrl || null;
-
-              return (
-                <Pressable
-                  key={coll.id}
-                  style={styles.collectionCard}
-                  onPress={() => setActiveCollectionId(coll.id)}
-                  onLongPress={() => deleteCollection(coll.id, coll.name)}
-                >
-                  {coverImage ? (
-                    <Image source={{ uri: coverImage }} style={styles.collectionCover} />
-                  ) : (
-                    <View style={styles.collectionCoverPlaceholder} />
-                  )}
-                  <View style={styles.collectionInfo}>
-                    <Text style={styles.collectionName} numberOfLines={1}>
-                      {coll.name}
-                    </Text>
-                    <Text style={styles.collectionCount}>
-                      {(coll.itemIds || []).length} items
-                    </Text>
-                  </View>
-                </Pressable>
-              );
-            })}
-          </View>
-        )}
-      </View>
-    );
-  };
-
-  // ─── Root render ─────────────────────────────────────────────────────────
+  // ── Root render ────────────────────────────────────────────────────────────
 
   return (
     <>
-      <ScrollView style={styles.container}>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        {/* Profile header */}
         <View style={styles.profileHeader}>
-          <View style={styles.header}>
+          <View style={styles.headerRow}>
             <View style={styles.headerLeft}>
               <View style={styles.avatar}>
                 {profile?.profileImage ? (
-                  <Image source={{ uri: profile.profileImage }} style={styles.profileImage} />
+                  <Image source={{ uri: profile.profileImage }} style={styles.avatarImage} />
                 ) : (
                   <Text style={styles.avatarText}>
                     {profile?.username?.charAt(0)?.toUpperCase() || "?"}
@@ -473,64 +211,59 @@ export default function ProfileScreen() {
             <Pressable
               onPress={() =>
                 Alert.alert("Profile options", "", [
-                  { text: "Log out", style: "destructive", onPress: handleLogout },
+                  {
+                    text: "Log out",
+                    style: "destructive",
+                    onPress: async () => signOut(auth),
+                  },
                   { text: "Cancel", style: "cancel" },
                 ])
               }
             >
-              <Text style={styles.menuButton}>⋯</Text>
+              <Text style={styles.menuBtn}>⋯</Text>
             </Pressable>
           </View>
 
           <Text style={styles.bio}>
-            {profile?.bio || "No bio yet. Add your dreams here soon."}
+            {profile?.bio || "Add your dreams here."}
           </Text>
 
-          <Link href="/edit-profile" style={styles.editButton}>
+          <Link href="/edit-profile" style={styles.editBtn}>
             Edit profile
           </Link>
 
           <View style={styles.statsRow}>
-            <View>
-              <Text style={styles.statNumber}>
-                {completedItems.length}/{items.length}
-              </Text>
-              <Text style={styles.statLabel}>Bucketlist</Text>
+            <View style={styles.stat}>
+              <Text style={styles.statNumber}>{completedItems.length}</Text>
+              <Text style={styles.statLabel}>Posts</Text>
             </View>
-            <View>
+            <View style={styles.stat}>
               <Text style={styles.statNumber}>{followersCount}</Text>
               <Text style={styles.statLabel}>Followers</Text>
             </View>
-            <View>
+            <View style={styles.stat}>
               <Text style={styles.statNumber}>{followingCount}</Text>
               <Text style={styles.statLabel}>Following</Text>
             </View>
           </View>
         </View>
 
-        <View style={styles.customTabs}>
-          {(["posts", "cards", "bucketlist", "collections"] as ActiveTab[]).map((key) => (
+        {/* Tabs */}
+        <View style={styles.tabs}>
+          {(["posts", "collections"] as ActiveTab[]).map((tab) => (
             <Pressable
-              key={key}
-              style={[styles.customTab, activeTab === key && styles.customTabActive]}
-              onPress={() => {
-                setActiveTab(key);
-                setSelectedBucketlistCategory(null);
-                setActiveCollectionId(null);
-              }}
+              key={tab}
+              style={[styles.tab, activeTab === tab && styles.tabActive]}
+              onPress={() => setActiveTab(tab)}
             >
-              <Text
-                style={[styles.customTabText, activeTab === key && styles.customTabTextActive]}
-              >
-                {key.charAt(0).toUpperCase() + key.slice(1)}
+              <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </Text>
             </Pressable>
           ))}
         </View>
 
         {activeTab === "posts" && renderPosts()}
-        {activeTab === "cards" && renderCards()}
-        {activeTab === "bucketlist" && renderBucketlist()}
         {activeTab === "collections" && renderCollections()}
       </ScrollView>
 
@@ -541,7 +274,12 @@ export default function ProfileScreen() {
         animationType="slide"
         onRequestClose={() => setCreateSheetOpen(false)}
       >
-        <TouchableWithoutFeedback onPress={() => { Keyboard.dismiss(); setCreateSheetOpen(false); }}>
+        <TouchableWithoutFeedback
+          onPress={() => {
+            Keyboard.dismiss();
+            setCreateSheetOpen(false);
+          }}
+        >
           <View style={styles.overlay} />
         </TouchableWithoutFeedback>
 
@@ -552,11 +290,13 @@ export default function ProfileScreen() {
           <View style={styles.sheet}>
             <View style={styles.sheetHandle} />
             <Text style={styles.sheetTitle}>New collection</Text>
-            <Text style={styles.sheetSubtitle}>Give your collection a name.</Text>
+            <Text style={styles.sheetSubtitle}>
+              Give your collection a name — Japan 2027, Dream Honeymoon, Food Goals…
+            </Text>
 
             <TextInput
               style={styles.sheetInput}
-              placeholder="e.g. Summer 2026, Date Ideas…"
+              placeholder="Collection name"
               placeholderTextColor="#999"
               value={newCollectionName}
               onChangeText={setNewCollectionName}
@@ -566,11 +306,11 @@ export default function ProfileScreen() {
             />
 
             <Pressable
-              style={[styles.sheetButton, creating && styles.sheetButtonDisabled]}
+              style={[styles.sheetBtn, creating && styles.sheetBtnOff]}
               onPress={createCollection}
               disabled={creating}
             >
-              <Text style={styles.sheetButtonText}>
+              <Text style={styles.sheetBtnText}>
                 {creating ? "Creating…" : "Create collection"}
               </Text>
             </Pressable>
@@ -583,56 +323,6 @@ export default function ProfileScreen() {
             </Pressable>
           </View>
         </KeyboardAvoidingView>
-      </Modal>
-
-      {/* Add to collection sheet */}
-      <Modal
-        visible={addToCollectionItemId !== null}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setAddToCollectionItemId(null)}
-      >
-        <TouchableWithoutFeedback onPress={() => setAddToCollectionItemId(null)}>
-          <View style={styles.overlay} />
-        </TouchableWithoutFeedback>
-
-        <View style={styles.sheetWrapper}>
-          <View style={styles.sheet}>
-            <View style={styles.sheetHandle} />
-            <Text style={styles.sheetTitle}>Add to collection</Text>
-
-            {collections.map((coll) => {
-              const alreadyIn = (coll.itemIds || []).includes(addToCollectionItemId);
-              return (
-                <Pressable
-                  key={coll.id}
-                  style={styles.collectionPickRow}
-                  onPress={() =>
-                    !alreadyIn && addItemToCollection(coll.id, addToCollectionItemId!)
-                  }
-                  disabled={alreadyIn}
-                >
-                  <View style={styles.collectionPickInfo}>
-                    <Text style={styles.collectionPickName}>{coll.name}</Text>
-                    <Text style={styles.collectionPickCount}>
-                      {(coll.itemIds || []).length} items
-                    </Text>
-                  </View>
-                  <Text style={[styles.collectionPickCheck, alreadyIn && styles.collectionPickCheckDone]}>
-                    {alreadyIn ? "✓" : "+"}
-                  </Text>
-                </Pressable>
-              );
-            })}
-
-            <Pressable
-              style={styles.sheetCancel}
-              onPress={() => setAddToCollectionItemId(null)}
-            >
-              <Text style={styles.sheetCancelText}>Cancel</Text>
-            </Pressable>
-          </View>
-        </View>
       </Modal>
     </>
   );
@@ -647,7 +337,7 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingTop: 80,
   },
-  header: {
+  headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -657,7 +347,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 16,
   },
-  menuButton: {
+  menuBtn: {
     fontSize: 26,
     fontWeight: "800",
     paddingHorizontal: 8,
@@ -669,6 +359,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#111",
     justifyContent: "center",
     alignItems: "center",
+    overflow: "hidden",
+  },
+  avatarImage: {
+    width: 86,
+    height: 86,
+    borderRadius: 43,
   },
   avatarText: {
     color: "#fff",
@@ -679,17 +375,13 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: "800",
   },
-  profileImage: {
-    width: 86,
-    height: 86,
-    borderRadius: 43,
-  },
   bio: {
     marginTop: 24,
     fontSize: 16,
     lineHeight: 22,
+    color: "#333",
   },
-  editButton: {
+  editBtn: {
     marginTop: 18,
     backgroundColor: "#111",
     color: "#fff",
@@ -706,6 +398,9 @@ const styles = StyleSheet.create({
     padding: 18,
     borderRadius: 22,
   },
+  stat: {
+    alignItems: "center",
+  },
   statNumber: {
     fontSize: 22,
     fontWeight: "800",
@@ -717,252 +412,54 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textAlign: "center",
   },
-  customTabs: {
+  tabs: {
     flexDirection: "row",
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
     backgroundColor: "#fff",
   },
-  customTab: {
+  tab: {
     flex: 1,
     paddingVertical: 14,
     alignItems: "center",
   },
-  customTabActive: {
+  tabActive: {
     borderBottomWidth: 3,
     borderBottomColor: "#111",
   },
-  customTabText: {
-    fontSize: 12,
+  tabText: {
+    fontSize: 13,
     fontWeight: "800",
-    color: "#777",
+    color: "#999",
   },
-  customTabTextActive: {
+  tabTextActive: {
     color: "#111",
   },
   scene: {
     flex: 1,
     backgroundColor: "#fff",
     paddingTop: 20,
-    paddingHorizontal: 24,
+  },
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
   },
   emptyText: {
     color: "#777",
     textAlign: "center",
     marginTop: 24,
     lineHeight: 22,
+    paddingHorizontal: 40,
   },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginHorizontal: -24,
-  },
-  categoryCard: {
-    backgroundColor: "#F4F4F4",
-    padding: 18,
-    borderRadius: 18,
-    marginBottom: 12,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  categoryTitle: {
-    fontSize: 17,
-    fontWeight: "800",
-  },
-  categoryCount: {
-    marginTop: 4,
-    color: "#777",
-    fontWeight: "600",
-  },
-  cardsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-  },
-  cardItem: {
-    width: "47%",
-    borderRadius: 16,
-    overflow: "hidden",
-    backgroundColor: "#F8F8F8",
-  },
-  cardImage: {
-    width: "100%",
-    aspectRatio: 4 / 3,
-    resizeMode: "cover",
-  },
-  cardImageFallback: {
-    width: "100%",
-    aspectRatio: 4 / 3,
-    backgroundColor: "#E0E0E0",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  cardImageFallbackText: {
-    fontSize: 32,
-    fontWeight: "900",
-    color: "#bbb",
-  },
-  cardTextBlock: {
-    padding: 10,
-  },
-  cardCategoryText: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: "#111",
-  },
-  cardCountText: {
-    fontSize: 12,
-    color: "#888",
-    marginTop: 2,
-    fontWeight: "600",
-  },
-  arrow: {
-    fontSize: 30,
-    color: "#777",
-  },
-  backText: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: "#111",
-    marginBottom: 18,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: "900",
-    marginBottom: 16,
-  },
-  itemCard: {
-    backgroundColor: "#F4F4F4",
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 10,
-  },
-  itemTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  itemCategory: {
-    marginTop: 4,
-    color: "#777",
-  },
-  completeHint: {
-    marginTop: 8,
-    color: "#111",
-    fontWeight: "700",
-    fontSize: 13,
-  },
-  completedBadge: {
-    marginTop: 8,
-    color: "#2ecc71",
-    fontWeight: "700",
-    fontSize: 13,
-  },
-  itemContent: {
-    flex: 1,
-  },
-  itemActions: {
-    flexDirection: "row",
-    gap: 16,
-    marginTop: 12,
-  },
-  addToCollectionBtn: {
-    paddingVertical: 5,
-    paddingHorizontal: 12,
-    backgroundColor: "#111",
-    borderRadius: 10,
-  },
-  addToCollectionText: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 12,
-  },
-  deleteItemText: {
-    color: "#C0392B",
-    fontWeight: "800",
-    fontSize: 14,
-    paddingVertical: 5,
-  },
-
-  // Bucketlist tab
-  bucketlistChipsScroll: {
-    paddingBottom: 16,
-    gap: 8,
-  },
-  bucketlistChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: "#F4F4F4",
-    borderRadius: 999,
-  },
-  bucketlistChipActive: {
-    backgroundColor: "#111",
-  },
-  bucketlistChipText: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#555",
-  },
-  bucketlistChipTextActive: {
-    color: "#fff",
-  },
-  bucketlistRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F2F2F2",
-    gap: 14,
-  },
-  bucketlistRowLeft: {
-    flex: 1,
-  },
-  bucketlistRowTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#111",
-    lineHeight: 22,
-  },
-  bucketlistRowMeta: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginTop: 5,
-  },
-  circleBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: "#CCCCCC",
-    flexShrink: 0,
-  },
-  categoryPill: {
-    backgroundColor: "#F0F0F0",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-  },
-  categoryPillText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#555",
-  },
-  sourceLabel: {
-    fontSize: 12,
-    color: "#BBBBBB",
-    fontWeight: "600",
-  },
-
-  // Collections grid
-  createCollectionBtn: {
+  newCollBtn: {
     backgroundColor: "#111",
     padding: 15,
     borderRadius: 16,
     alignItems: "center",
+    marginHorizontal: CARD_PAD,
     marginBottom: 20,
   },
-  createCollectionText: {
+  newCollBtnText: {
     color: "#fff",
     fontWeight: "800",
     fontSize: 15,
@@ -970,38 +467,11 @@ const styles = StyleSheet.create({
   collectionsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 12,
-  },
-  collectionCard: {
-    width: "47%",
-    borderRadius: 16,
-    backgroundColor: "#F4F4F4",
-    overflow: "hidden",
-  },
-  collectionCover: {
-    width: "100%",
-    aspectRatio: 1,
-  },
-  collectionCoverPlaceholder: {
-    width: "100%",
-    aspectRatio: 1,
-    backgroundColor: "#E0E0E0",
-  },
-  collectionInfo: {
-    padding: 10,
-  },
-  collectionName: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: "#111",
-  },
-  collectionCount: {
-    fontSize: 12,
-    color: "#777",
-    marginTop: 2,
+    gap: CARD_GAP,
+    paddingHorizontal: CARD_PAD,
   },
 
-  // Modals
+  // Sheet
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.4)",
@@ -1037,6 +507,7 @@ const styles = StyleSheet.create({
     color: "#777",
     fontSize: 14,
     marginBottom: 18,
+    lineHeight: 20,
   },
   sheetInput: {
     backgroundColor: "#F4F4F4",
@@ -1045,16 +516,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 16,
   },
-  sheetButton: {
+  sheetBtn: {
     backgroundColor: "#111",
     padding: 16,
     borderRadius: 18,
     alignItems: "center",
   },
-  sheetButtonDisabled: {
+  sheetBtnOff: {
     backgroundColor: "#ccc",
   },
-  sheetButtonText: {
+  sheetBtnText: {
     color: "#fff",
     fontWeight: "800",
     fontSize: 16,
@@ -1067,36 +538,5 @@ const styles = StyleSheet.create({
     color: "#777",
     fontWeight: "700",
     fontSize: 15,
-  },
-
-  // Collection picker rows
-  collectionPickRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-  },
-  collectionPickInfo: {
-    flex: 1,
-  },
-  collectionPickName: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  collectionPickCount: {
-    fontSize: 12,
-    color: "#777",
-    marginTop: 2,
-  },
-  collectionPickCheck: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: "#111",
-    width: 28,
-    textAlign: "center",
-  },
-  collectionPickCheckDone: {
-    color: "#2ecc71",
   },
 });

@@ -12,6 +12,7 @@ import {
   where,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
+import CollectionPickerSheet from "../../components/CollectionPickerSheet";
 import {
   ActivityIndicator,
   Alert,
@@ -53,6 +54,8 @@ export default function ExperienceScreen() {
   const [savedPostIds, setSavedPostIds] = useState<string[]>([]);
   const [isAdded, setIsAdded] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [pickerVisible, setPickerVisible] = useState(false);
+  const [pendingPost, setPendingPost] = useState<any | null>(null);
 
   useEffect(() => {
     if (id) loadExperience();
@@ -73,7 +76,7 @@ export default function ExperienceScreen() {
         getDocs(
           query(
             collection(db, "userBucketlistItems"),
-            where("title", "==", (expData as any).title),
+            where("experienceId", "==", String(id)),
             where("completed", "==", true)
           )
         ),
@@ -88,8 +91,7 @@ export default function ExperienceScreen() {
               query(
                 collection(db, "userBucketlistItems"),
                 where("userId", "==", auth.currentUser.uid),
-                where("experienceId", "==", String(id)),
-                where("completed", "==", false)
+                where("experienceId", "==", String(id))
               )
             )
           : Promise.resolve(null),
@@ -131,11 +133,33 @@ export default function ExperienceScreen() {
     }
   };
 
-  const addToBucketlist = async () => {
+  const openPickerForExperience = () => {
     if (!auth.currentUser || !experience) return;
+    setPendingPost(null);
+    setPickerVisible(true);
+  };
 
+  const openPickerForPost = (post: any) => {
+    if (!auth.currentUser) return;
+    setPendingPost(post);
+    setPickerVisible(true);
+  };
+
+  const handlePickerSelect = async (collectionId: string, collectionName: string) => {
+    setPickerVisible(false);
+    if (pendingPost) {
+      await doSavePost(pendingPost, collectionId, collectionName);
+      setPendingPost(null);
+    } else {
+      await doAddExperience(collectionId, collectionName);
+    }
+  };
+
+  const doAddExperience = async (collectionId: string, collectionName: string) => {
+    if (!auth.currentUser || !experience) return;
     await addDoc(collection(db, "userBucketlistItems"), {
       userId: auth.currentUser.uid,
+      collectionId,
       title: experience.title,
       category: experience.category,
       completed: false,
@@ -147,20 +171,24 @@ export default function ExperienceScreen() {
       fromExplore: true,
       experienceId: String(id),
     });
-
-    updateDoc(doc(db, "experiences", String(id)), {
-      savesCount: increment(1),
-    }).catch(() => {});
-
+    await Promise.all([
+      updateDoc(doc(db, "experiences", String(id)), {
+        savesCount: increment(1),
+      }).catch(() => {}),
+      updateDoc(doc(db, "collections", collectionId), {
+        itemCount: increment(1),
+        updatedAt: serverTimestamp(),
+      }).catch(() => {}),
+    ]);
     setIsAdded(true);
-    Alert.alert("Added", `${experience.title} was added to your bucketlist.`);
+    Alert.alert("Saved", `Added to "${collectionName}"`);
   };
 
-  const savePost = async (post: any) => {
+  const doSavePost = async (post: any, collectionId: string, collectionName: string) => {
     if (!auth.currentUser) return;
-
     await addDoc(collection(db, "userBucketlistItems"), {
       userId: auth.currentUser.uid,
+      collectionId,
       title: post.title,
       category: post.category,
       completed: false,
@@ -174,14 +202,17 @@ export default function ExperienceScreen() {
       inspiredByUserId: post.userId,
       experienceId: String(id),
     });
-
-    updateDoc(doc(db, "experiences", String(id)), {
-      savesCount: increment(1),
-    }).catch(() => {});
-
+    await Promise.all([
+      updateDoc(doc(db, "experiences", String(id)), {
+        savesCount: increment(1),
+      }).catch(() => {}),
+      updateDoc(doc(db, "collections", collectionId), {
+        itemCount: increment(1),
+        updatedAt: serverTimestamp(),
+      }).catch(() => {}),
+    ]);
     setSavedPostIds((prev) => [...prev, post.id]);
-    Alert.alert("Added", `${post.title} was added to your bucketlist.`);
-
+    Alert.alert("Saved", `Added to "${collectionName}"`);
     createNotification({
       recipientId: post.userId,
       type: "save",
@@ -256,10 +287,10 @@ export default function ExperienceScreen() {
 
           <Pressable
             style={[styles.addBtn, isAdded && styles.addBtnDone]}
-            onPress={isAdded ? undefined : addToBucketlist}
+            onPress={isAdded ? undefined : openPickerForExperience}
           >
             <Text style={[styles.addBtnText, isAdded && styles.addBtnTextDone]}>
-              {isAdded ? "Added ✓" : "+ Add to my list"}
+              {isAdded ? "Saved ✓" : "+ Save to list"}
             </Text>
           </Pressable>
         </View>
@@ -276,7 +307,7 @@ export default function ExperienceScreen() {
                   key={post.id}
                   post={post}
                   author={post.author}
-                  onSave={!isOwnPost && !isSaved ? () => savePost(post) : undefined}
+                  onSave={!isOwnPost && !isSaved ? () => openPickerForPost(post) : undefined}
                   saveDone={!isOwnPost && isSaved}
                 />
               );
@@ -333,6 +364,12 @@ export default function ExperienceScreen() {
 
         <View style={styles.bottomPad} />
       </ScrollView>
+
+      <CollectionPickerSheet
+        visible={pickerVisible}
+        onClose={() => { setPickerVisible(false); setPendingPost(null); }}
+        onSelect={handlePickerSelect}
+      />
     </View>
   );
 }

@@ -2,6 +2,7 @@ import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
 import * as VideoThumbnails from "expo-video-thumbnails";
 import {
+  arrayUnion,
   collection,
   doc,
   getDoc,
@@ -235,14 +236,24 @@ export default function CompleteItemScreen() {
 
       notifyCompletion(id).catch(() => {});
 
+      const firstImageUrl = cleanMedia.find((m: any) => m.type === "image")?.url;
+
       if (item?.experienceId) {
         const heroUpdate: Record<string, any> = { completionsCount: increment(1) };
-        const firstImageUrl = cleanMedia.find((m: any) => m.type === "image")?.url;
         if (firstImageUrl) heroUpdate.heroImageUrl = firstImageUrl;
         updateDoc(doc(db, "experiences", item.experienceId), heroUpdate).catch(() => {});
       }
 
-      Alert.alert("Posted", "Your bucketlist item is now posted!");
+      if (item?.collectionId) {
+        const collUpdate: Record<string, any> = {
+          completedCount: increment(1),
+          updatedAt: serverTimestamp(),
+        };
+        if (firstImageUrl) collUpdate.coverImages = arrayUnion(firstImageUrl);
+        updateDoc(doc(db, "collections", item.collectionId), collUpdate).catch(() => {});
+      }
+
+      Alert.alert("Posted", "Your experience is now posted!");
       router.back();
     } catch (error) {
       console.log(error);

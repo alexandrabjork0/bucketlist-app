@@ -27,6 +27,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
+import CollectionPickerSheet from "../../components/CollectionPickerSheet";
 import { auth, db } from "../../lib/firebaseConfig";
 import { migrateIdeasToExperiences } from "../../lib/migration";
 
@@ -86,6 +87,8 @@ export default function ExploreScreen() {
   const [newCustomCategory, setNewCustomCategory] = useState("");
   const [newIsPrivate, setNewIsPrivate] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [collectionPickerVisible, setCollectionPickerVisible] = useState(false);
+  const [pendingExperience, setPendingExperience] = useState<Experience | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -225,14 +228,24 @@ export default function ExploreScreen() {
     }
   };
 
-  const addToBucketlist = async (exp: Experience) => {
+  const addToBucketlist = (exp: Experience) => {
     if (!auth.currentUser) {
       Alert.alert("Not logged in", "You need to log in first.");
       return;
     }
+    setPendingExperience(exp);
+    setCollectionPickerVisible(true);
+  };
+
+  const handleCollectionSelected = async (collectionId: string, collectionName: string) => {
+    setCollectionPickerVisible(false);
+    const exp = pendingExperience;
+    setPendingExperience(null);
+    if (!auth.currentUser || !exp) return;
 
     await addDoc(collection(db, "userBucketlistItems"), {
       userId: auth.currentUser.uid,
+      collectionId,
       title: exp.title,
       category: exp.category,
       completed: false,
@@ -245,12 +258,18 @@ export default function ExploreScreen() {
       experienceId: exp.id,
     });
 
-    updateDoc(doc(db, "experiences", exp.id), {
-      savesCount: increment(1),
-    }).catch(() => {});
+    await Promise.all([
+      updateDoc(doc(db, "experiences", exp.id), {
+        savesCount: increment(1),
+      }).catch(() => {}),
+      updateDoc(doc(db, "collections", collectionId), {
+        itemCount: increment(1),
+        updatedAt: serverTimestamp(),
+      }).catch(() => {}),
+    ]);
 
     setUserExperienceIds((prev) => new Set([...prev, exp.id]));
-    Alert.alert("Added", `${exp.title} was added to your bucketlist.`);
+    Alert.alert("Saved", `Added to "${collectionName}"`);
   };
 
   const trending = experiences.slice(0, 6);
@@ -528,6 +547,12 @@ export default function ExploreScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      <CollectionPickerSheet
+        visible={collectionPickerVisible}
+        onClose={() => { setCollectionPickerVisible(false); setPendingExperience(null); }}
+        onSelect={handleCollectionSelected}
+      />
     </View>
   );
 }

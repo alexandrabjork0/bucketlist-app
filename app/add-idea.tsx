@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { addDoc, collection, doc, increment, serverTimestamp, updateDoc } from "firebase/firestore";
 import { useState } from "react";
 import {
     Alert,
@@ -13,6 +13,7 @@ import {
     TouchableWithoutFeedback,
     View,
 } from "react-native";
+import CollectionPickerSheet from "../components/CollectionPickerSheet";
 import { auth, db } from "../lib/firebaseConfig";
 
 const CATEGORIES = [
@@ -35,28 +36,37 @@ export default function AddIdeaScreen() {
   const [category, setCategory] = useState("");
   const [customCategory, setCustomCategory] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
+  const [pickerVisible, setPickerVisible] = useState(false);
 
-  const handleAddIdea = async () => {
-    if (!auth.currentUser) {
-      Alert.alert("Not logged in", "You need to log in first.");
+  const validateForm = (): string | null => {
+    if (!auth.currentUser) return "Not logged in";
+    const finalCategory = category === "Other" ? customCategory.trim() : category.trim();
+    if (!title.trim()) return "Please add a title.";
+    if (!finalCategory) return "Please choose a category.";
+    return null;
+  };
+
+  const handleAddIdea = () => {
+    const error = validateForm();
+    if (error) {
+      Alert.alert("Missing info", error);
       return;
     }
+    Keyboard.dismiss();
+    setPickerVisible(true);
+  };
 
-    const finalCategory =
-      category === "Other" ? customCategory.trim() : category.trim();
-
-    if (!title.trim() || !finalCategory) {
-      Alert.alert("Missing info", "Please add a title and category.");
-      return;
-    }
+  const handleCollectionSelected = async (collectionId: string, collectionName: string) => {
+    setPickerVisible(false);
+    if (!auth.currentUser) return;
 
     const cleanTitle = title.trim();
-    const cleanCategory = finalCategory;
+    const cleanCategory = (category === "Other" ? customCategory : category).trim();
 
-    let experienceId = null;
+    let experienceId: string | null = null;
 
     if (!isPrivate) {
-      const experienceRef = await addDoc(collection(db, "experiences"), {
+      const expRef = await addDoc(collection(db, "experiences"), {
         title: cleanTitle,
         slug: cleanTitle.toLowerCase().replace(/\s+/g, "-"),
         category: cleanCategory,
@@ -71,12 +81,12 @@ export default function AddIdeaScreen() {
         createdAt: serverTimestamp(),
         source: "user",
       });
-
-      experienceId = experienceRef.id;
+      experienceId = expRef.id;
     }
 
     await addDoc(collection(db, "userBucketlistItems"), {
       userId: auth.currentUser.uid,
+      collectionId,
       title: cleanTitle,
       category: cleanCategory,
       completed: false,
@@ -90,11 +100,16 @@ export default function AddIdeaScreen() {
       experienceId,
     });
 
+    updateDoc(doc(db, "collections", collectionId), {
+      itemCount: increment(1),
+      updatedAt: serverTimestamp(),
+    }).catch(() => {});
+
     Alert.alert(
-      "Added",
+      "Saved",
       isPrivate
-        ? "Your private idea was added to your list."
-        : "Your idea was added to your list and Explore."
+        ? `Added to "${collectionName}"`
+        : `Added to "${collectionName}" and Explore.`
     );
 
     router.back();
@@ -180,7 +195,7 @@ export default function AddIdeaScreen() {
           </Pressable>
 
           <Pressable style={styles.button} onPress={handleAddIdea}>
-            <Text style={styles.buttonText}>Add to my list</Text>
+            <Text style={styles.buttonText}>Choose a collection →</Text>
           </Pressable>
 
           <Pressable onPress={() => router.back()}>
@@ -188,6 +203,12 @@ export default function AddIdeaScreen() {
           </Pressable>
         </View>
       </KeyboardAvoidingView>
+
+      <CollectionPickerSheet
+        visible={pickerVisible}
+        onClose={() => setPickerVisible(false)}
+        onSelect={handleCollectionSelected}
+      />
     </TouchableWithoutFeedback>
   );
 }

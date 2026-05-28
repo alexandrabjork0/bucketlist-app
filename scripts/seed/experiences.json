@@ -1,0 +1,3146 @@
+[
+  {
+    "title": "See the Northern Lights in Iceland",
+    "slug": "see-the-northern-lights-in-iceland",
+    "category": "Travel",
+    "country": "Iceland",
+    "continent": "Europe",
+    "region": null,
+    "city": null,
+    "description": "Stand beneath curtains of green and violet light dancing across an Arctic sky. Iceland's dark winters and minimal light pollution make it one of the best places on Earth to witness the aurora borealis.",
+    "tags": [
+      "aurora",
+      "iceland",
+      "arctic",
+      "night sky",
+      "photography"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$",
+    "season": [
+      "winter"
+    ],
+    "duration": "1 week",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1703027783266-2304bfd74681?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDIxMzh8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Go on a safari in the Serengeti",
+    "slug": "go-on-a-safari-in-the-serengeti",
+    "category": "Travel",
+    "country": "Tanzania",
+    "continent": "Africa",
+    "region": "Serengeti",
+    "city": null,
+    "description": "Track lions across golden savannah, watch a cheetah sprint at full speed, and fall asleep to the sound of distant elephants. The Serengeti is Africa at its most raw and spectacular.",
+    "tags": [
+      "safari",
+      "wildlife",
+      "africa",
+      "lions",
+      "big five"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 week",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1711062752125-3463b40e4255?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDIyMTR8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Walk the Great Wall of China",
+    "slug": "walk-the-great-wall-of-china",
+    "category": "Travel",
+    "country": "China",
+    "continent": "Asia",
+    "region": null,
+    "city": "Beijing",
+    "description": "Hike a section of the 13,000-mile ancient wonder that winds across mountains and valleys. The Jinshanling section offers stunning scenery and far fewer crowds than Badaling.",
+    "tags": [
+      "history",
+      "hiking",
+      "china",
+      "UNESCO",
+      "ancient"
+    ],
+    "difficulty": "moderate",
+    "priceRange": "$",
+    "season": [
+      "spring",
+      "fall"
+    ],
+    "duration": "1 day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1558981017-9c65fb6f2530?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDIyODl8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Visit Machu Picchu at sunrise",
+    "slug": "visit-machu-picchu-at-sunrise",
+    "category": "Travel",
+    "country": "Peru",
+    "continent": "South America",
+    "region": "Cusco",
+    "city": "Aguas Calientes",
+    "description": "Watch morning mist roll off the ancient Incan citadel as the sun rises above the Andes. Arriving on the first bus to beat the crowds makes this one of the most magical moments you can have.",
+    "tags": [
+      "inca",
+      "UNESCO",
+      "sunrise",
+      "ancient",
+      "hiking",
+      "south america"
+    ],
+    "difficulty": "moderate",
+    "priceRange": "$$",
+    "season": [
+      "spring",
+      "fall"
+    ],
+    "duration": "2 days",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1565983406260-16ea27f2fff9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDIzNjV8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "See the Pyramids of Giza",
+    "slug": "see-the-pyramids-of-giza",
+    "category": "Travel",
+    "country": "Egypt",
+    "continent": "Africa",
+    "region": null,
+    "city": "Giza",
+    "description": "Stand at the base of the last remaining Wonder of the Ancient World and feel the weight of 4,500 years of history. The Sphinx gazes east in the shadow of the Great Pyramid just beyond the Cairo skyline.",
+    "tags": [
+      "ancient",
+      "history",
+      "UNESCO",
+      "egypt",
+      "wonder"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "fall",
+      "winter",
+      "spring"
+    ],
+    "duration": "1 day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1667830009590-4a29a2fa01f0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDI0NDF8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Float in the Dead Sea",
+    "slug": "float-in-the-dead-sea",
+    "category": "Travel",
+    "country": "Jordan",
+    "continent": "Asia",
+    "region": null,
+    "city": null,
+    "description": "Lie back and let the salt do the work in the lowest place on Earth. The water is ten times saltier than the ocean, making it physically impossible to sink — read a newspaper while you float.",
+    "tags": [
+      "dead sea",
+      "jordan",
+      "unique",
+      "swimming",
+      "relaxation"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "spring",
+      "fall"
+    ],
+    "duration": "1 day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1743590971737-6bb439ac0882?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDI1MTZ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Watch cherry blossoms bloom in Kyoto",
+    "slug": "watch-cherry-blossoms-bloom-in-kyoto",
+    "category": "Travel",
+    "country": "Japan",
+    "continent": "Asia",
+    "region": "Kansai",
+    "city": "Kyoto",
+    "description": "For two fleeting weeks each spring, Japan erupts in pink and white. Walk the Philosopher's Path lined with hundreds of cherry trees reflected in the canal below.",
+    "tags": [
+      "sakura",
+      "japan",
+      "spring",
+      "photography",
+      "temples"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$",
+    "season": [
+      "spring"
+    ],
+    "duration": "3 days",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1572064542027-78b602e6cda2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDI1OTJ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Watch sunrise at Angkor Wat",
+    "slug": "watch-sunrise-at-angkor-wat",
+    "category": "Travel",
+    "country": "Cambodia",
+    "continent": "Asia",
+    "region": "Siem Reap",
+    "city": "Siem Reap",
+    "description": "Wake before dawn and watch the sun rise behind the world's largest religious monument, perfectly reflected in the temple's lotus pond. The silence before the crowds arrive makes it feel like a private moment with history.",
+    "tags": [
+      "temples",
+      "sunrise",
+      "history",
+      "photography",
+      "UNESCO"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "half day",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1766027293864-c1b38a8661ce?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDI2Njh8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Cruise the Norwegian Fjords",
+    "slug": "cruise-the-norwegian-fjords",
+    "category": "Travel",
+    "country": "Norway",
+    "continent": "Europe",
+    "region": "Vestland",
+    "city": null,
+    "description": "Drift through steep-walled fjords where waterfalls cascade hundreds of metres into mirror-still water below. Geirangerfjord and Nærøyfjord are two of the most dramatic in the world.",
+    "tags": [
+      "fjords",
+      "norway",
+      "boat",
+      "nature",
+      "photography",
+      "scenic"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$$",
+    "season": [
+      "summer"
+    ],
+    "duration": "1 week",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1558280068-d9fe194ffb0a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDI3NDN8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Explore Cappadocia by hot air balloon",
+    "slug": "explore-cappadocia-by-hot-air-balloon",
+    "category": "Travel",
+    "country": "Turkey",
+    "continent": "Asia",
+    "region": "Cappadocia",
+    "city": "Göreme",
+    "description": "Float above fairy chimneys and ancient cave valleys at sunrise in one of the most surreal landscapes on the planet. Hundreds of colourful balloons fill the dawn sky over Göreme every morning.",
+    "tags": [
+      "hot air balloon",
+      "turkey",
+      "sunrise",
+      "photography",
+      "unique"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$",
+    "season": [
+      "spring",
+      "fall"
+    ],
+    "duration": "2 days",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1683083941893-6e2554d68bef?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDI4MTl8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Walk the Camino de Santiago",
+    "slug": "walk-the-camino-de-santiago",
+    "category": "Travel",
+    "country": "Spain",
+    "continent": "Europe",
+    "region": "Galicia",
+    "city": "Santiago de Compostela",
+    "description": "Follow centuries of pilgrims across 800 km of Spanish countryside to the cathedral of Santiago de Compostela. The Camino Francés takes about 30 days and changes people deeply.",
+    "tags": [
+      "hiking",
+      "pilgrimage",
+      "spain",
+      "walking",
+      "spiritual",
+      "challenge"
+    ],
+    "difficulty": "hard",
+    "priceRange": "$",
+    "season": [
+      "spring",
+      "summer",
+      "fall"
+    ],
+    "duration": "30 days",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1723401147929-c900beac1047?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDI4OTV8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Visit Santorini at sunset from Oia",
+    "slug": "visit-santorini-at-sunset-from-oia",
+    "category": "Travel",
+    "country": "Greece",
+    "continent": "Europe",
+    "region": "South Aegean",
+    "city": "Oia",
+    "description": "Watch the sun melt into the Aegean Sea from the famous blue-domed village of Oia. The entire village applauds at the moment of sunset — one of the most romantic spectacles in the world.",
+    "tags": [
+      "greece",
+      "sunset",
+      "island",
+      "romantic",
+      "photography"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$$",
+    "season": [
+      "summer",
+      "spring"
+    ],
+    "duration": "3 days",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1569581395739-b496ac334d95?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDI5NzB8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Trek to Everest Base Camp",
+    "slug": "trek-to-everest-base-camp",
+    "category": "Adventure",
+    "country": "Nepal",
+    "continent": "Asia",
+    "region": "Khumbu",
+    "city": "Lukla",
+    "description": "Trek for 12 days through Sherpa villages and rhododendron forests to reach the foot of the world's tallest mountain at 5,364m. The views of Khumbu Glacier and the South Face are unlike anything else on Earth.",
+    "tags": [
+      "everest",
+      "nepal",
+      "hiking",
+      "mountains",
+      "altitude",
+      "challenge"
+    ],
+    "difficulty": "hard",
+    "priceRange": "$$",
+    "season": [
+      "spring",
+      "fall"
+    ],
+    "duration": "14 days",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1741257067646-11ee4ea80551?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDMwNDZ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Skydive over the Swiss Alps",
+    "slug": "skydive-over-the-swiss-alps",
+    "category": "Adventure",
+    "country": "Switzerland",
+    "continent": "Europe",
+    "region": "Bernese Oberland",
+    "city": "Interlaken",
+    "description": "Freefall at 200km/h from 4,000m above the turquoise lakes and glacier peaks of the Swiss Alps. The Interlaken drop zone offers one of the most dramatic skydiving views in the world.",
+    "tags": [
+      "skydiving",
+      "freefall",
+      "switzerland",
+      "adrenaline",
+      "mountains"
+    ],
+    "difficulty": "moderate",
+    "priceRange": "$$$",
+    "season": [
+      "summer"
+    ],
+    "duration": "half day",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1640627142031-a3eff88df31b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDMxMjJ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Bungee jump from Kawarau Bridge in New Zealand",
+    "slug": "bungee-jump-from-kawarau-bridge",
+    "category": "Adventure",
+    "country": "New Zealand",
+    "continent": "Oceania",
+    "region": "Otago",
+    "city": "Queenstown",
+    "description": "Leap from the birthplace of commercial bungee jumping — 43 metres above the Kawarau River in the adventure capital of the world. Queenstown is the ultimate adrenaline destination.",
+    "tags": [
+      "bungee",
+      "new zealand",
+      "queenstown",
+      "adrenaline",
+      "extreme"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$",
+    "season": [
+      "all"
+    ],
+    "duration": "half day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1524842495237-6abc737eae1f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDMxOTh8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Swim with whale sharks in the Philippines",
+    "slug": "swim-with-whale-sharks-in-the-philippines",
+    "category": "Adventure",
+    "country": "Philippines",
+    "continent": "Asia",
+    "region": "Cebu",
+    "city": "Oslob",
+    "description": "Snorkel alongside the world's largest fish in warm, crystal-clear water. These gentle giants can reach 12 metres in length but are entirely harmless, filter-feeding on plankton just below the surface.",
+    "tags": [
+      "whale sharks",
+      "snorkeling",
+      "ocean",
+      "wildlife",
+      "philippines"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "half day",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1517971053567-8bde93bc6a58?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDMyNzN8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Climb Mount Kilimanjaro",
+    "slug": "climb-mount-kilimanjaro",
+    "category": "Adventure",
+    "country": "Tanzania",
+    "continent": "Africa",
+    "region": "Kilimanjaro Region",
+    "city": "Moshi",
+    "description": "Stand on the Roof of Africa at 5,895m — the highest peak on the continent and the world's highest free-standing mountain. No technical climbing required, just determination and slow walking.",
+    "tags": [
+      "kilimanjaro",
+      "africa",
+      "hiking",
+      "summit",
+      "altitude",
+      "challenge"
+    ],
+    "difficulty": "hard",
+    "priceRange": "$$",
+    "season": [
+      "spring",
+      "fall"
+    ],
+    "duration": "7 days",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1728042107033-76b13feac547?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDMzNDl8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Surf the waves in Pipeline, Hawaii",
+    "slug": "surf-the-waves-in-pipeline-hawaii",
+    "category": "Adventure",
+    "country": "USA",
+    "continent": "North America",
+    "region": "Hawaii",
+    "city": "Oahu",
+    "description": "Charge the legendary Banzai Pipeline — one of the most iconic and dangerous surf breaks in the world. Even watching the professionals from the beach is a jaw-dropping experience.",
+    "tags": [
+      "surfing",
+      "hawaii",
+      "waves",
+      "ocean",
+      "extreme"
+    ],
+    "difficulty": "extreme",
+    "priceRange": "$",
+    "season": [
+      "winter"
+    ],
+    "duration": "1 week",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1629501325446-4b0c4708b822?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDM0MjR8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Paraglide over the Himalayas in Pokhara",
+    "slug": "paraglide-over-the-himalayas-in-pokhara",
+    "category": "Adventure",
+    "country": "Nepal",
+    "continent": "Asia",
+    "region": "Gandaki",
+    "city": "Pokhara",
+    "description": "Soar above Phewa Lake with a panoramic view of the Annapurna range stretching across the horizon. Pokhara is one of the best paragliding destinations in the world.",
+    "tags": [
+      "paragliding",
+      "nepal",
+      "himalayas",
+      "mountains",
+      "views"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "spring",
+      "fall"
+    ],
+    "duration": "half day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1718179634981-58c7b7d738ab?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDM1MDB8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Scuba dive the Great Barrier Reef",
+    "slug": "scuba-dive-the-great-barrier-reef",
+    "category": "Adventure",
+    "country": "Australia",
+    "continent": "Oceania",
+    "region": "Queensland",
+    "city": "Cairns",
+    "description": "Dive through one of the world's greatest natural wonders — 2,300 km of coral reef teeming with sea turtles, reef sharks, clownfish, and more than 1,500 species of tropical fish.",
+    "tags": [
+      "scuba",
+      "diving",
+      "reef",
+      "ocean",
+      "wildlife",
+      "australia"
+    ],
+    "difficulty": "moderate",
+    "priceRange": "$$",
+    "season": [
+      "all"
+    ],
+    "duration": "2 days",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1650754619398-61aa70d76251?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDM1NzZ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Rock climb at Yosemite Valley",
+    "slug": "rock-climb-at-yosemite-valley",
+    "category": "Adventure",
+    "country": "USA",
+    "continent": "North America",
+    "region": "California",
+    "city": "Yosemite",
+    "description": "Climb granite walls that inspired generations of climbers, with El Capitan and Half Dome towering above the valley floor. Camp 4 is the birthplace of modern big-wall climbing.",
+    "tags": [
+      "rock climbing",
+      "yosemite",
+      "usa",
+      "granite",
+      "mountains"
+    ],
+    "difficulty": "hard",
+    "priceRange": "$",
+    "season": [
+      "spring",
+      "fall"
+    ],
+    "duration": "1 week",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1593210542502-f928dcee2c9d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDM2NTJ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Mountain bike the Death Road in Bolivia",
+    "slug": "mountain-bike-the-death-road-in-bolivia",
+    "category": "Adventure",
+    "country": "Bolivia",
+    "continent": "South America",
+    "region": "La Paz Department",
+    "city": "La Paz",
+    "description": "Descend 3,500m over 64 km of steep mountain road carved into cliff faces above cloud forest valleys. Once officially the world's most dangerous road, it's now a controlled cycling adventure with stunning views.",
+    "tags": [
+      "cycling",
+      "adrenaline",
+      "bolivia",
+      "mountains",
+      "extreme"
+    ],
+    "difficulty": "moderate",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 day",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1769544445292-c2038e200773?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDM3Mjd8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Whitewater raft the Grand Canyon",
+    "slug": "whitewater-raft-the-grand-canyon",
+    "category": "Adventure",
+    "country": "USA",
+    "continent": "North America",
+    "region": "Arizona",
+    "city": null,
+    "description": "Float 225 miles through the world's most famous canyon over 2 weeks, camping on sandy banks under a sky of stars. The Colorado River carved this mile-deep wonder over 5 million years.",
+    "tags": [
+      "rafting",
+      "grand canyon",
+      "usa",
+      "river",
+      "camping"
+    ],
+    "difficulty": "hard",
+    "priceRange": "$$$",
+    "season": [
+      "spring",
+      "summer",
+      "fall"
+    ],
+    "duration": "2 weeks",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1706230140441-52e158dc6821?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDM4MDN8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Dog sled across the Arctic tundra",
+    "slug": "dog-sled-across-the-arctic-tundra",
+    "category": "Adventure",
+    "country": "Norway",
+    "continent": "Europe",
+    "region": "Finnmark",
+    "city": "Alta",
+    "description": "Mush your own team of huskies across a frozen Arctic wilderness under the northern lights. Guide a dog sled through birch forests and frozen lakes in temperatures that can reach -30°C.",
+    "tags": [
+      "dog sled",
+      "arctic",
+      "norway",
+      "huskies",
+      "winter",
+      "unique"
+    ],
+    "difficulty": "moderate",
+    "priceRange": "$$$",
+    "season": [
+      "winter"
+    ],
+    "duration": "3 days",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1764957078687-6d34e7fdeacb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDM4Nzh8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Via ferrata in the Dolomites",
+    "slug": "via-ferrata-in-the-dolomites",
+    "category": "Adventure",
+    "country": "Italy",
+    "continent": "Europe",
+    "region": "South Tyrol",
+    "city": "Cortina d'Ampezzo",
+    "description": "Clip into fixed iron cables and ladders bolted into dramatic limestone towers rising 3,000m above alpine meadows. The via ferrata routes of the Dolomites make vertical terrain accessible to non-climbers.",
+    "tags": [
+      "via ferrata",
+      "dolomites",
+      "italy",
+      "climbing",
+      "mountains"
+    ],
+    "difficulty": "moderate",
+    "priceRange": "$",
+    "season": [
+      "summer"
+    ],
+    "duration": "1 day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1680081103748-2edd3f7276f1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDM5NTR8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Eat omakase sushi in Tokyo",
+    "slug": "eat-omakase-sushi-in-tokyo",
+    "category": "Food & Drink",
+    "country": "Japan",
+    "continent": "Asia",
+    "region": "Kanto",
+    "city": "Tokyo",
+    "description": "Sit at the counter of a 10-seat sushi bar and surrender entirely to the chef. Each piece of nigiri is a masterclass in restraint — the rice, the temperature, the cut, all perfectly calibrated.",
+    "tags": [
+      "sushi",
+      "japan",
+      "michelin",
+      "fine dining",
+      "omakase"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$$$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 night",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1677429544315-459b676009d3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDQwMzB8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Take a pasta-making class in Bologna",
+    "slug": "take-a-pasta-making-class-in-bologna",
+    "category": "Food & Drink",
+    "country": "Italy",
+    "continent": "Europe",
+    "region": "Emilia-Romagna",
+    "city": "Bologna",
+    "description": "Learn to make tagliatelle al ragù from a Bologna nonna who has been rolling pasta by hand for 60 years. The food capital of Italy takes its pasta very seriously.",
+    "tags": [
+      "pasta",
+      "italy",
+      "cooking class",
+      "bologna",
+      "food"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$",
+    "season": [
+      "all"
+    ],
+    "duration": "half day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1649539374859-500b3702d824?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDQxMDV8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Dine at a Michelin 3-star restaurant",
+    "slug": "dine-at-a-michelin-3-star-restaurant",
+    "category": "Food & Drink",
+    "country": "France",
+    "continent": "Europe",
+    "region": null,
+    "city": null,
+    "description": "Experience the absolute pinnacle of culinary craft. A three-star meal can last four hours and span twenty courses — each dish an expression of a chef's life's work. Book 3-6 months in advance.",
+    "tags": [
+      "michelin",
+      "fine dining",
+      "france",
+      "chef",
+      "tasting menu"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$$$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 night",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1616671285410-2a676a9a433d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDQxODF8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Drink wine at a Bordeaux château",
+    "slug": "drink-wine-at-a-bordeaux-chateau",
+    "category": "Food & Drink",
+    "country": "France",
+    "continent": "Europe",
+    "region": "Bordeaux",
+    "city": "Bordeaux",
+    "description": "Tour a grand cru classé estate at harvest, walk the vines, and taste wine from barrel in a stone cellar. Bordeaux produces some of the most sought-after wines in the world.",
+    "tags": [
+      "wine",
+      "bordeaux",
+      "france",
+      "chateau",
+      "tasting"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$$",
+    "season": [
+      "fall"
+    ],
+    "duration": "2 days",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1610065333275-b3e5c63fc872?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDQyNTZ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Eat street food at a Bangkok night market",
+    "slug": "eat-street-food-at-a-bangkok-night-market",
+    "category": "Food & Drink",
+    "country": "Thailand",
+    "continent": "Asia",
+    "region": null,
+    "city": "Bangkok",
+    "description": "Wander through Or Tor Kor Market or Chatuchak at dusk and eat your way through pad kra pao, mango sticky rice, satay, and grilled seafood with cold beer and neon lights overhead.",
+    "tags": [
+      "street food",
+      "bangkok",
+      "thailand",
+      "night market",
+      "asian food"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 night",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1765761870400-c7ed80f1def2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDQzMzJ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Take a sake brewery tour in Kyoto",
+    "slug": "take-a-sake-brewery-tour-in-kyoto",
+    "category": "Food & Drink",
+    "country": "Japan",
+    "continent": "Asia",
+    "region": "Kansai",
+    "city": "Fushimi",
+    "description": "Visit Fushimi, Japan's sake capital, and tour a traditional kura brewery where rice wine has been made for four centuries. End with a tasting of unpasteurised namazake straight from the cedar barrels.",
+    "tags": [
+      "sake",
+      "japan",
+      "brewery",
+      "kyoto",
+      "tasting"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "winter",
+      "spring"
+    ],
+    "duration": "1 day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1779443941726-89485db3f3f3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDQ0MDh8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Hunt truffles in Périgord",
+    "slug": "hunt-truffles-in-perigord",
+    "category": "Food & Drink",
+    "country": "France",
+    "continent": "Europe",
+    "region": "Dordogne",
+    "city": "Périgueux",
+    "description": "Follow a trained Lagotto Romagnolo dog through oak forests searching for black Périgord truffles — the most prized ingredient in French cuisine. Finish with a truffle lunch at the farm.",
+    "tags": [
+      "truffle",
+      "france",
+      "foraging",
+      "gourmet",
+      "unique"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$$",
+    "season": [
+      "winter"
+    ],
+    "duration": "1 day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1533920770382-cc31b3447ab8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDQ0ODR8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Eat tacos al pastor in Mexico City",
+    "slug": "eat-tacos-al-pastor-in-mexico-city",
+    "category": "Food & Drink",
+    "country": "Mexico",
+    "continent": "North America",
+    "region": null,
+    "city": "Mexico City",
+    "description": "Join the late-night queue at a legendary taqueria and watch a taquero carve pork from a vertical spit onto a small corn tortilla, topped with pineapple, cilantro, and onion.",
+    "tags": [
+      "tacos",
+      "mexico",
+      "street food",
+      "night food",
+      "carnivore"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 night",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1707340246486-4ba19bbdfeb4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDQ1NTl8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Drink whisky at a Speyside distillery",
+    "slug": "drink-whisky-at-a-speyside-distillery",
+    "category": "Food & Drink",
+    "country": "Scotland",
+    "continent": "Europe",
+    "region": "Speyside",
+    "city": null,
+    "description": "Walk the Speyside Whisky Trail through the valley of the Spey River, visiting distilleries like Glenfiddich and Macallan. Taste single malts drawn from barrels using a copper valinch.",
+    "tags": [
+      "whisky",
+      "scotland",
+      "distillery",
+      "whisky trail",
+      "tasting"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$",
+    "season": [
+      "spring",
+      "fall"
+    ],
+    "duration": "3 days",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1571136541173-7e4a0fa4210c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDQ2MzV8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Eat dim sum in Hong Kong",
+    "slug": "eat-dim-sum-in-hong-kong",
+    "category": "Food & Drink",
+    "country": "China",
+    "continent": "Asia",
+    "region": null,
+    "city": "Hong Kong",
+    "description": "Join the Sunday morning ritual at a packed Hong Kong dim sum house — bamboo steamers of har gow, siu mai, and turnip cake arriving at the table in a constant parade, washed down with pu-erh tea.",
+    "tags": [
+      "dim sum",
+      "hong kong",
+      "chinese food",
+      "brunch",
+      "tea"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "half day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1775385922655-8c0f9529721c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDQ3MTF8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Drink coffee at a specialty roastery in Melbourne",
+    "slug": "drink-coffee-at-a-specialty-roastery-in-melbourne",
+    "category": "Food & Drink",
+    "country": "Australia",
+    "continent": "Oceania",
+    "region": "Victoria",
+    "city": "Melbourne",
+    "description": "Melbourne's specialty coffee scene is arguably the best in the world. Visit a renowned roastery like Patricia or St Ali and drink a perfectly extracted single-origin filter.",
+    "tags": [
+      "coffee",
+      "melbourne",
+      "specialty",
+      "australia",
+      "cafe"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "half day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1642821369363-91823004cca5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDc2MTN8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Attend a mezcal tasting in Oaxaca",
+    "slug": "attend-a-mezcal-tasting-in-oaxaca",
+    "category": "Food & Drink",
+    "country": "Mexico",
+    "continent": "North America",
+    "region": "Oaxaca",
+    "city": "Oaxaca",
+    "description": "Visit a small-batch palenque in the Sierra Norte and taste mezcal made by a fourth-generation maestro mezcalero, cooked in an underground pit and distilled in clay pots.",
+    "tags": [
+      "mezcal",
+      "oaxaca",
+      "mexico",
+      "spirits",
+      "artisanal"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1614578042874-43557c183d4f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDc2ODh8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "See the Great Migration in the Masai Mara",
+    "slug": "see-the-great-migration-in-the-masai-mara",
+    "category": "Nature",
+    "country": "Kenya",
+    "continent": "Africa",
+    "region": "Rift Valley",
+    "city": null,
+    "description": "Watch over a million wildebeest and zebra thunder across the Mara River in one of the most spectacular wildlife events on Earth. Crocodiles lurk below; lions wait on the banks above.",
+    "tags": [
+      "migration",
+      "wildlife",
+      "kenya",
+      "safari",
+      "wildebeest"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$$",
+    "season": [
+      "summer"
+    ],
+    "duration": "1 week",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1649808570849-46d54fe89a0b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDc3NjR8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Watch humpback whales breach in Alaska",
+    "slug": "watch-humpback-whales-breach-in-alaska",
+    "category": "Nature",
+    "country": "USA",
+    "continent": "North America",
+    "region": "Alaska",
+    "city": "Juneau",
+    "description": "Watch 40-tonne humpback whales launch their bodies clear of the Alaskan sea in one of nature's greatest athletic feats. Frederick Sound has one of the highest whale densities in the world.",
+    "tags": [
+      "whales",
+      "alaska",
+      "wildlife",
+      "ocean",
+      "boat"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$",
+    "season": [
+      "summer"
+    ],
+    "duration": "2 days",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1701789402425-a3f2c5427633?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDc4Mzl8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "See bioluminescent water in Vieques",
+    "slug": "see-bioluminescent-water-in-vieques",
+    "category": "Nature",
+    "country": "Puerto Rico",
+    "continent": "North America",
+    "region": null,
+    "city": "Vieques",
+    "description": "Kayak across Mosquito Bay on a moonless night and watch your paddle ignite blue-green fire with every stroke. This Puerto Rican bay has the highest concentration of bioluminescent dinoflagellates in the world.",
+    "tags": [
+      "bioluminescence",
+      "kayak",
+      "night",
+      "ocean",
+      "magical",
+      "puerto rico"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 night",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1505142468610-359e7d316be0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDc5MTV8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Walk through California redwood forests",
+    "slug": "walk-through-california-redwood-forests",
+    "category": "Nature",
+    "country": "USA",
+    "continent": "North America",
+    "region": "Northern California",
+    "city": null,
+    "description": "Stand at the base of trees that were saplings when Rome fell. Coast redwoods can grow 115 metres tall and live for 2,000 years. The silence inside a cathedral grove is profound.",
+    "tags": [
+      "redwoods",
+      "california",
+      "forest",
+      "hiking",
+      "ancient"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1690269113372-4bdb1e894abb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDc5OTF8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Swim in the cenotes of Tulum",
+    "slug": "swim-in-the-cenotes-of-tulum",
+    "category": "Nature",
+    "country": "Mexico",
+    "continent": "North America",
+    "region": "Quintana Roo",
+    "city": "Tulum",
+    "description": "Dive into a hidden underground pool of crystal-clear fresh water, filtered through limestone for thousands of years. Cenote Dos Ojos and Gran Cenote are among the most beautiful on the Yucatán Peninsula.",
+    "tags": [
+      "cenote",
+      "mexico",
+      "swimming",
+      "underground",
+      "crystal clear"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 day",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1546839581-c0468cc6fbf9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDgwNjZ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "See the Waitomo Glowworm Caves",
+    "slug": "see-the-waitomo-glowworm-caves",
+    "category": "Nature",
+    "country": "New Zealand",
+    "continent": "Oceania",
+    "region": "Waikato",
+    "city": "Waitomo",
+    "description": "Drift silently through a darkened cave on a small boat while thousands of Arachnocampa luminosa glowworms turn the ceiling into a living galaxy above your head.",
+    "tags": [
+      "glowworms",
+      "caves",
+      "new zealand",
+      "bioluminescence",
+      "unique"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "half day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1755772469837-d5f8d30b5576?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDgxNDJ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Watch a solar eclipse in totality",
+    "slug": "watch-a-solar-eclipse-in-totality",
+    "category": "Nature",
+    "country": null,
+    "continent": null,
+    "region": null,
+    "city": null,
+    "description": "Stand in the narrow path of totality as day turns to night in the middle of the afternoon. The corona blazes around the black disc, stars appear, and temperatures drop. People weep. Nothing else compares.",
+    "tags": [
+      "eclipse",
+      "astronomy",
+      "sky",
+      "rare",
+      "nature"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1734372599162-0a023c40ac0f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDgyMTh8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "See sea turtles nesting in Costa Rica",
+    "slug": "see-sea-turtles-nesting-in-costa-rica",
+    "category": "Nature",
+    "country": "Costa Rica",
+    "continent": "North America",
+    "region": "Guanacaste",
+    "city": null,
+    "description": "Watch giant leatherback or olive ridley turtles haul themselves onto a dark beach at midnight to lay their eggs in the sand. Tortuguero and Ostional Wildlife Refuge protect some of the most important nesting sites.",
+    "tags": [
+      "sea turtles",
+      "costa rica",
+      "nesting",
+      "wildlife",
+      "ocean"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "summer"
+    ],
+    "duration": "2 days",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1674170206059-5f7acdaa4a5a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDgyOTN8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Kayak among icebergs in Greenland",
+    "slug": "kayak-among-icebergs-in-greenland",
+    "category": "Nature",
+    "country": "Greenland",
+    "continent": "North America",
+    "region": null,
+    "city": "Ilulissat",
+    "description": "Paddle a sea kayak through a fjord filled with towering blue-white icebergs calved from the Sermeq Kujalleq glacier. The Ilulissat Icefjord is a UNESCO World Heritage Site producing 46 cubic km of ice per year.",
+    "tags": [
+      "kayak",
+      "greenland",
+      "icebergs",
+      "arctic",
+      "UNESCO"
+    ],
+    "difficulty": "moderate",
+    "priceRange": "$$$",
+    "season": [
+      "summer"
+    ],
+    "duration": "3 days",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1719754523440-e65a26df4cd4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDgzNjl8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Watch flamingos at Lake Nakuru",
+    "slug": "watch-flamingos-at-lake-nakuru",
+    "category": "Nature",
+    "country": "Kenya",
+    "continent": "Africa",
+    "region": "Rift Valley",
+    "city": "Nakuru",
+    "description": "Stand at the shore of an alkaline lake turned pink by over a million lesser flamingos. The sight of hundreds of thousands of birds taking flight simultaneously is almost incomprehensible.",
+    "tags": [
+      "flamingos",
+      "kenya",
+      "lake",
+      "birds",
+      "pink",
+      "wildlife"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1599940824399-b87987ceb72a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDg0NDV8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "See the giant tortoises of the Galápagos",
+    "slug": "see-the-giant-tortoises-of-the-galapagos",
+    "category": "Nature",
+    "country": "Ecuador",
+    "continent": "South America",
+    "region": "Galápagos Islands",
+    "city": "Puerto Ayora",
+    "description": "Come face-to-face with Galápagos giant tortoises — animals that can weigh 400 kg and live for 150 years. Darwin observed these creatures in 1835 and they sparked his theory of natural selection.",
+    "tags": [
+      "galapagos",
+      "tortoises",
+      "ecuador",
+      "wildlife",
+      "islands",
+      "darwin"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 week",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1580133318324-f2f76d987dd8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDg1MjF8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Watch a meteor shower from a dark sky reserve",
+    "slug": "watch-a-meteor-shower-from-a-dark-sky-reserve",
+    "category": "Nature",
+    "country": null,
+    "continent": null,
+    "region": null,
+    "city": null,
+    "description": "Lie on your back in a field far from any city and watch shooting stars trace silver arcs across the Milky Way. The Perseids in August and the Geminids in December deliver hundreds of meteors per hour at peak.",
+    "tags": [
+      "meteor shower",
+      "astronomy",
+      "night sky",
+      "milky way",
+      "stargazing"
+    ],
+    "difficulty": "easy",
+    "priceRange": "free",
+    "season": [
+      "summer",
+      "winter"
+    ],
+    "duration": "1 night",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1595321723095-bdb31ff0353f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDg1OTZ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Watch the sumo wrestling Grand Tournament in Tokyo",
+    "slug": "watch-the-sumo-wrestling-grand-tournament-in-tokyo",
+    "category": "Culture",
+    "country": "Japan",
+    "continent": "Asia",
+    "region": "Kanto",
+    "city": "Tokyo",
+    "description": "Sit ringside at Ryōgoku Kokugikan and watch enormous rikishi athletes clash in a sport rooted in Shinto ritual. Six basho tournaments take place each year, three of them in Tokyo.",
+    "tags": [
+      "sumo",
+      "japan",
+      "sport",
+      "culture",
+      "tokyo",
+      "ritual"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1737208945023-375d85a1adb5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDg2NzJ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Attend Carnival in Rio de Janeiro",
+    "slug": "attend-carnival-in-rio-de-janeiro",
+    "category": "Culture",
+    "country": "Brazil",
+    "continent": "South America",
+    "region": null,
+    "city": "Rio de Janeiro",
+    "description": "Lose yourself in the world's greatest party for five days of samba schools, feathered costumes, and drumlines so loud you feel them in your chest. The Sambadrome parade is one of the great spectacles on Earth.",
+    "tags": [
+      "carnival",
+      "brazil",
+      "samba",
+      "rio",
+      "dancing",
+      "festival"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$",
+    "season": [
+      "winter"
+    ],
+    "duration": "5 days",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1673005908715-1286d0059b30?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDg3NDh8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "See the Bolshoi Ballet perform in Moscow",
+    "slug": "see-the-bolshoi-ballet-perform-in-moscow",
+    "category": "Culture",
+    "country": "Russia",
+    "continent": "Europe",
+    "region": null,
+    "city": "Moscow",
+    "description": "Watch Swan Lake performed by one of the world's finest ballet companies in a gilded 19th-century theatre. The Bolshoi Ballet has been performing since 1776 — this is the pinnacle of classical dance.",
+    "tags": [
+      "ballet",
+      "russia",
+      "moscow",
+      "bolshoi",
+      "classical",
+      "theatre"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 night",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1763733594047-d1ab598fb6f5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDg4MjR8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "See a traditional Noh theatre performance",
+    "slug": "see-a-traditional-noh-theatre-performance",
+    "category": "Culture",
+    "country": "Japan",
+    "continent": "Asia",
+    "region": "Kansai",
+    "city": "Kyoto",
+    "description": "Watch the world's oldest continuously performed theatrical form — a slow, masked drama that has been staged for over 650 years. Noh is the opposite of spectacle: it demands silence and total attention.",
+    "tags": [
+      "noh",
+      "japan",
+      "theatre",
+      "mask",
+      "traditional",
+      "ancient"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 night",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1763733595228-7d0a3e35dbad?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDg5MDB8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Attend the Edinburgh Festival Fringe",
+    "slug": "attend-the-edinburgh-festival-fringe",
+    "category": "Culture",
+    "country": "Scotland",
+    "continent": "Europe",
+    "region": null,
+    "city": "Edinburgh",
+    "description": "Experience the world's largest arts festival — over 3,000 shows across 300 venues in one small city for three weeks in August. Comedy, theatre, circus, and dance erupt in every pub, hall, and closes.",
+    "tags": [
+      "festival",
+      "comedy",
+      "theatre",
+      "edinburgh",
+      "arts",
+      "fringe"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$",
+    "season": [
+      "summer"
+    ],
+    "duration": "1 week",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1701975544137-6e981870e652?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDg5NzZ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Visit Pompeii and walk through ancient streets",
+    "slug": "visit-pompeii-and-walk-through-ancient-streets",
+    "category": "Culture",
+    "country": "Italy",
+    "continent": "Europe",
+    "region": "Campania",
+    "city": "Pompeii",
+    "description": "Walk streets that were frozen in time on 24 August, 79 AD when Vesuvius erupted and buried this Roman city under six metres of volcanic ash. The casts of victims are a profound and haunting sight.",
+    "tags": [
+      "pompeii",
+      "italy",
+      "roman",
+      "ancient",
+      "history",
+      "UNESCO"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "spring",
+      "fall"
+    ],
+    "duration": "1 day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1739993701568-ce5e2509b503?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDkwNTJ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Attend the Day of the Dead in Oaxaca",
+    "slug": "attend-the-day-of-the-dead-in-oaxaca",
+    "category": "Culture",
+    "country": "Mexico",
+    "continent": "North America",
+    "region": "Oaxaca",
+    "city": "Oaxaca",
+    "description": "Visit graveyards filled with flowers, candlelight, and families honouring their dead with food and music on November 1–2. Oaxaca's celebration is considered among the most authentic and moving in Mexico.",
+    "tags": [
+      "day of the dead",
+      "mexico",
+      "festival",
+      "oaxaca",
+      "spiritual",
+      "unique"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "fall"
+    ],
+    "duration": "3 days",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1652763612332-9c15caf03d1d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDkxMjd8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "See the Terracotta Army in Xi'an",
+    "slug": "see-the-terracotta-army-in-xian",
+    "category": "Culture",
+    "country": "China",
+    "continent": "Asia",
+    "region": "Shaanxi",
+    "city": "Xi'an",
+    "description": "Stare into Pit 1 and see 8,000 life-size terracotta soldiers buried with the First Emperor of China in 210 BC, each with a unique face. They were discovered by farmers digging a well in 1974.",
+    "tags": [
+      "terracotta",
+      "china",
+      "ancient",
+      "UNESCO",
+      "history"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "spring",
+      "fall"
+    ],
+    "duration": "1 day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1678900441090-2f5f7906ee0b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDkyMDN8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Experience a traditional Japanese tea ceremony",
+    "slug": "experience-a-traditional-japanese-tea-ceremony",
+    "category": "Culture",
+    "country": "Japan",
+    "continent": "Asia",
+    "region": "Kansai",
+    "city": "Kyoto",
+    "description": "Kneel in a tatami room and follow the ancient ritual of chado — the Way of Tea. Each movement, from the folding of the fukusa cloth to the sound of water in the iron kettle, has been codified for 500 years.",
+    "tags": [
+      "tea ceremony",
+      "japan",
+      "culture",
+      "zen",
+      "ritual"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "2 hours",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1745911861395-fe821429b36a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDkyOTV8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Visit the Vatican Museums and Sistine Chapel",
+    "slug": "visit-the-vatican-museums-and-sistine-chapel",
+    "category": "Culture",
+    "country": "Vatican City",
+    "continent": "Europe",
+    "region": null,
+    "city": "Vatican City",
+    "description": "Walk through 54 galleries housing the greatest collection of art in the world before arriving in the Sistine Chapel. Tilt your head back and look at Michelangelo's ceiling — painted in four years while lying on scaffolding.",
+    "tags": [
+      "vatican",
+      "sistine chapel",
+      "michelangelo",
+      "art",
+      "history"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1752215160772-5e0c088f26d1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDkzNzF8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Watch a flamenco show in Seville",
+    "slug": "watch-a-flamenco-show-in-seville",
+    "category": "Culture",
+    "country": "Spain",
+    "continent": "Europe",
+    "region": "Andalusia",
+    "city": "Seville",
+    "description": "Sit in a candlelit tablao and watch a flamenco dancer stomp and spin just metres from your face. Seville is the birthplace of this art form — the passion and grief expressed are visceral and real.",
+    "tags": [
+      "flamenco",
+      "spain",
+      "seville",
+      "dance",
+      "culture",
+      "music"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 night",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1744570922946-95c91accf83d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDk0NDd8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Run a marathon",
+    "slug": "run-a-marathon",
+    "category": "Sports",
+    "country": null,
+    "continent": null,
+    "region": null,
+    "city": null,
+    "description": "Cross the finish line of a 42.2 km race after months of training — one of the most personally meaningful things a human body can do. The wall at kilometre 32 is real. The high at kilometre 42 is more real.",
+    "tags": [
+      "running",
+      "marathon",
+      "fitness",
+      "challenge",
+      "personal"
+    ],
+    "difficulty": "hard",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 day",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1771402900065-695cc47bb432?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDk1MjJ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Complete an Ironman triathlon",
+    "slug": "complete-an-ironman-triathlon",
+    "category": "Sports",
+    "country": null,
+    "continent": null,
+    "region": null,
+    "city": null,
+    "description": "Swim 3.8km, bike 180km, and run a full marathon — in one day. The Ironman is the pinnacle of endurance sport and crossing any finish line while hearing 'You are an Ironman' is unforgettable.",
+    "tags": [
+      "triathlon",
+      "ironman",
+      "endurance",
+      "swimming",
+      "cycling",
+      "running"
+    ],
+    "difficulty": "extreme",
+    "priceRange": "$$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1765590817454-1cd4a7b1e11c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDk1OTh8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Play golf at St Andrews Old Course",
+    "slug": "play-golf-at-st-andrews-old-course",
+    "category": "Sports",
+    "country": "Scotland",
+    "continent": "Europe",
+    "region": "Fife",
+    "city": "St Andrews",
+    "description": "Play the oldest and most famous golf course in the world — the Home of Golf since the 15th century. The Road Hole is one of the hardest par fours in the game; the Valley of Sin on 18 has broken hearts for centuries.",
+    "tags": [
+      "golf",
+      "scotland",
+      "st andrews",
+      "historic",
+      "sport"
+    ],
+    "difficulty": "moderate",
+    "priceRange": "$$$",
+    "season": [
+      "spring",
+      "summer",
+      "fall"
+    ],
+    "duration": "1 day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1470468969717-61d5d54fd036?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDk2NzR8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Watch a Champions League final live",
+    "slug": "watch-a-champions-league-final-live",
+    "category": "Sports",
+    "country": null,
+    "continent": "Europe",
+    "region": null,
+    "city": null,
+    "description": "Sit in a 60,000-seat stadium for the biggest game in club football and feel the atmosphere that no television broadcast can capture — the songs, the flares, the collective held breath before a penalty.",
+    "tags": [
+      "football",
+      "champions league",
+      "soccer",
+      "stadium",
+      "europe"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$$",
+    "season": [
+      "spring"
+    ],
+    "duration": "1 day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1705969382634-e02b571e90a8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDk3NTB8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Ski a double black diamond run",
+    "slug": "ski-a-double-black-diamond-run",
+    "category": "Sports",
+    "country": null,
+    "continent": null,
+    "region": null,
+    "city": null,
+    "description": "Drop into a steep, expert-only ski run that tests everything you've learned on the mountain — speed control, commitment, and reading terrain you can barely see from the top.",
+    "tags": [
+      "skiing",
+      "mountains",
+      "winter sports",
+      "extreme",
+      "challenge"
+    ],
+    "difficulty": "hard",
+    "priceRange": "$$",
+    "season": [
+      "winter"
+    ],
+    "duration": "1 day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1611089605552-6c0c02980898?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDk4MjZ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Complete a 100-mile ultramarathon",
+    "slug": "complete-a-100-mile-ultramarathon",
+    "category": "Sports",
+    "country": null,
+    "continent": null,
+    "region": null,
+    "city": null,
+    "description": "Run through the night and into the next day on mountain trails, covering 161 km on foot. The UTMB, Western States, and Leadville 100 are the holy grails of ultra-distance running.",
+    "tags": [
+      "ultramarathon",
+      "trail running",
+      "endurance",
+      "100 miles",
+      "extreme"
+    ],
+    "difficulty": "extreme",
+    "priceRange": "$",
+    "season": [
+      "summer",
+      "fall"
+    ],
+    "duration": "2 days",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1778444329450-81a0098887b2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDk5MDJ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Complete a 10-day Vipassana meditation retreat",
+    "slug": "complete-a-10-day-vipassana-meditation-retreat",
+    "category": "Health",
+    "country": null,
+    "continent": null,
+    "region": null,
+    "city": null,
+    "description": "Sit in complete silence for ten days, meditating up to twelve hours a day in the Buddhist tradition of Vipassana. No phones, no reading, no talking. Most people describe it as the hardest and most important thing they've ever done.",
+    "tags": [
+      "meditation",
+      "vipassana",
+      "silence",
+      "mindfulness",
+      "retreat"
+    ],
+    "difficulty": "hard",
+    "priceRange": "free",
+    "season": [
+      "all"
+    ],
+    "duration": "10 days",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1777721974643-b6c448cd5c6c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MDk5Nzd8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Do a week-long digital detox in nature",
+    "slug": "do-a-week-long-digital-detox-in-nature",
+    "category": "Health",
+    "country": null,
+    "continent": null,
+    "region": null,
+    "city": null,
+    "description": "Leave your phone behind, walk into the woods, and remember what boredom, presence, and unmediated reality feel like. One week without screens changes your relationship with technology permanently.",
+    "tags": [
+      "digital detox",
+      "nature",
+      "offline",
+      "mindfulness",
+      "camping"
+    ],
+    "difficulty": "moderate",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 week",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1753611633922-5048a9b7f671?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTAwNTN8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Take a yoga teacher training in Bali",
+    "slug": "take-a-yoga-teacher-training-in-bali",
+    "category": "Health",
+    "country": "Indonesia",
+    "continent": "Asia",
+    "region": "Bali",
+    "city": "Ubud",
+    "description": "Complete a 200-hour yoga teacher training in the spiritual heartland of Bali. Even if you never teach, the month deepens your practice and understanding of the body beyond what years of classes achieve.",
+    "tags": [
+      "yoga",
+      "bali",
+      "training",
+      "health",
+      "indonesia",
+      "spiritual"
+    ],
+    "difficulty": "moderate",
+    "priceRange": "$$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 month",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1572495481413-7b7768307a72?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTAxMjl8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Take an Ayurvedic retreat in Kerala",
+    "slug": "take-an-ayurvedic-retreat-in-kerala",
+    "category": "Health",
+    "country": "India",
+    "continent": "Asia",
+    "region": "Kerala",
+    "city": null,
+    "description": "Spend a week at a traditional Ayurvedic centre undergoing Panchakarma — the ancient detoxification process involving herbal oil treatments, steam baths, and a diet prescribed to your dosha constitution.",
+    "tags": [
+      "ayurveda",
+      "india",
+      "wellness",
+      "retreat",
+      "traditional"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$",
+    "season": [
+      "fall",
+      "winter"
+    ],
+    "duration": "1 week",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1717489358244-01dd1c704afa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTAyMDV8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Practice yoga at sunrise in Ubud",
+    "slug": "practice-yoga-at-sunrise-in-ubud",
+    "category": "Health",
+    "country": "Indonesia",
+    "continent": "Asia",
+    "region": "Bali",
+    "city": "Ubud",
+    "description": "Roll out your mat on an open-sided wooden platform surrounded by jungle and practise yoga as the mist clears from Ubud's rice terraces. Bali's spiritual energy makes every practice feel different.",
+    "tags": [
+      "yoga",
+      "bali",
+      "sunrise",
+      "wellness",
+      "indonesia"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 week",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1600209970258-650445f5e724?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTAyODB8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Complete a cold water immersion challenge",
+    "slug": "complete-a-cold-water-immersion-challenge",
+    "category": "Health",
+    "country": null,
+    "continent": null,
+    "region": null,
+    "city": null,
+    "description": "Immerse yourself in cold water every day for 30 days — a practice shown to reduce inflammation, boost mood, and build a higher tolerance for discomfort. Start with cold showers and work up to wild swimming.",
+    "tags": [
+      "cold water",
+      "challenge",
+      "wellness",
+      "mental health",
+      "habit"
+    ],
+    "difficulty": "moderate",
+    "priceRange": "free",
+    "season": [
+      "all"
+    ],
+    "duration": "30 days",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1598161776123-d06720c81dd2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTAzNTZ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Learn to surf",
+    "slug": "learn-to-surf",
+    "category": "Learning",
+    "country": null,
+    "continent": null,
+    "region": null,
+    "city": null,
+    "description": "Stand up on a wave for the first time and feel the ocean push you forward. Learning to surf is humbling, joyful, and deeply addictive — the ocean becomes a different place once you understand it from the inside.",
+    "tags": [
+      "surfing",
+      "ocean",
+      "learning",
+      "beach",
+      "sport"
+    ],
+    "difficulty": "moderate",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 week",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTA0MzJ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Take a pottery class in Japan",
+    "slug": "take-a-pottery-class-in-japan",
+    "category": "Learning",
+    "country": "Japan",
+    "continent": "Asia",
+    "region": null,
+    "city": null,
+    "description": "Learn tebineri (hand-forming) or wheel-throwing in a traditional Japanese kiln town like Mashiko, Bizen, or Hagi. Japanese ceramics is one of the world's most refined craft traditions.",
+    "tags": [
+      "pottery",
+      "japan",
+      "ceramics",
+      "craft",
+      "learning"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "2 days",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1754041639346-7bad6eb96bbc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTA1MDd8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Learn to sail in the Mediterranean",
+    "slug": "learn-to-sail-in-the-mediterranean",
+    "category": "Learning",
+    "country": "Greece",
+    "continent": "Europe",
+    "region": null,
+    "city": null,
+    "description": "Get your RYA Day Skipper certification on a week-long sailing course across the Greek islands or Croatian coast. By the end you can navigate, moor, and sail a 10-metre yacht on your own.",
+    "tags": [
+      "sailing",
+      "mediterranean",
+      "ocean",
+      "learning",
+      "certificate"
+    ],
+    "difficulty": "moderate",
+    "priceRange": "$$$",
+    "season": [
+      "summer"
+    ],
+    "duration": "1 week",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1755378022998-c869d8e70734?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTA1ODN8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Take an astronomy course at a dark sky observatory",
+    "slug": "take-an-astronomy-course-at-a-dark-sky-observatory",
+    "category": "Learning",
+    "country": null,
+    "continent": null,
+    "region": null,
+    "city": null,
+    "description": "Spend a week at a remote dark-sky site learning to navigate the night sky by eye and through a telescope — identify constellations, planets, galaxies, and nebulae with a professional astronomer.",
+    "tags": [
+      "astronomy",
+      "stars",
+      "telescope",
+      "learning",
+      "night sky"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 week",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1618890334461-c33a04c4c916?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTA2NTl8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Learn a new language to conversational level",
+    "slug": "learn-a-new-language-to-conversational-level",
+    "category": "Learning",
+    "country": null,
+    "continent": null,
+    "region": null,
+    "city": null,
+    "description": "Reach the point where you can hold a real conversation with a native speaker in a language you taught yourself. The moment when a foreign language stops sounding like noise and starts sounding like meaning is life-changing.",
+    "tags": [
+      "language",
+      "learning",
+      "culture",
+      "challenge",
+      "personal growth"
+    ],
+    "difficulty": "hard",
+    "priceRange": "free",
+    "season": [
+      "all"
+    ],
+    "duration": "1 year",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1655337690307-5293f900f580?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTA3MzV8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Take a bread-making course in Paris",
+    "slug": "take-a-bread-making-course-in-paris",
+    "category": "Learning",
+    "country": "France",
+    "continent": "Europe",
+    "region": null,
+    "city": "Paris",
+    "description": "Learn baguette technique at the Ferrandi school or a neighbourhood boulangerie — how to shape, score, and bake bread with the kind of crust that shatters when you tap it.",
+    "tags": [
+      "baking",
+      "bread",
+      "paris",
+      "france",
+      "cooking",
+      "learning"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1716141453632-1882de0a54d3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTA4MTB8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Learn to freedive",
+    "slug": "learn-to-freedive",
+    "category": "Learning",
+    "country": null,
+    "continent": null,
+    "region": null,
+    "city": null,
+    "description": "Take an SSI or AIDA freediving course and learn to hold your breath for multiple minutes, descending to 20m+ on a single breath using only technique and relaxation. A completely new relationship with the ocean.",
+    "tags": [
+      "freediving",
+      "ocean",
+      "breath",
+      "learning",
+      "diving"
+    ],
+    "difficulty": "moderate",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "3 days",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1539892613216-9e92b9257fd1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTA4ODZ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Learn to fly a plane",
+    "slug": "learn-to-fly-a-plane",
+    "category": "Learning",
+    "country": null,
+    "continent": null,
+    "region": null,
+    "city": null,
+    "description": "Get your Private Pilot License and solo fly an aircraft for the first time — taking off and landing a plane with no one else at the controls. Most people achieve their first solo within 20 hours of training.",
+    "tags": [
+      "flying",
+      "aviation",
+      "pilot",
+      "license",
+      "adventure"
+    ],
+    "difficulty": "hard",
+    "priceRange": "$$$",
+    "season": [
+      "all"
+    ],
+    "duration": "6 months",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1533615048937-0807f9ab66d6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTA5NjJ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Write and finish a novel",
+    "slug": "write-and-finish-a-novel",
+    "category": "Creative",
+    "country": null,
+    "continent": null,
+    "region": null,
+    "city": null,
+    "description": "Sit with a story long enough to write it from beginning to end. Most people start novels. Very few finish them. NaNoWriMo's 50,000-word November challenge is a proven way to break through resistance.",
+    "tags": [
+      "writing",
+      "novel",
+      "creative",
+      "challenge",
+      "storytelling"
+    ],
+    "difficulty": "hard",
+    "priceRange": "free",
+    "season": [
+      "all"
+    ],
+    "duration": "1 month",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1777190772770-895ec6416335?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTEwMzh8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Paint a mural in a public space",
+    "slug": "paint-a-mural-in-a-public-space",
+    "category": "Creative",
+    "country": null,
+    "continent": null,
+    "region": null,
+    "city": null,
+    "description": "Create a piece of visual art large enough that strangers walking by can see it — a mural on a wall, fence, or building. Whether it's commissioned or guerrilla, public art changes how a place feels.",
+    "tags": [
+      "mural",
+      "art",
+      "painting",
+      "public art",
+      "creative"
+    ],
+    "difficulty": "moderate",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 week",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1771756762796-d37ba624c253?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTIwOTF8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Record an album of original music",
+    "slug": "record-an-album-of-original-music",
+    "category": "Creative",
+    "country": null,
+    "continent": null,
+    "region": null,
+    "city": null,
+    "description": "Write and record a collection of original songs — even if only your friends and family hear them. Modern home studios make professional-sounding recordings accessible to anyone willing to learn.",
+    "tags": [
+      "music",
+      "recording",
+      "album",
+      "creative",
+      "songwriting"
+    ],
+    "difficulty": "hard",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "ongoing",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1732602330422-238bc695ce45?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTIxNjd8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Perform a stand-up comedy set",
+    "slug": "perform-a-stand-up-comedy-set",
+    "category": "Creative",
+    "country": null,
+    "continent": null,
+    "region": null,
+    "city": null,
+    "description": "Write five minutes of material and perform it in front of a live audience at an open mic night. The silence before your first laugh lands is the purest form of creative vulnerability there is.",
+    "tags": [
+      "comedy",
+      "stand-up",
+      "performance",
+      "courage",
+      "creative"
+    ],
+    "difficulty": "hard",
+    "priceRange": "free",
+    "season": [
+      "all"
+    ],
+    "duration": "1 night",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1583387930488-e643449728a5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTIyNDN8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Build a piece of furniture from scratch",
+    "slug": "build-a-piece-of-furniture-from-scratch",
+    "category": "Creative",
+    "country": null,
+    "continent": null,
+    "region": null,
+    "city": null,
+    "description": "Design, cut, join, and finish a functional wooden object with your own hands — a table, chair, or bookshelf that will outlast you. The satisfaction of using something you built is irreplaceable.",
+    "tags": [
+      "woodworking",
+      "furniture",
+      "making",
+      "craft",
+      "creative"
+    ],
+    "difficulty": "moderate",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 month",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1579522821642-6835d50a2754?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTIzMTl8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Create a short film",
+    "slug": "create-a-short-film",
+    "category": "Creative",
+    "country": null,
+    "continent": null,
+    "region": null,
+    "city": null,
+    "description": "Write, direct, shoot, and edit a 5–15 minute film of your own. Modern smartphones and free editing software have eliminated every barrier except the willingness to begin.",
+    "tags": [
+      "film",
+      "creative",
+      "directing",
+      "editing",
+      "storytelling"
+    ],
+    "difficulty": "moderate",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 month",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1591719211416-084b8effc9f4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTIzOTV8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Learn ceramics and make a full set of dishware",
+    "slug": "learn-ceramics-and-make-a-full-set-of-dishware",
+    "category": "Creative",
+    "country": null,
+    "continent": null,
+    "region": null,
+    "city": null,
+    "description": "Take regular throwing classes until you can make matching bowls, plates, and mugs — then glaze and fire a complete dinner set that you eat from every day.",
+    "tags": [
+      "ceramics",
+      "pottery",
+      "craft",
+      "making",
+      "creative"
+    ],
+    "difficulty": "hard",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "ongoing",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1772135893721-b4f49f5e47d5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTI0NzB8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Attend Burning Man",
+    "slug": "attend-burning-man",
+    "category": "Events",
+    "country": "USA",
+    "continent": "North America",
+    "region": "Nevada",
+    "city": "Black Rock City",
+    "description": "Join 80,000 people in the Nevada desert for a week of radical self-expression, enormous art installations, and a temporary city that burns itself down at the end. Nothing else is like it.",
+    "tags": [
+      "burning man",
+      "festival",
+      "art",
+      "desert",
+      "community",
+      "usa"
+    ],
+    "difficulty": "hard",
+    "priceRange": "$$",
+    "season": [
+      "summer"
+    ],
+    "duration": "1 week",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1635951678461-0a54835703f0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTI1NDZ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Watch the Olympics live",
+    "slug": "watch-the-olympics-live",
+    "category": "Events",
+    "country": null,
+    "continent": null,
+    "region": null,
+    "city": null,
+    "description": "Sit in a stadium and watch the greatest athletes in the world compete in person. Olympic atmosphere — the opening ceremony, the flags, the crowd cheering for dozens of countries at once — is unlike any other event.",
+    "tags": [
+      "olympics",
+      "sport",
+      "global",
+      "stadium",
+      "once in a lifetime"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 week",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1728060555005-6bd4a359b431?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTI2MjF8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Attend Coachella",
+    "slug": "attend-coachella",
+    "category": "Events",
+    "country": "USA",
+    "continent": "North America",
+    "region": "California",
+    "city": "Indio",
+    "description": "Spend three days in the California desert watching the world's biggest names in music and art across multiple stages, surrounded by extraordinary installations and a crowd from every corner of the globe.",
+    "tags": [
+      "music festival",
+      "coachella",
+      "usa",
+      "california",
+      "music"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$$",
+    "season": [
+      "spring"
+    ],
+    "duration": "3 days",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1751042322270-4c9abaf0ee60?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTI2OTd8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Watch New Year's Eve fireworks in Sydney",
+    "slug": "watch-new-years-eve-fireworks-in-sydney",
+    "category": "Events",
+    "country": "Australia",
+    "continent": "Oceania",
+    "region": "New South Wales",
+    "city": "Sydney",
+    "description": "Stand on the harbour foreshore and watch the world's most watched New Year's Eve fireworks display launch from the Sydney Harbour Bridge and Opera House — the first major city to welcome each New Year.",
+    "tags": [
+      "new year",
+      "fireworks",
+      "sydney",
+      "australia",
+      "celebration"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "summer"
+    ],
+    "duration": "1 night",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1688493904183-f35fc3e07891?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTI3NzN8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Attend the Glastonbury Festival",
+    "slug": "attend-the-glastonbury-festival",
+    "category": "Events",
+    "country": "England",
+    "continent": "Europe",
+    "region": "Somerset",
+    "city": "Pilton",
+    "description": "Camp in a muddy English field for five days and watch 3,000 acts on 100 stages — the best music festival in the world. Walking the Pyramid Stage field as the headliner begins is a rite of passage.",
+    "tags": [
+      "glastonbury",
+      "music festival",
+      "uk",
+      "camping",
+      "music"
+    ],
+    "difficulty": "moderate",
+    "priceRange": "$$",
+    "season": [
+      "summer"
+    ],
+    "duration": "5 days",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1612798784361-f596dd050c3a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTI4NDl8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Watch a Formula 1 Grand Prix live",
+    "slug": "watch-a-formula-1-grand-prix-live",
+    "category": "Events",
+    "country": null,
+    "continent": null,
+    "region": null,
+    "city": null,
+    "description": "Stand at a barrier as F1 cars accelerate from 0–300 km/h just metres from where you're standing. The sound and speed are incomprehensible until you experience them in person.",
+    "tags": [
+      "formula 1",
+      "racing",
+      "motorsport",
+      "speed",
+      "sport"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$",
+    "season": [
+      "spring",
+      "summer",
+      "fall"
+    ],
+    "duration": "3 days",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1770123142763-f8e50404077d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTI5MjR8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Start a business from scratch",
+    "slug": "start-a-business-from-scratch",
+    "category": "Personal Growth",
+    "country": null,
+    "continent": null,
+    "region": null,
+    "city": null,
+    "description": "Build something from nothing — find a real problem, create a solution, and convince someone to pay for it. Even a business that fails teaches you more about yourself than most things life offers.",
+    "tags": [
+      "entrepreneurship",
+      "business",
+      "challenge",
+      "personal growth"
+    ],
+    "difficulty": "hard",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "ongoing",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1707584903107-16563f916ace?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTMwMDB8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Live abroad for at least a year",
+    "slug": "live-abroad-for-at-least-a-year",
+    "category": "Personal Growth",
+    "country": null,
+    "continent": null,
+    "region": null,
+    "city": null,
+    "description": "Build a real life in a country that is not your own — find an apartment, make friends, shop at local markets, and navigate a different culture from the inside. A year abroad changes you in ways a holiday never can.",
+    "tags": [
+      "expat",
+      "abroad",
+      "culture",
+      "adventure",
+      "personal growth"
+    ],
+    "difficulty": "hard",
+    "priceRange": "$$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 year",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1562106813-5aaed820a7fa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTMwNzZ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Volunteer abroad for three months",
+    "slug": "volunteer-abroad-for-three-months",
+    "category": "Personal Growth",
+    "country": null,
+    "continent": null,
+    "region": null,
+    "city": null,
+    "description": "Spend three months working with a community that needs support — conservation, education, medical aid, or disaster relief. Choose an ethical organisation where your skills genuinely help rather than displace locals.",
+    "tags": [
+      "volunteering",
+      "community",
+      "travel",
+      "giving back",
+      "personal growth"
+    ],
+    "difficulty": "moderate",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "3 months",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1602306171783-60e8021ab80e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTMxNTJ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Take a solo trip with no itinerary",
+    "slug": "take-a-solo-trip-with-no-itinerary",
+    "category": "Personal Growth",
+    "country": null,
+    "continent": null,
+    "region": null,
+    "city": null,
+    "description": "Book a flight somewhere and arrive with no hotels booked, no plans, and no one to report back to. Figure out everything day by day. You will surprise yourself with how capable you are.",
+    "tags": [
+      "solo travel",
+      "adventure",
+      "freedom",
+      "spontaneous",
+      "personal growth"
+    ],
+    "difficulty": "moderate",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "2 weeks",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1754351008589-dc42d6b545a7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTMyMjd8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Mentor someone younger than you",
+    "slug": "mentor-someone-younger-than-you",
+    "category": "Personal Growth",
+    "country": null,
+    "continent": null,
+    "region": null,
+    "city": null,
+    "description": "Commit to a real mentorship — regular conversations, honest feedback, and genuine investment in another person's growth. Teaching someone else is the fastest way to clarify what you actually know.",
+    "tags": [
+      "mentorship",
+      "giving back",
+      "growth",
+      "teaching",
+      "leadership"
+    ],
+    "difficulty": "easy",
+    "priceRange": "free",
+    "season": [
+      "all"
+    ],
+    "duration": "1 year",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1596688787955-72a75ec303b4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTMzMDN8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Hike the Appalachian Trail",
+    "slug": "hike-the-appalachian-trail",
+    "category": "Health",
+    "country": "USA",
+    "continent": "North America",
+    "region": "Eastern USA",
+    "city": null,
+    "description": "Walk 3,500 km from Georgia to Maine through 14 states — the longest marked footpath in the United States. Thru-hikers spend five to seven months on the trail, losing and finding themselves along the way.",
+    "tags": [
+      "appalachian trail",
+      "hiking",
+      "usa",
+      "thru-hike",
+      "endurance"
+    ],
+    "difficulty": "extreme",
+    "priceRange": "$",
+    "season": [
+      "spring",
+      "summer"
+    ],
+    "duration": "6 months",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1547099407-d134cad383b8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTM0MzV8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "See Mount Fuji at sunrise from the summit",
+    "slug": "see-mount-fuji-at-sunrise-from-the-summit",
+    "category": "Adventure",
+    "country": "Japan",
+    "continent": "Asia",
+    "region": "Chubu",
+    "city": "Fujinomiya",
+    "description": "Start your climb at midnight from the Yoshida Trail and reach Japan's highest peak at 3,776m in time to watch Goraiko — the sunrise over the clouds below you. Around 300,000 people attempt this each summer.",
+    "tags": [
+      "mount fuji",
+      "japan",
+      "sunrise",
+      "hiking",
+      "summit"
+    ],
+    "difficulty": "hard",
+    "priceRange": "$",
+    "season": [
+      "summer"
+    ],
+    "duration": "2 days",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1768566620544-03b5fe948cbb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTM1MTF8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Visit the Amazon Rainforest",
+    "slug": "visit-the-amazon-rainforest",
+    "category": "Travel",
+    "country": "Brazil",
+    "continent": "South America",
+    "region": "Amazonas",
+    "city": "Manaus",
+    "description": "Take a boat deep into the world's largest rainforest and spend nights in a jungle lodge listening to frogs, macaws, and howler monkeys. The Amazon holds 10% of all species on Earth.",
+    "tags": [
+      "amazon",
+      "jungle",
+      "wildlife",
+      "brazil",
+      "nature",
+      "boat"
+    ],
+    "difficulty": "moderate",
+    "priceRange": "$$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 week",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1618344322727-2256d3abdd1e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTM1ODZ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "See the Amalfi Coast by boat",
+    "slug": "see-the-amalfi-coast-by-boat",
+    "category": "Travel",
+    "country": "Italy",
+    "continent": "Europe",
+    "region": "Campania",
+    "city": "Positano",
+    "description": "Rent a wooden boat and spend a day cruising between colourful clifftop villages, swimming in sea caves, and eating anchovies on a shaded terrace. The Amalfi Coast looks best from the water.",
+    "tags": [
+      "amalfi",
+      "italy",
+      "boat",
+      "coastal",
+      "mediterranean"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$$",
+    "season": [
+      "summer"
+    ],
+    "duration": "3 days",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1760955728799-bd8fdcfb4c88?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTM2NjJ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Road trip Route 66",
+    "slug": "road-trip-route-66",
+    "category": "Travel",
+    "country": "USA",
+    "continent": "North America",
+    "region": null,
+    "city": null,
+    "description": "Drive the full length of America's Mother Road from Chicago to Los Angeles across 4,000 km of desert, small towns, diners, and motels with neon signs. The original American road trip.",
+    "tags": [
+      "road trip",
+      "usa",
+      "route 66",
+      "driving",
+      "american"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$",
+    "season": [
+      "spring",
+      "fall"
+    ],
+    "duration": "2 weeks",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1767297075305-0524b8de351e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTM3Mzd8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Explore Petra by night",
+    "slug": "explore-petra-by-night",
+    "category": "Travel",
+    "country": "Jordan",
+    "continent": "Asia",
+    "region": "Ma'an Governorate",
+    "city": "Wadi Musa",
+    "description": "Walk the candlelit Siq canyon to the Treasury at night as thousands of candles cast shadows on rose-red rock carved 2,000 years ago by the Nabataeans. The Treasury by candlelight is one of the most beautiful sights in the world.",
+    "tags": [
+      "petra",
+      "jordan",
+      "UNESCO",
+      "night",
+      "ancient",
+      "candlelight"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "2 days",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1711838813426-f7510e5e8de8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTM4MTN8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Sleep in an overwater bungalow in the Maldives",
+    "slug": "sleep-in-an-overwater-bungalow-in-the-maldives",
+    "category": "Travel",
+    "country": "Maldives",
+    "continent": "Asia",
+    "region": null,
+    "city": null,
+    "description": "Fall asleep to the sound of the Indian Ocean beneath you in a glass-floored villa built over a turquoise lagoon. Wake up, open the hatch, and drop straight into water so clear it looks unreal.",
+    "tags": [
+      "maldives",
+      "luxury",
+      "overwater",
+      "ocean",
+      "romantic"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$$$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 week",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1767452985125-e3727dcfb1f9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTM4ODh8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Visit the rice terraces of Bali",
+    "slug": "visit-the-rice-terraces-of-bali",
+    "category": "Travel",
+    "country": "Indonesia",
+    "continent": "Asia",
+    "region": "Bali",
+    "city": "Ubud",
+    "description": "Walk through the UNESCO-listed Jatiluwih rice terraces at golden hour — a 2,000-year-old subak water irrigation system carved into the volcanic hillside in perfect curved steps.",
+    "tags": [
+      "bali",
+      "rice terraces",
+      "indonesia",
+      "UNESCO",
+      "photography"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1673675866138-6d67328cd57a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTM5NjR8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "See the tulip fields of the Netherlands",
+    "slug": "see-the-tulip-fields-of-the-netherlands",
+    "category": "Travel",
+    "country": "Netherlands",
+    "continent": "Europe",
+    "region": "North Holland",
+    "city": "Lisse",
+    "description": "Cycle through kilometre-wide stripes of colour as millions of tulips, hyacinths, and daffodils bloom across the Bollenstreek. Keukenhof Gardens opens for just eight weeks each spring.",
+    "tags": [
+      "tulips",
+      "netherlands",
+      "spring",
+      "cycling",
+      "flowers"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "spring"
+    ],
+    "duration": "2 days",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1713859746215-6e1397b1e385?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTQwNDB8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Visit Victoria Falls",
+    "slug": "visit-victoria-falls",
+    "category": "Travel",
+    "country": "Zimbabwe",
+    "continent": "Africa",
+    "region": null,
+    "city": "Victoria Falls",
+    "description": "Stand at the edge of the world's largest waterfall as 550 million litres of water per minute thunder over a 1.7 km wide cliff. The Kololo people call it Mosi-oa-Tunya — The Smoke That Thunders.",
+    "tags": [
+      "victoria falls",
+      "zimbabwe",
+      "waterfall",
+      "africa",
+      "wonder"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "2 days",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1603201236596-eb1a63eb0ede?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTQxMTV8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Watch the midnight sun in northern Norway",
+    "slug": "watch-the-midnight-sun-in-northern-norway",
+    "category": "Travel",
+    "country": "Norway",
+    "continent": "Europe",
+    "region": "Troms",
+    "city": "Tromsø",
+    "description": "Stand outside at midnight as the sun hangs above the Arctic horizon and the sky glows gold and pink without ever fully darkening. Above the Arctic Circle in June, the sun simply doesn't set.",
+    "tags": [
+      "midnight sun",
+      "norway",
+      "arctic",
+      "summer",
+      "unique"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$",
+    "season": [
+      "summer"
+    ],
+    "duration": "3 days",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1649452815507-22e076e5d708?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTQxOTF8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Hike Patagonia's W Trek",
+    "slug": "hike-patagonia-w-trek",
+    "category": "Adventure",
+    "country": "Chile",
+    "continent": "South America",
+    "region": "Magallanes",
+    "city": "Puerto Natales",
+    "description": "Spend five days hiking through Torres del Paine National Park — past emerald lakes, hanging glaciers, and the iconic three granite towers. The W Circuit is South America's most spectacular multi-day hike.",
+    "tags": [
+      "patagonia",
+      "hiking",
+      "chile",
+      "mountains",
+      "glacier",
+      "torres del paine"
+    ],
+    "difficulty": "hard",
+    "priceRange": "$$",
+    "season": [
+      "spring",
+      "fall"
+    ],
+    "duration": "5 days",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1753462692136-74bf475804c2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTQyNjd8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Ice cave tour in Iceland",
+    "slug": "ice-cave-tour-in-iceland",
+    "category": "Adventure",
+    "country": "Iceland",
+    "continent": "Europe",
+    "region": null,
+    "city": "Jökulsárlón",
+    "description": "Strap on crampons and crawl through tunnels of blue glacier ice beneath Vatnajökull — Europe's largest glacier. The ice above is ancient, compressed snow that has been filtering light for hundreds of years.",
+    "tags": [
+      "ice cave",
+      "iceland",
+      "glacier",
+      "winter",
+      "unique"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$",
+    "season": [
+      "winter"
+    ],
+    "duration": "1 day",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1660487281714-1b4c2f2c5e27?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTQzNDJ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "See a volcanic eruption in Iceland",
+    "slug": "see-a-volcanic-eruption-in-iceland",
+    "category": "Nature",
+    "country": "Iceland",
+    "continent": "Europe",
+    "region": "Reykjanes Peninsula",
+    "city": null,
+    "description": "Walk across a lava field to the edge of a Reykjanes Peninsula fissure eruption and watch glowing magma flow just metres away. Iceland has been in a period of volcanic activity since 2021.",
+    "tags": [
+      "volcano",
+      "iceland",
+      "lava",
+      "nature",
+      "geology",
+      "unique"
+    ],
+    "difficulty": "moderate",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 day",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1589223050080-165d4cb53c13?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTQ0MTh8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "See the temples of Bagan at sunrise by balloon",
+    "slug": "see-the-temples-of-bagan-at-sunrise-by-balloon",
+    "category": "Travel",
+    "country": "Myanmar",
+    "continent": "Asia",
+    "region": "Mandalay Region",
+    "city": "Bagan",
+    "description": "Float above 2,000 Buddhist temples and pagodas as the morning mist clears from the Irrawaddy plains at dawn. The Bagan archaeological zone spans 40 square kilometres of ancient religious architecture.",
+    "tags": [
+      "bagan",
+      "myanmar",
+      "temples",
+      "hot air balloon",
+      "sunrise",
+      "buddhist"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$",
+    "season": [
+      "fall",
+      "winter"
+    ],
+    "duration": "2 days",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1761828122680-7d47bb98a8c8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTQ0OTR8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Hike Tiger's Nest Monastery in Bhutan",
+    "slug": "hike-tigers-nest-monastery-in-bhutan",
+    "category": "Travel",
+    "country": "Bhutan",
+    "continent": "Asia",
+    "region": "Paro",
+    "city": "Paro",
+    "description": "Climb 3,120m to a Buddhist monastery that clings to a sheer cliff face above the Paro valley — built in 1692 where Guru Rinpoche is said to have meditated in the 8th century. The hike takes four hours and the view is transformative.",
+    "tags": [
+      "bhutan",
+      "monastery",
+      "hiking",
+      "buddhist",
+      "mountains"
+    ],
+    "difficulty": "moderate",
+    "priceRange": "$$",
+    "season": [
+      "spring",
+      "fall"
+    ],
+    "duration": "1 day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1638246438556-5d5042582f05?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTQ1NzB8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Walk the Inca Trail to Machu Picchu",
+    "slug": "walk-the-inca-trail-to-machu-picchu",
+    "category": "Adventure",
+    "country": "Peru",
+    "continent": "South America",
+    "region": "Cusco",
+    "city": null,
+    "description": "Hike the original ancient footpath through Andean cloud forest, past Inca ruins, and through the Sun Gate to arrive at Machu Picchu at dawn. Permits sell out months in advance — book early.",
+    "tags": [
+      "inca trail",
+      "peru",
+      "machu picchu",
+      "hiking",
+      "ancient",
+      "south america"
+    ],
+    "difficulty": "hard",
+    "priceRange": "$$",
+    "season": [
+      "spring",
+      "summer",
+      "fall"
+    ],
+    "duration": "4 days",
+    "trending": true,
+    "heroImageUrl": "https://images.unsplash.com/photo-1568805746839-47f0dd6ad183?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTQ2NDZ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Attend the Vienna Opera Ball",
+    "slug": "attend-the-vienna-opera-ball",
+    "category": "Culture",
+    "country": "Austria",
+    "continent": "Europe",
+    "region": null,
+    "city": "Vienna",
+    "description": "Dress in a ball gown or white tie and waltz in the Vienna State Opera House at Austria's most prestigious annual event. Debutantes in white open the ball before five orchestras play through the night.",
+    "tags": [
+      "vienna",
+      "ball",
+      "waltz",
+      "opera",
+      "luxury",
+      "culture"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$$$",
+    "season": [
+      "winter"
+    ],
+    "duration": "1 night",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1693820569264-cfded6888899?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTQ3MjF8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "See the geysers of Iceland",
+    "slug": "see-the-geysers-of-iceland",
+    "category": "Nature",
+    "country": "Iceland",
+    "continent": "Europe",
+    "region": "South Iceland",
+    "city": null,
+    "description": "Stand ten metres back and watch Strokkur geyser blast a column of superheated water 30 metres into the sky every five minutes. The Geysir hot spring area is one of Iceland's Golden Circle attractions.",
+    "tags": [
+      "geyser",
+      "iceland",
+      "geology",
+      "nature",
+      "golden circle"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "half day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1579271201881-02817750c7e7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTQ3OTd8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Kitesurf in Tarifa, Spain",
+    "slug": "kitesurf-in-tarifa-spain",
+    "category": "Adventure",
+    "country": "Spain",
+    "continent": "Europe",
+    "region": "Andalusia",
+    "city": "Tarifa",
+    "description": "Learn to kitesurf in Europe's wind capital — where the Atlantic meets the Mediterranean and the Levante and Poniente winds blow consistently. Tarifa's beaches are a world mecca for kitesurfers.",
+    "tags": [
+      "kitesurfing",
+      "spain",
+      "wind",
+      "beach",
+      "ocean",
+      "extreme"
+    ],
+    "difficulty": "hard",
+    "priceRange": "$$",
+    "season": [
+      "spring",
+      "summer",
+      "fall"
+    ],
+    "duration": "1 week",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1698414126582-96bc9a781e87?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTQ4NzJ8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "See penguins in Antarctica",
+    "slug": "see-penguins-in-antarctica",
+    "category": "Nature",
+    "country": "Antarctica",
+    "continent": "Antarctica",
+    "region": null,
+    "city": null,
+    "description": "Stand in a colony of tens of thousands of gentoo penguins on the most remote continent on Earth. Antarctica receives fewer tourists per year than Disneyland receives in a single day.",
+    "tags": [
+      "antarctica",
+      "penguins",
+      "expedition",
+      "polar",
+      "wildlife"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$$$$",
+    "season": [
+      "winter"
+    ],
+    "duration": "2 weeks",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1664786495020-15efacb288a9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTQ5NDh8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Walk the Medina of Marrakech",
+    "slug": "walk-the-medina-of-marrakech",
+    "category": "Travel",
+    "country": "Morocco",
+    "continent": "Africa",
+    "region": null,
+    "city": "Marrakech",
+    "description": "Get deliberately lost in the souks — acres of covered markets selling spices, ceramics, leather, and lanterns. Emerge on a rooftop terrace above the din with a glass of mint tea.",
+    "tags": [
+      "marrakech",
+      "morocco",
+      "medina",
+      "souks",
+      "culture",
+      "food"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "fall",
+      "winter",
+      "spring"
+    ],
+    "duration": "3 days",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1548018560-cd92fb00373f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTUwMjR8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Zip line through the Costa Rican cloud forest",
+    "slug": "zip-line-through-the-costa-rican-cloud-forest",
+    "category": "Adventure",
+    "country": "Costa Rica",
+    "continent": "North America",
+    "region": "Puntarenas",
+    "city": "Monteverde",
+    "description": "Fly between treetops at 60 km/h above a forest canopy where orchids, toucans, and resplendent quetzals live in the clouds. Monteverde's zip lines launched the industry worldwide.",
+    "tags": [
+      "zip line",
+      "costa rica",
+      "cloud forest",
+      "canopy",
+      "adrenaline"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "half day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1657737738312-0f524f5ed190?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTUxMDB8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Hike the Faroe Islands",
+    "slug": "hike-the-faroe-islands",
+    "category": "Nature",
+    "country": "Faroe Islands",
+    "continent": "Europe",
+    "region": null,
+    "city": null,
+    "description": "Walk across treeless volcanic islands between dramatic sea cliffs and hidden waterfalls falling directly into the Atlantic. The Faroe Islands feel like the end of the world in the best possible way.",
+    "tags": [
+      "faroe islands",
+      "hiking",
+      "cliffs",
+      "ocean",
+      "remote",
+      "north atlantic"
+    ],
+    "difficulty": "moderate",
+    "priceRange": "$$",
+    "season": [
+      "summer"
+    ],
+    "duration": "1 week",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1707150990376-de79830d1780?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTUxNzV8&ixlib=rb-4.1.0&q=80&w=1080"
+  },
+  {
+    "title": "Visit the Louvre and see the Mona Lisa",
+    "slug": "visit-the-louvre-and-see-the-mona-lisa",
+    "category": "Culture",
+    "country": "France",
+    "continent": "Europe",
+    "region": null,
+    "city": "Paris",
+    "description": "Navigate the world's largest art museum and stand in front of one of the most famous paintings in history. Then discover that the 35,000 other works in the Louvre are far less crowded and equally extraordinary.",
+    "tags": [
+      "louvre",
+      "paris",
+      "mona lisa",
+      "art",
+      "museum",
+      "france"
+    ],
+    "difficulty": "easy",
+    "priceRange": "$",
+    "season": [
+      "all"
+    ],
+    "duration": "1 day",
+    "trending": false,
+    "heroImageUrl": "https://images.unsplash.com/photo-1769437598069-d5148d009769?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5NjI1OTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzk5MTUyNTF8&ixlib=rb-4.1.0&q=80&w=1080"
+  }
+]

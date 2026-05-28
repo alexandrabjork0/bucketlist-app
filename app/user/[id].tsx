@@ -1,59 +1,85 @@
 import { router, useLocalSearchParams } from "expo-router";
 import {
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
   query,
   serverTimestamp,
   setDoc,
-  deleteDoc,
   where,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Dimensions,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import CollectionCard from "../../components/CollectionCard";
 import PostThumbnail from "../../components/PostThumbnail";
 import { auth, db } from "../../lib/firebaseConfig";
 import { createNotification } from "../../lib/notifications";
 
+type ActiveTab = "posts" | "collections";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const CARD_GAP = 12;
+const CARD_PAD = 16;
+const CARD_WIDTH = Math.floor((SCREEN_WIDTH - CARD_PAD * 2 - CARD_GAP) / 2);
+
 export default function UserProfileScreen() {
-  const { id } = useLocalSearchParams();
+  const { id } = useLocalSearchParams<{ id: string }>();
 
   const [profile, setProfile] = useState<any>(null);
-  const [items, setItems] = useState<any[]>([]);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [publicCollections, setPublicCollections] = useState<any[]>([]);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
+  const [activeTab, setActiveTab] = useState<ActiveTab>("posts");
 
   useEffect(() => {
-    if (!id || typeof id !== "string") return;
-    loadUserProfile(id);
+    if (id) loadProfile(id);
   }, [id]);
 
-  const loadUserProfile = async (userId: string) => {
-    const [userSnap, itemsSnap, followersSnap, followingSnap] = await Promise.all([
-      getDoc(doc(db, "users", userId)),
-      getDocs(
-        query(
-          collection(db, "userBucketlistItems"),
-          where("userId", "==", userId),
-          where("completed", "==", true)
-        )
-      ),
-      getDocs(query(collection(db, "follows"), where("followingId", "==", userId))),
-      getDocs(query(collection(db, "follows"), where("followerId", "==", userId))),
-    ]);
+  const loadProfile = async (userId: string) => {
+    const [userSnap, postsSnap, followersSnap, followingSnap, collectionsSnap] =
+      await Promise.all([
+        getDoc(doc(db, "users", userId)),
+        getDocs(
+          query(
+            collection(db, "userBucketlistItems"),
+            where("userId", "==", userId),
+            where("completed", "==", true)
+          )
+        ),
+        getDocs(query(collection(db, "follows"), where("followingId", "==", userId))),
+        getDocs(query(collection(db, "follows"), where("followerId", "==", userId))),
+        getDocs(query(collection(db, "collections"), where("userId", "==", userId))),
+      ]);
 
     if (userSnap.exists()) setProfile(userSnap.data());
 
-    setItems(
-      itemsSnap.docs
+    setPosts(
+      postsSnap.docs
         .map((d) => ({ id: d.id, ...d.data() }))
         .sort((a: any, b: any) => (b.completedAt?.seconds || 0) - (a.completedAt?.seconds || 0))
     );
 
     setFollowersCount(followersSnap.size);
     setFollowingCount(followingSnap.size);
+
+    // Only show public collections on other users' profiles
+    setPublicCollections(
+      collectionsSnap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .filter((c: any) => !c.isPrivate)
+    );
 
     const currentUserId = auth.currentUser?.uid;
     if (currentUserId && currentUserId !== userId) {
@@ -63,8 +89,7 @@ export default function UserProfileScreen() {
   };
 
   const handleFollowToggle = async () => {
-    if (!auth.currentUser || !id || typeof id !== "string") return;
-
+    if (!auth.currentUser || !id) return;
     const currentUserId = auth.currentUser.uid;
     const followRef = doc(db, "follows", `${currentUserId}_${id}`);
 
@@ -91,14 +116,14 @@ export default function UserProfileScreen() {
   const isOwnProfile = auth.currentUser?.uid === id;
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Header */}
       <View style={styles.profileHeader}>
-        {/* Top row: avatar + username + back */}
         <View style={styles.headerRow}>
           <View style={styles.headerLeft}>
             <View style={styles.avatar}>
               {profile?.profileImage ? (
-                <Image source={{ uri: profile.profileImage }} style={styles.profileImage} />
+                <Image source={{ uri: profile.profileImage }} style={styles.avatarImage} />
               ) : (
                 <Text style={styles.avatarText}>
                   {profile?.username?.charAt(0)?.toUpperCase() || "?"}
@@ -113,10 +138,8 @@ export default function UserProfileScreen() {
           </Pressable>
         </View>
 
-        {/* Bio */}
         <Text style={styles.bio}>{profile?.bio || "No bio yet."}</Text>
 
-        {/* Follow button */}
         {!isOwnProfile && (
           <Pressable
             style={[styles.followBtn, isFollowing && styles.followingBtn]}
@@ -128,39 +151,79 @@ export default function UserProfileScreen() {
           </Pressable>
         )}
 
-        {/* Stats */}
         <View style={styles.statsRow}>
-          <View>
-            <Text style={styles.statNumber}>{items.length}</Text>
-            <Text style={styles.statLabel}>Completed</Text>
+          <View style={styles.stat}>
+            <Text style={styles.statNumber}>{posts.length}</Text>
+            <Text style={styles.statLabel}>Posts</Text>
           </View>
-          <View>
+          <View style={styles.stat}>
             <Text style={styles.statNumber}>{followersCount}</Text>
             <Text style={styles.statLabel}>Followers</Text>
           </View>
-          <View>
+          <View style={styles.stat}>
             <Text style={styles.statNumber}>{followingCount}</Text>
             <Text style={styles.statLabel}>Following</Text>
           </View>
         </View>
       </View>
 
-      {/* Post grid */}
-      {items.length === 0 ? (
-        <Text style={styles.emptyText}>No completed posts yet.</Text>
-      ) : (
-        <View style={styles.grid}>
-          {items.map((item) => (
-            <PostThumbnail
-              key={item.id}
-              post={item}
-              onPress={() =>
-                router.push({ pathname: "/explore-post/[id]", params: { id: item.id } })
-              }
-            />
-          ))}
+      {/* Tabs */}
+      <View style={styles.tabs}>
+        {(["posts", "collections"] as ActiveTab[]).map((tab) => (
+          <Pressable
+            key={tab}
+            style={[styles.tab, activeTab === tab && styles.tabActive]}
+            onPress={() => setActiveTab(tab)}
+          >
+            <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
+      {/* Posts tab */}
+      {activeTab === "posts" && (
+        posts.length === 0 ? (
+          <Text style={styles.emptyText}>No posts yet.</Text>
+        ) : (
+          <View style={styles.grid}>
+            {posts.map((item) => (
+              <PostThumbnail
+                key={item.id}
+                post={item}
+                onPress={() =>
+                  router.push({ pathname: "/explore-post/[id]", params: { id: item.id } })
+                }
+              />
+            ))}
+          </View>
+        )
+      )}
+
+      {/* Collections tab */}
+      {activeTab === "collections" && (
+        <View style={styles.collectionsScene}>
+          {publicCollections.length === 0 ? (
+            <Text style={styles.emptyText}>No public collections yet.</Text>
+          ) : (
+            <View style={styles.collectionsGrid}>
+              {publicCollections.map((coll) => (
+                <CollectionCard
+                  key={coll.id}
+                  collection={coll}
+                  cardWidth={CARD_WIDTH}
+                  onPress={() =>
+                    router.push({ pathname: "/collection/[id]", params: { id: coll.id } })
+                  }
+                />
+              ))}
+            </View>
+          )}
         </View>
       )}
+
+      <View style={{ height: 48 }} />
     </ScrollView>
   );
 }
@@ -200,7 +263,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     overflow: "hidden",
   },
-  profileImage: {
+  avatarImage: {
     width: 86,
     height: 86,
     borderRadius: 43,
@@ -248,6 +311,9 @@ const styles = StyleSheet.create({
     padding: 18,
     borderRadius: 22,
   },
+  stat: {
+    alignItems: "center",
+  },
   statNumber: {
     fontSize: 22,
     fontWeight: "800",
@@ -259,14 +325,46 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textAlign: "center",
   },
+  tabs: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  tabActive: {
+    borderBottomWidth: 3,
+    borderBottomColor: "#111",
+  },
+  tabText: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#999",
+  },
+  tabTextActive: {
+    color: "#111",
+  },
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
   emptyText: {
     color: "#777",
     textAlign: "center",
     marginTop: 24,
     paddingHorizontal: 24,
+    lineHeight: 22,
   },
-  grid: {
+  collectionsScene: {
+    paddingTop: 20,
+  },
+  collectionsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
+    gap: CARD_GAP,
+    paddingHorizontal: CARD_PAD,
   },
 });

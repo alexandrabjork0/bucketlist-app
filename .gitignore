@@ -41,3 +41,9 @@ app-example
 # generated native folders
 /ios
 /android
+
+# Firebase service account key — never commit this
+scripts/serviceAccountKey.json
+
+# Unsplash photo fetch cache — regenerable
+scripts/seed/photo-cache.json
