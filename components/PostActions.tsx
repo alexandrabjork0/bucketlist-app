@@ -33,6 +33,7 @@ export default function PostActions({
   const user = auth.currentUser;
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
+  const [commentsCount, setCommentsCount] = useState(0);
 
   useEffect(() => {
     if (!postId || !user) return;
@@ -41,7 +42,10 @@ export default function PostActions({
     const likeRef = doc(db, "userBucketlistItems", postId, "likes", user.uid);
 
     const unsubPost = onSnapshot(postRef, (snap) => {
-      if (snap.exists()) setLikesCount(snap.data().likesCount || 0);
+      if (snap.exists()) {
+        setLikesCount(snap.data().likesCount || 0);
+        setCommentsCount(snap.data().commentsCount || 0);
+      }
     });
     const unsubLike = onSnapshot(likeRef, (snap) => {
       setLiked(snap.exists());
@@ -87,32 +91,40 @@ export default function PostActions({
   return (
     <View style={styles.container}>
       <View style={styles.iconRow}>
-        <Pressable onPress={toggleLike} style={styles.iconBtn} hitSlop={8}>
-          <Ionicons
-            name={liked ? "heart" : "heart-outline"}
-            size={26}
-            color={liked ? "#ff3040" : C.text}
-          />
-        </Pressable>
-
-        <Pressable onPress={onCommentPress} style={styles.iconBtn} hitSlop={8}>
-          <Ionicons name="chatbubble-outline" size={24} color={C.text} />
-        </Pressable>
-
-        {onSave && (
-          <Pressable onPress={onSave} style={styles.iconBtn} hitSlop={8}>
+        <View style={styles.iconCol}>
+          <Pressable onPress={toggleLike} hitSlop={8}>
             <Ionicons
-              name={savedCount > 0 ? "bookmark" : "bookmark-outline"}
-              size={24}
-              color={C.text}
+              name={liked ? "heart" : "heart-outline"}
+              size={26}
+              color={liked ? "#ff3040" : C.text}
             />
           </Pressable>
+          {likesCount > 0 && (
+            <Text style={styles.countText}>{likesCount}</Text>
+          )}
+        </View>
+
+        <View style={styles.iconCol}>
+          <Pressable onPress={onCommentPress} hitSlop={8}>
+            <Ionicons name="chatbubble-outline" size={24} color={C.text} />
+          </Pressable>
+          {commentsCount > 0 && (
+            <Text style={styles.countText}>{commentsCount}</Text>
+          )}
+        </View>
+
+        {onSave && (
+          <View style={styles.iconCol}>
+            <Pressable onPress={onSave} hitSlop={8}>
+              <Ionicons
+                name={savedCount > 0 ? "bookmark" : "bookmark-outline"}
+                size={24}
+                color={C.text}
+              />
+            </Pressable>
+          </View>
         )}
       </View>
-
-      <Text style={styles.likesText}>
-        {likesCount} {likesCount === 1 ? "like" : "likes"}
-      </Text>
     </View>
   );
 }
@@ -125,15 +137,15 @@ function makeStyles(C: ThemeColors) {
     },
     iconRow: {
       flexDirection: "row",
+      alignItems: "flex-start",
+      gap: 18,
+    },
+    iconCol: {
       alignItems: "center",
-      gap: 16,
-      marginBottom: 6,
+      gap: 3,
     },
-    iconBtn: {
-      padding: 2,
-    },
-    likesText: {
-      fontSize: 13,
+    countText: {
+      fontSize: 12,
       fontWeight: "700",
       color: C.text,
     },

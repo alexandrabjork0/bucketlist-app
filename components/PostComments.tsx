@@ -1,6 +1,8 @@
+import { Ionicons } from "@expo/vector-icons";
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   increment,
@@ -9,10 +11,16 @@ import {
   query,
   runTransaction,
   serverTimestamp,
+  updateDoc,
 } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
+  Alert,
+  Dimensions,
+  Image,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -23,6 +31,23 @@ import {
 import { auth, db } from "../lib/firebaseConfig";
 import { createNotification } from "../lib/notifications";
 import { ThemeColors, useTheme } from "../lib/theme";
+
+const SHEET_HEIGHT = Dimensions.get("window").height * 0.75;
+
+function formatRelativeTime(timestamp: any): string {
+  if (!timestamp?.seconds) return "";
+  const seconds = Math.floor(Date.now() / 1000) - timestamp.seconds;
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 52) return `${weeks}w`;
+  return `${Math.floor(weeks / 52)}y`;
+}
 
 interface Props {
   postId: string;
@@ -37,6 +62,18 @@ export default function PostComments({ postId, authorId, expanded, onClose }: Pr
 
   const [comments, setComments] = useState<any[]>([]);
   const [text, setText] = useState("");
+  const [myProfileImage, setMyProfileImage] = useState<string | null>(null);
+  const [myUsername, setMyUsername] = useState<string>("");
+
+  useEffect(() => {
+    if (!auth.currentUser) return;
+    getDoc(doc(db, "users", auth.currentUser.uid)).then((snap) => {
+      if (snap.exists()) {
+        setMyProfileImage(snap.data().profileImage || null);
+        setMyUsername(snap.data().username || auth.currentUser?.displayName || "");
+      }
+    });
+  }, []);
 
   useEffect(() => {
     const q = query(
@@ -51,13 +88,11 @@ export default function PostComments({ postId, authorId, expanded, onClose }: Pr
   const addComment = async () => {
     if (!text.trim() || !auth.currentUser) return;
 
-    const userSnap = await getDoc(doc(db, "users", auth.currentUser.uid));
-    const userData = userSnap.exists() ? userSnap.data() : null;
-
     await addDoc(collection(db, "userBucketlistItems", postId, "comments"), {
       text: text.trim(),
       userId: auth.currentUser.uid,
-      username: userData?.username || auth.currentUser.displayName || "user",
+      username: myUsername || auth.currentUser.displayName || "user",
+      profileImage: myProfileImage,
       createdAt: serverTimestamp(),
     });
 
@@ -77,99 +112,139 @@ export default function PostComments({ postId, authorId, expanded, onClose }: Pr
     }).catch(() => {});
   };
 
-  const previewComments = comments.slice(-2);
+  const deleteComment = (commentId: string, commentUserId: string) => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+    const canDelete = uid === commentUserId || uid === authorId;
+    if (!canDelete) return;
+
+    Alert.alert("Delete comment?", undefined, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          await deleteDoc(
+            doc(db, "userBucketlistItems", postId, "comments", commentId)
+          );
+          updateDoc(doc(db, "userBucketlistItems", postId), {
+            commentsCount: increment(-1),
+          }).catch(() => {});
+        },
+      },
+    ]);
+  };
 
   return (
-    <View style={styles.container}>
-      {previewComments.map((c) => (
-        <Text key={c.id} style={styles.comment}>
-          <Text style={styles.username}>{c.username || "user"} </Text>
-          {c.text}
-        </Text>
-      ))}
-
-      <Modal
-        visible={expanded}
-        animationType="slide"
-        transparent
-        onRequestClose={onClose}
+    <Modal
+      visible={expanded}
+      animationType="slide"
+      transparent
+      onRequestClose={onClose}
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardView}
       >
-        <Pressable style={styles.modalOverlay} onPress={onClose}>
-          <Pressable style={styles.modalContent}>
-            <View style={styles.modalHandle} />
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
 
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Comments</Text>
-              <Pressable onPress={onClose}>
-                <Text style={styles.closeText}>Close</Text>
+        <View style={styles.sheet} onStartShouldSetResponder={() => true}>
+          <View style={styles.handle} />
+
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>Comments</Text>
+            <Pressable onPress={onClose}>
+              <Text style={styles.closeText}>Close</Text>
+            </Pressable>
+          </View>
+
+          <ScrollView
+            style={styles.list}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            {comments.length === 0 && (
+              <Text style={styles.emptyText}>No comments yet. Be the first.</Text>
+            )}
+            {comments.map((c) => (
+              <Pressable
+                key={c.id}
+                style={styles.commentRow}
+                onLongPress={() => deleteComment(c.id, c.userId)}
+                delayLongPress={400}
+              >
+                {c.profileImage ? (
+                  <Image source={{ uri: c.profileImage }} style={styles.avatar} />
+                ) : (
+                  <View style={styles.avatarFallback}>
+                    <Text style={styles.avatarInitial}>
+                      {(c.username || "?").charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                )}
+
+                <View style={styles.commentContent}>
+                  <Text style={styles.commentText}>
+                    <Text style={styles.commentUsername}>{c.username || "user"} </Text>
+                    {c.text}
+                  </Text>
+                  <Text style={styles.commentTime}>{formatRelativeTime(c.createdAt)}</Text>
+                </View>
+
+                <Pressable hitSlop={10} style={styles.heartBtn}>
+                  <Ionicons name="heart-outline" size={13} color={C.textTertiary} />
+                </Pressable>
               </Pressable>
-            </View>
+            ))}
+          </ScrollView>
 
-            <ScrollView style={styles.commentsList} keyboardShouldPersistTaps="handled">
-              {comments.length === 0 && (
-                <Text style={styles.emptyText}>No comments yet. Be the first.</Text>
-              )}
-              {comments.map((c) => (
-                <Text key={c.id} style={styles.modalComment}>
-                  <Text style={styles.username}>{c.username || "user"} </Text>
-                  {c.text}
+          <View style={styles.inputRow}>
+            {myProfileImage ? (
+              <Image source={{ uri: myProfileImage }} style={styles.inputAvatar} />
+            ) : (
+              <View style={styles.inputAvatarFallback}>
+                <Text style={styles.avatarInitial}>
+                  {(myUsername || "?").charAt(0).toUpperCase()}
                 </Text>
-              ))}
-            </ScrollView>
-
-            <View style={styles.inputRow}>
-              <TextInput
-                value={text}
-                onChangeText={setText}
-                placeholder="Add a comment…"
-                placeholderTextColor={C.inputPlaceholder}
-                style={styles.input}
-                returnKeyType="send"
-                onSubmitEditing={addComment}
-              />
-              <Pressable onPress={addComment} hitSlop={8}>
-                <Text style={[styles.postBtn, !text.trim() && styles.postBtnDim]}>
-                  Post
-                </Text>
-              </Pressable>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
-    </View>
+              </View>
+            )}
+            <TextInput
+              value={text}
+              onChangeText={setText}
+              placeholder="Add a comment…"
+              placeholderTextColor={C.inputPlaceholder}
+              style={styles.input}
+              returnKeyType="send"
+              onSubmitEditing={addComment}
+            />
+            <Pressable onPress={addComment} hitSlop={8}>
+              <Text style={[styles.postBtn, !text.trim() && styles.postBtnDim]}>
+                Post
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
   );
 }
 
 function makeStyles(C: ThemeColors) {
   return StyleSheet.create({
-    container: {
-      marginTop: 6,
-    },
-    comment: {
-      fontSize: 14,
-      lineHeight: 20,
-      marginBottom: 3,
-      color: C.text,
-    },
-    username: {
-      fontWeight: "700",
-      color: C.text,
-    },
-    modalOverlay: {
+    keyboardView: {
       flex: 1,
-      backgroundColor: C.overlay,
       justifyContent: "flex-end",
     },
-    modalContent: {
+    sheet: {
+      height: SHEET_HEIGHT,
       backgroundColor: C.background,
       borderTopLeftRadius: 22,
       borderTopRightRadius: 22,
       paddingTop: 10,
       paddingHorizontal: 16,
       paddingBottom: 32,
-      maxHeight: "75%",
     },
-    modalHandle: {
+    handle: {
       width: 42,
       height: 4,
       borderRadius: 2,
@@ -177,13 +252,13 @@ function makeStyles(C: ThemeColors) {
       alignSelf: "center",
       marginBottom: 12,
     },
-    modalHeader: {
+    header: {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
       marginBottom: 14,
     },
-    modalTitle: {
+    headerTitle: {
       fontSize: 17,
       fontWeight: "800",
       color: C.text,
@@ -193,7 +268,7 @@ function makeStyles(C: ThemeColors) {
       color: C.textSecondary,
       fontSize: 15,
     },
-    commentsList: {
+    list: {
       flex: 1,
       marginBottom: 12,
     },
@@ -204,11 +279,62 @@ function makeStyles(C: ThemeColors) {
       marginTop: 24,
       marginBottom: 8,
     },
-    modalComment: {
-      fontSize: 15,
-      marginBottom: 14,
-      lineHeight: 21,
+    commentRow: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      marginBottom: 18,
+      gap: 10,
+    },
+    avatar: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+    },
+    avatarFallback: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: C.avatarBg,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    avatarInitial: {
+      color: "#fff",
+      fontWeight: "700",
+      fontSize: 13,
+    },
+    commentContent: {
+      flex: 1,
+    },
+    commentText: {
+      fontSize: 14,
+      lineHeight: 20,
       color: C.text,
+    },
+    commentUsername: {
+      fontWeight: "700",
+      color: C.text,
+    },
+    commentTime: {
+      fontSize: 12,
+      color: C.textTertiary,
+      marginTop: 4,
+    },
+    heartBtn: {
+      paddingTop: 2,
+    },
+    inputAvatar: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+    },
+    inputAvatarFallback: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      backgroundColor: C.avatarBg,
+      justifyContent: "center",
+      alignItems: "center",
     },
     inputRow: {
       flexDirection: "row",
