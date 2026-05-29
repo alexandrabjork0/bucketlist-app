@@ -30,7 +30,8 @@ import { createNotification } from "../../lib/notifications";
 import { ThemeColors, useTheme } from "../../lib/theme";
 
 const { width: SW } = Dimensions.get("window");
-const TILE_W = 150;
+const TILE_W = Math.round(SW * 0.42);
+const TILE_H = Math.round(TILE_W * 1.42);
 const COLL_W = 160;
 const PERSON_W = 110;
 
@@ -143,8 +144,8 @@ const at = StyleSheet.create({
   },
   imageWrapper: {
     width: TILE_W,
-    aspectRatio: 1,
-    borderRadius: 14,
+    height: TILE_H,
+    borderRadius: 18,
     overflow: "hidden",
   },
   image: {
@@ -530,7 +531,7 @@ export default function HomeScreen({ isFocused }: { isFocused: boolean }) {
         <View style={styles.section}>
           <SectionHeader
             title="Collections"
-            onSeeAll={() => router.push("/(tabs)/profile" as any)}
+            onSeeAll={() => router.push("/my-collections")}
           />
           <ScrollView
             horizontal
@@ -556,7 +557,7 @@ export default function HomeScreen({ isFocused }: { isFocused: boolean }) {
       {/* ── 2. Friends' activity ── */}
       {friendsPosts.length > 0 && (
         <View style={styles.section}>
-          <SectionHeader title="Friends' activity" />
+          <SectionHeader title="Friends' activity" onSeeAll={() => router.push("/friends-activity")} />
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -593,7 +594,7 @@ export default function HomeScreen({ isFocused }: { isFocused: boolean }) {
       {/* ── 4. Friends' lists ── */}
       {friendsCollections.length > 0 && (
         <View style={styles.section}>
-          <SectionHeader title="Friends' lists" subtle />
+          <SectionHeader title="Friends' lists" subtle onSeeAll={() => router.push("/friends-lists")} />
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
