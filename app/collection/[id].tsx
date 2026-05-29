@@ -325,7 +325,19 @@ export default function CollectionDetailScreen() {
   const isOwner = coll?.userId === currentUid;
   const isMember = !isOwner && (coll?.memberIds ?? []).includes(currentUid ?? "");
   const isParticipant = isOwner || isMember;
-  const completedItems = items.filter((i) => i.completed);
+  const isSharedCollection = (coll?.memberIds ?? []).length > 0 || isMember;
+  const ideaItems = useMemo(() => items.filter((i) => !i.completed), [items]);
+  const completedItems = useMemo(() => items.filter((i) => i.completed), [items]);
+  const completionsByIdeaId = useMemo(() => {
+    const map = new Map<string, any[]>();
+    items.forEach((item) => {
+      if (item.ideaId) {
+        const arr = map.get(item.ideaId) ?? [];
+        map.set(item.ideaId, [...arr, item]);
+      }
+    });
+    return map;
+  }, [items]);
   const total = coll ? (coll.itemCount ?? items.length) : 0;
   const done = coll ? (coll.completedCount ?? completedItems.length) : 0;
 
@@ -381,6 +393,13 @@ export default function CollectionDetailScreen() {
                     pathname: "/post-feed/[id]",
                     params: { id: item.id, mode: "collection", filterId: id },
                   });
+                } else if (isSharedCollection && isParticipant) {
+                  const myC = (completionsByIdeaId.get(item.id) ?? []).find((c: any) => c.userId === currentUid);
+                  if (myC) {
+                    router.push({ pathname: "/post-feed/[id]", params: { id: myC.id, mode: "collection", filterId: id } });
+                  } else {
+                    router.push({ pathname: "/complete-item/[id]", params: { id: item.id, isShared: "true" } });
+                  }
                 } else if (item.userId === currentUid) {
                   router.push({ pathname: "/complete-item/[id]", params: { id: item.id } });
                 }
@@ -394,14 +413,27 @@ export default function CollectionDetailScreen() {
                 {item.category ? (
                   <Text style={styles.itemCat} numberOfLines={1}>{item.category}</Text>
                 ) : null}
-                {item.completed ? (
-                  <Text style={styles.doneBadge}>Done</Text>
+                {isSharedCollection ? (
+                  (() => {
+                    const myC = (completionsByIdeaId.get(item.id) ?? []).find((c: any) => c.userId === currentUid);
+                    if (myC) return <Text style={styles.doneBadge}>You completed this ✓</Text>;
+                    if (isParticipant) return <Text style={styles.tapHint}>Tap to complete →</Text>;
+                    return null;
+                  })()
                 ) : item.userId === currentUid ? (
                   <Text style={styles.tapHint}>
                     {item.notes ? "Hold to edit · Tap to complete" : "Tap to complete →"}
                   </Text>
                 ) : null}
               </View>
+              {(() => {
+                const completions = completionsByIdeaId.get(item.id) ?? [];
+                if (!isSharedCollection || completions.length === 0) return null;
+                const names = completions
+                  .map((c: any) => c.completedByUsername ? `@${c.completedByUsername}` : "someone")
+                  .join(", ");
+                return <Text style={styles.doneByText}>done by {names}</Text>;
+              })()}
               {item.notes ? (
                 <Text style={styles.itemNotes} numberOfLines={1}>{item.notes}</Text>
               ) : null}
@@ -499,7 +531,7 @@ export default function CollectionDetailScreen() {
                   </Pressable>
                 </View>
               )}
-              {renderPage(items, "No items yet.", false)}
+              {renderPage(ideaItems, "No ideas yet.", false)}
             </View>
             <View style={{ width: SCREEN_WIDTH, minHeight: SCREEN_HEIGHT * 0.7 }}>
               {renderPage(completedItems, "Nothing completed yet. Go do something!", true)}
@@ -869,6 +901,7 @@ function makeStyles(C: ThemeColors) {
     itemCat: { fontSize: 12, fontWeight: "500", color: C.textTertiary },
     doneBadge: { fontSize: 12, color: C.accent, fontWeight: "800" },
     tapHint: { fontSize: 12, color: C.textTertiary, fontWeight: "600" },
+    doneByText: { fontSize: 11, color: C.accent, fontWeight: "600", marginTop: 4 },
     itemNotes: { fontSize: 12, color: C.textTertiary, marginTop: 4, fontStyle: "italic" },
     deleteBtn: { width: 32, height: 32, alignItems: "center", justifyContent: "center" },
     deleteBtnText: { fontSize: 24, color: C.border, fontWeight: "300", lineHeight: 28 },

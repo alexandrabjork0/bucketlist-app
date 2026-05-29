@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { ThemeColors, useTheme } from "../lib/theme";
 import CollectionCover from "./CollectionCover";
 
@@ -19,10 +19,10 @@ interface Props {
   onPress: () => void;
   onLongPress?: () => void;
   ownerUsername?: string;
-  isShared?: boolean;
+  memberAvatars?: string[];
 }
 
-export default function CollectionCard({ collection, cardWidth, onPress, onLongPress, ownerUsername, isShared }: Props) {
+export default function CollectionCard({ collection, cardWidth, onPress, onLongPress, ownerUsername, memberAvatars }: Props) {
   const C = useTheme();
   const styles = useMemo(() => makeStyles(C), [C]);
 
@@ -42,9 +42,17 @@ export default function CollectionCard({ collection, cardWidth, onPress, onLongP
             <Text style={styles.lockIcon}>🔒</Text>
           </View>
         )}
-        {isShared && (
-          <View style={styles.sharedBadge}>
-            <Text style={styles.sharedIcon}>👥</Text>
+        {memberAvatars && memberAvatars.length > 0 && (
+          <View style={styles.memberBadge}>
+            {memberAvatars.slice(0, 3).map((uri, idx) => (
+              <View key={idx} style={[styles.memberAvatar, idx > 0 && styles.memberAvatarOverlap]}>
+                {uri ? (
+                  <Image source={{ uri }} style={styles.memberAvatarImg} />
+                ) : (
+                  <View style={styles.memberAvatarFallback} />
+                )}
+              </View>
+            ))}
           </View>
         )}
       </View>
@@ -85,18 +93,24 @@ function makeStyles(C: ThemeColors) {
       justifyContent: "center",
     },
     lockIcon: { fontSize: 12 },
-    sharedBadge: {
+    memberBadge: {
       position: "absolute",
       top: 8,
       left: 8,
-      backgroundColor: "rgba(0,0,0,0.45)",
-      borderRadius: 999,
-      width: 26,
-      height: 26,
+      flexDirection: "row",
       alignItems: "center",
-      justifyContent: "center",
     },
-    sharedIcon: { fontSize: 12 },
+    memberAvatar: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      borderWidth: 1.5,
+      borderColor: "#fff",
+      overflow: "hidden",
+    },
+    memberAvatarOverlap: { marginLeft: -7 },
+    memberAvatarImg: { width: 22, height: 22, borderRadius: 11 },
+    memberAvatarFallback: { width: 22, height: 22, backgroundColor: "rgba(0,0,0,0.45)" },
     info: {
       paddingTop: 8,
       paddingHorizontal: 2,

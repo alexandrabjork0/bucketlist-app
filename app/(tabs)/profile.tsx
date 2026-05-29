@@ -97,16 +97,26 @@ export default function ProfileScreen({ isFocused }: { isFocused: boolean }) {
     setFollowersCount(followersSnap.size);
     setFollowingCount(followingSnap.size);
 
-    const ownedCollections = ownedSnap.docs.map((d) => ({ id: d.id, ...d.data(), isShared: false }));
+    const ownedRaw = ownedSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
     const sharedRaw = sharedSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const memberIdsToFetch = [...new Set(ownedRaw.flatMap((c: any) => c.memberIds || []))] as string[];
+    const memberDataMap = new Map<string, any>();
+    if (memberIdsToFetch.length > 0) {
+      const memberDocs = await Promise.all(memberIdsToFetch.map((mid) => getDoc(doc(db, "users", mid))));
+      memberDocs.forEach((d) => { if (d.exists()) memberDataMap.set(d.id, d.data()); });
+    }
+    const ownedCollections = ownedRaw.map((c: any) => ({
+      ...c,
+      isShared: (c.memberIds || []).length > 0,
+      memberAvatars: (c.memberIds || []).map((mid: string) => memberDataMap.get(mid)?.profileImage || null).filter(Boolean).slice(0, 3),
+    }));
     const ownerIds = [...new Set(sharedRaw.map((c: any) => c.userId as string))];
     const ownerDocs = await Promise.all(ownerIds.map((oid) => getDoc(doc(db, "users", oid))));
-    const ownerMap = new Map(ownerDocs.map((d) => [d.id, d.exists() ? (d.data() as any).username : "user"]));
-    const sharedCollections = sharedRaw.map((c: any) => ({
-      ...c,
-      isShared: true,
-      ownerUsername: ownerMap.get(c.userId) || "user",
-    }));
+    const ownerDataMap = new Map(ownerDocs.map((d) => [d.id, d.exists() ? d.data() : null]));
+    const sharedCollections = sharedRaw.map((c: any) => {
+      const ownerData = ownerDataMap.get(c.userId);
+      return { ...c, isShared: true, ownerUsername: ownerData?.username || "user", memberAvatars: ownerData?.profileImage ? [ownerData.profileImage] : [] };
+    });
     setCollections([...ownedCollections, ...sharedCollections]);
   };
 
@@ -117,16 +127,26 @@ export default function ProfileScreen({ isFocused }: { isFocused: boolean }) {
       getDocs(query(collection(db, "collections"), where("userId", "==", uid))),
       getDocs(query(collection(db, "collections"), where("memberIds", "array-contains", uid))),
     ]);
-    const ownedCollections = ownedSnap.docs.map((d) => ({ id: d.id, ...d.data(), isShared: false }));
+    const ownedRaw = ownedSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
     const sharedRaw = sharedSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const memberIdsToFetch = [...new Set(ownedRaw.flatMap((c: any) => c.memberIds || []))] as string[];
+    const memberDataMap = new Map<string, any>();
+    if (memberIdsToFetch.length > 0) {
+      const memberDocs = await Promise.all(memberIdsToFetch.map((mid) => getDoc(doc(db, "users", mid))));
+      memberDocs.forEach((d) => { if (d.exists()) memberDataMap.set(d.id, d.data()); });
+    }
+    const ownedCollections = ownedRaw.map((c: any) => ({
+      ...c,
+      isShared: (c.memberIds || []).length > 0,
+      memberAvatars: (c.memberIds || []).map((mid: string) => memberDataMap.get(mid)?.profileImage || null).filter(Boolean).slice(0, 3),
+    }));
     const ownerIds = [...new Set(sharedRaw.map((c: any) => c.userId as string))];
     const ownerDocs = await Promise.all(ownerIds.map((oid) => getDoc(doc(db, "users", oid))));
-    const ownerMap = new Map(ownerDocs.map((d) => [d.id, d.exists() ? (d.data() as any).username : "user"]));
-    const sharedCollections = sharedRaw.map((c: any) => ({
-      ...c,
-      isShared: true,
-      ownerUsername: ownerMap.get(c.userId) || "user",
-    }));
+    const ownerDataMap = new Map(ownerDocs.map((d) => [d.id, d.exists() ? d.data() : null]));
+    const sharedCollections = sharedRaw.map((c: any) => {
+      const ownerData = ownerDataMap.get(c.userId);
+      return { ...c, isShared: true, ownerUsername: ownerData?.username || "user", memberAvatars: ownerData?.profileImage ? [ownerData.profileImage] : [] };
+    });
     setCollections([...ownedCollections, ...sharedCollections]);
   };
 
@@ -342,12 +362,12 @@ export default function ProfileScreen({ isFocused }: { isFocused: boolean }) {
                     key={coll.id}
                     collection={coll}
                     cardWidth={CARD_WIDTH}
-                    isShared={coll.isShared}
+                    memberAvatars={coll.memberAvatars}
                     ownerUsername={coll.ownerUsername}
                     onPress={() =>
                       router.push({ pathname: "/collection/[id]", params: { id: coll.id } })
                     }
-                    onLongPress={coll.isShared ? undefined : () => handleDeleteCollection(coll.id, coll.name)}
+                    onLongPress={coll.userId === auth.currentUser?.uid ? () => handleDeleteCollection(coll.id, coll.name) : undefined}
                   />
                 ))}
               </View>

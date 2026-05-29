@@ -254,7 +254,9 @@ export async function leaveCollection(collectionId: string): Promise<void> {
   });
 }
 
-// Complete an item. Caller handles media uploads and passes the resulting URLs.
+// Complete an item. Returns the completion doc ID (= itemId for personal, new doc ID for shared).
+// isShared=true → create a new completion doc (Phase 2 model: idea stays incomplete, each member
+// gets their own completion doc). isShared=false → update the existing doc in place.
 export async function completeItem(params: {
   itemId: string;
   collectionId?: string | null;
@@ -263,33 +265,87 @@ export async function completeItem(params: {
   imageUrl: string | null;
   media: any[];
   isPrivate?: boolean;
-}): Promise<void> {
-  const batch = writeBatch(db);
+  isShared?: boolean;
+  ideaTitle?: string;
+  ideaCategory?: string;
+}): Promise<string> {
+  const uid = auth.currentUser?.uid ?? null;
 
+  if (params.isShared) {
+    let completedByUsername = "";
+    if (uid) {
+      try {
+        const userSnap = await getDoc(doc(db, "users", uid));
+        if (userSnap.exists()) completedByUsername = userSnap.data().username || "";
+      } catch {}
+    }
+
+    const newRef = doc(collection(db, "userBucketlistItems"));
+    const batch = writeBatch(db);
+    batch.set(newRef, {
+      userId: uid,
+      createdBy: uid,
+      savedBy: uid,
+      completedBy: uid,
+      completedByUsername,
+      ideaId: params.itemId,
+      collectionId: params.collectionId || null,
+      title: params.ideaTitle || "",
+      category: params.ideaCategory || "",
+      isPrivate: params.isPrivate ?? false,
+      publishedToDiscover: false,
+      source: "custom",
+      completed: true,
+      completedAt: serverTimestamp(),
+      caption: params.caption.trim(),
+      imageUrl: params.imageUrl,
+      media: params.media,
+      notes: "",
+      likesCount: 0,
+      commentsCount: 0,
+      inspiredByPostId: null,
+      inspiredByUserId: null,
+      experienceId: params.experienceId ?? null,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    if (params.collectionId) {
+      batch.update(doc(db, "collections", params.collectionId), {
+        completedCount: increment(1),
+        updatedAt: serverTimestamp(),
+      });
+    }
+    await batch.commit();
+    if (params.experienceId && !params.isPrivate) {
+      updateDoc(doc(db, "experiences", params.experienceId), {
+        completionsCount: increment(1),
+      }).catch(() => {});
+    }
+    return newRef.id;
+  }
+
+  const batch = writeBatch(db);
   batch.update(doc(db, "userBucketlistItems", params.itemId), {
     completed: true,
     completedAt: serverTimestamp(),
-    completedBy: auth.currentUser?.uid ?? null,
+    completedBy: uid,
     publishedToDiscover: false,
     caption: params.caption.trim(),
     imageUrl: params.imageUrl,
     media: params.media,
     updatedAt: serverTimestamp(),
   });
-
   if (params.collectionId) {
     batch.update(doc(db, "collections", params.collectionId), {
       completedCount: increment(1),
       updatedAt: serverTimestamp(),
     });
   }
-
-  // Only count towards public completions if the item is not private
   if (params.experienceId && !params.isPrivate) {
     batch.update(doc(db, "experiences", params.experienceId), {
       completionsCount: increment(1),
     });
   }
-
   await batch.commit();
+  return params.itemId;
 }

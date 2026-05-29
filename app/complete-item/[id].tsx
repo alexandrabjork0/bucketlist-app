@@ -99,7 +99,7 @@ export default function CompleteItemScreen() {
   const C = useTheme();
   const styles = useMemo(() => makeStyles(C), [C]);
 
-  const { id } = useLocalSearchParams();
+  const { id, isShared } = useLocalSearchParams<{ id: string; isShared?: string }>();
   const { width } = useWindowDimensions();
 
   const [item, setItem] = useState<any>(null);
@@ -227,7 +227,7 @@ export default function CompleteItemScreen() {
       const firstMedia = cleanMedia[0] as any;
       const imageUrl = firstImage?.url || firstMedia?.url || null;
 
-      await saveCompletion({
+      const completionId = await saveCompletion({
         itemId: id as string,
         collectionId: item?.collectionId ?? null,
         experienceId: item?.experienceId ?? null,
@@ -235,9 +235,12 @@ export default function CompleteItemScreen() {
         imageUrl,
         media: cleanMedia,
         isPrivate: item?.isPrivate ?? false,
+        isShared: isShared === "true",
+        ideaTitle: item?.title,
+        ideaCategory: item?.category,
       });
 
-      notifyCompletion(id).catch(() => {});
+      notifyCompletion(completionId).catch(() => {});
 
       Alert.alert("Posted", "Your experience is now posted!");
       router.back();
