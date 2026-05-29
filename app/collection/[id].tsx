@@ -326,7 +326,10 @@ export default function CollectionDetailScreen() {
   const isMember = !isOwner && (coll?.memberIds ?? []).includes(currentUid ?? "");
   const isParticipant = isOwner || isMember;
   const isSharedCollection = (coll?.memberIds ?? []).length > 0 || isMember;
-  const ideaItems = useMemo(() => items.filter((i) => !i.completed), [items]);
+  const ideaItems = useMemo(
+    () => isSharedCollection ? items.filter((i) => !i.ideaId) : items,
+    [items, isSharedCollection]
+  );
   const completedItems = useMemo(() => items.filter((i) => i.completed), [items]);
   const completionsByIdeaId = useMemo(() => {
     const map = new Map<string, any[]>();
