@@ -1,6 +1,7 @@
 import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
 import {
+  addDoc,
   collection,
   deleteDoc,
   doc,
@@ -33,6 +34,7 @@ import {
 } from "react-native";
 import CollectionCover from "../../components/CollectionCover";
 import PostThumbnail from "../../components/PostThumbnail";
+import { executeDeleteCollection } from "../../lib/collections";
 import { auth, db, storage } from "../../lib/firebaseConfig";
 import { ThemeColors, useTheme } from "../../lib/theme";
 
@@ -50,6 +52,14 @@ export default function CollectionDetailScreen() {
   const [items, setItems] = useState<any[]>([]);
   const [subTab, setSubTab] = useState<SubTab>("ideas");
   const [loading, setLoading] = useState(true);
+
+  // ── (···) menu ────────────────────────────────────────────────────────────
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // ── Add idea sheet ────────────────────────────────────────────────────────
+  const [addIdeaOpen, setAddIdeaOpen] = useState(false);
+  const [newIdeaTitle, setNewIdeaTitle] = useState("");
+  const [savingIdea, setSavingIdea] = useState(false);
 
   // ── Collection edit sheet ─────────────────────────────────────────────────
   const [editSheetOpen, setEditSheetOpen] = useState(false);
@@ -209,6 +219,85 @@ export default function CollectionDetailScreen() {
     }
   };
 
+  const handleDeleteCollection = () => {
+    setMenuOpen(false);
+    Alert.alert(
+      "Delete collection?",
+      "To-do ideas will be removed. Completed memories stay in your Posts.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            await executeDeleteCollection(id);
+            router.back();
+          },
+        },
+      ]
+    );
+  };
+
+  const addIdea = async () => {
+    if (!newIdeaTitle.trim() || !auth.currentUser) return;
+    setSavingIdea(true);
+    try {
+      const uid = auth.currentUser.uid;
+      const newRef = await addDoc(collection(db, "userBucketlistItems"), {
+        userId: uid,
+        createdBy: uid,
+        completedBy: null,
+        collectionId: id,
+        title: newIdeaTitle.trim(),
+        category: "",
+        notes: "",
+        source: "custom",
+        completed: false,
+        isPrivate: coll?.isPrivate ?? true,
+        publishedToDiscover: false,
+        imageUrl: null,
+        media: [],
+        caption: "",
+        likesCount: 0,
+        commentsCount: 0,
+        completedAt: null,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      setItems((prev) => [
+        ...prev,
+        {
+          id: newRef.id,
+          userId: uid,
+          createdBy: uid,
+          completedBy: null,
+          collectionId: id,
+          title: newIdeaTitle.trim(),
+          category: "",
+          notes: "",
+          source: "custom",
+          completed: false,
+          isPrivate: coll?.isPrivate ?? true,
+          publishedToDiscover: false,
+          imageUrl: null,
+          media: [],
+          caption: "",
+        },
+      ]);
+      setColl((prev: any) =>
+        prev ? { ...prev, itemCount: (prev.itemCount ?? 0) + 1 } : prev
+      );
+      updateDoc(doc(db, "collections", id), {
+        itemCount: increment(1),
+        updatedAt: serverTimestamp(),
+      }).catch(() => {});
+      setNewIdeaTitle("");
+      setAddIdeaOpen(false);
+    } finally {
+      setSavingIdea(false);
+    }
+  };
+
   const switchSubTab = (tab: SubTab) => {
     setSubTab(tab);
     const index = tab === "ideas" ? 0 : 1;
@@ -320,8 +409,8 @@ export default function CollectionDetailScreen() {
           </Pressable>
           <Text style={styles.topBarTitle} numberOfLines={1}>{coll.name}</Text>
           {isOwner ? (
-            <Pressable style={styles.editBtn} onPress={openEditSheet}>
-              <Text style={styles.editBtnText}>Edit</Text>
+            <Pressable style={styles.menuBtn} onPress={() => setMenuOpen(true)}>
+              <Text style={styles.menuBtnText}>···</Text>
             </Pressable>
           ) : (
             <View style={styles.editBtnSpacer} />
@@ -382,7 +471,14 @@ export default function CollectionDetailScreen() {
             }}
           >
             <View style={{ width: SCREEN_WIDTH, minHeight: SCREEN_HEIGHT * 0.7 }}>
-              {renderPage(items, "No items yet. Save experiences to this collection.", false)}
+              {isOwner && (
+                <View style={styles.addIdeaRow}>
+                  <Pressable style={styles.addIdeaBtn} onPress={() => setAddIdeaOpen(true)}>
+                    <Text style={styles.addIdeaBtnText}>+</Text>
+                  </Pressable>
+                </View>
+              )}
+              {renderPage(items, "No items yet.", false)}
             </View>
             <View style={{ width: SCREEN_WIDTH, minHeight: SCREEN_HEIGHT * 0.7 }}>
               {renderPage(completedItems, "Nothing completed yet. Go do something!", true)}
@@ -390,6 +486,74 @@ export default function CollectionDetailScreen() {
           </ScrollView>
         </ScrollView>
       </View>
+
+      {/* ── (···) menu ───────────────────────────────────────────────────── */}
+      <Modal
+        visible={menuOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setMenuOpen(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setMenuOpen(false)}>
+          <View style={styles.overlay} />
+        </TouchableWithoutFeedback>
+        <View style={styles.sheetWrapper}>
+          <View style={styles.sheet}>
+            <View style={styles.sheetHandle} />
+            <Pressable
+              style={styles.menuItem}
+              onPress={() => { setMenuOpen(false); openEditSheet(); }}
+            >
+              <Text style={styles.menuItemText}>Edit Collection</Text>
+            </Pressable>
+            <View style={styles.menuDivider} />
+            <Pressable style={styles.menuItem} onPress={handleDeleteCollection}>
+              <Text style={[styles.menuItemText, styles.menuItemDestructive]}>Delete Collection</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Add idea sheet ────────────────────────────────────────────────── */}
+      <Modal
+        visible={addIdeaOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setAddIdeaOpen(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => { Keyboard.dismiss(); setAddIdeaOpen(false); }}>
+          <View style={styles.overlay} />
+        </TouchableWithoutFeedback>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.sheetWrapper}
+        >
+          <View style={styles.sheet}>
+            <View style={styles.sheetHandle} />
+            <Text style={styles.sheetTitle}>Add an idea</Text>
+            <TextInput
+              style={styles.sheetInput}
+              placeholder="What do you want to do?"
+              placeholderTextColor={C.inputPlaceholder}
+              value={newIdeaTitle}
+              onChangeText={setNewIdeaTitle}
+              autoFocus
+              returnKeyType="done"
+              onSubmitEditing={addIdea}
+            />
+            <Pressable
+              style={[styles.sheetBtn, (!newIdeaTitle.trim() || savingIdea) && styles.sheetBtnOff]}
+              onPress={addIdea}
+              disabled={!newIdeaTitle.trim() || savingIdea}
+            >
+              <Text style={styles.sheetBtnText}>{savingIdea ? "Saving…" : "Save"}</Text>
+            </Pressable>
+            <Pressable style={styles.sheetCancel} onPress={() => setAddIdeaOpen(false)}>
+              <Text style={styles.sheetCancelText}>Cancel</Text>
+            </Pressable>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
 
       {/* ── Edit collection sheet ─────────────────────────────────────────── */}
       <Modal
@@ -574,12 +738,32 @@ function makeStyles(C: ThemeColors) {
       justifyContent: "center",
     },
     backBtnText: { color: C.text, fontSize: 28, fontWeight: "700", lineHeight: 32, marginTop: -2 },
-    editBtn: {
-      paddingHorizontal: 14,
-      paddingVertical: 8,
+    menuBtn: {
+      width: 44,
+      alignItems: "flex-end",
+      justifyContent: "center",
+      paddingRight: 2,
     },
-    editBtnSpacer: { width: 60 },
-    editBtnText: { fontSize: 15, fontWeight: "700", color: C.text },
+    menuBtnText: { fontSize: 20, fontWeight: "700", color: C.text, letterSpacing: 1 },
+    editBtnSpacer: { width: 44 },
+
+    menuItem: { paddingVertical: 16, paddingHorizontal: 4 },
+    menuItemText: { fontSize: 17, fontWeight: "600", color: C.text },
+    menuItemDestructive: { color: "#E53935" },
+    menuDivider: { height: StyleSheet.hairlineWidth, backgroundColor: C.border },
+
+    addIdeaRow: { alignItems: "flex-start", paddingVertical: 14, paddingHorizontal: 16 },
+    addIdeaBtn: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: C.surface,
+      borderWidth: 1,
+      borderColor: C.border,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    addIdeaBtnText: { fontSize: 24, fontWeight: "300", color: C.text, lineHeight: 28, marginTop: -1 },
     header: { width: "100%", overflow: "hidden" },
 
     headerMeta: { paddingHorizontal: 20, paddingTop: 18, paddingBottom: 4 },

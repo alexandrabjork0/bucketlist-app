@@ -69,10 +69,13 @@ export async function saveToCollections(
     const itemRef = doc(collection(db, "userBucketlistItems"));
     batch.set(itemRef, {
       userId: uid,
+      createdBy: uid,
+      completedBy: null,
       collectionId: col.id,
       title: itemData.title,
       category: itemData.category,
       isPrivate: itemData.isPrivate ?? false,
+      publishedToDiscover: false,
       source: itemData.source,
       experienceId: itemData.experienceId ?? null,
       inspiredByPostId: itemData.inspiredByPostId ?? null,
@@ -170,6 +173,8 @@ export async function completeItem(params: {
   batch.update(doc(db, "userBucketlistItems", params.itemId), {
     completed: true,
     completedAt: serverTimestamp(),
+    completedBy: auth.currentUser?.uid ?? null,
+    publishedToDiscover: false,
     caption: params.caption.trim(),
     imageUrl: params.imageUrl,
     media: params.media,
