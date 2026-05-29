@@ -101,10 +101,7 @@ function ActivityTile({ post, author }: { post: any; author: any }) {
   };
 
   return (
-    <Pressable
-      style={at.card}
-      onPress={() => router.push({ pathname: "/post/[id]", params: { id: post.id } })}
-    >
+    <View style={at.card}>
       <View style={[at.imageWrapper, { backgroundColor: C.surfaceElevated }]}>
         {imageUrl ? (
           <Image source={{ uri: imageUrl }} style={at.image} resizeMode="cover" />
@@ -134,7 +131,7 @@ function ActivityTile({ post, author }: { post: any; author: any }) {
         <Text style={[at.title, { color: C.text }]} numberOfLines={2}>{post.title}</Text>
         <Text style={[at.date, { color: C.textTertiary }]}>{shortDate()}</Text>
       </View>
-    </Pressable>
+    </View>
   );
 }
 

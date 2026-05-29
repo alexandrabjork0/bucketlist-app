@@ -22,8 +22,10 @@ import { auth, db } from "../lib/firebaseConfig";
 import { ThemeColors, useTheme } from "../lib/theme";
 
 const { width: SW } = Dimensions.get("window");
-const IMG_W = SW - 36;
-const IMG_H = IMG_W * (4 / 3);
+const PADDING = 18;
+const GAP = 10;
+const CARD_W = Math.round((SW - PADDING * 2 - GAP) / 2);
+const CARD_H = Math.round(CARD_W * 1.42);
 
 export default function FriendsActivityScreen() {
   const C = useTheme();
@@ -80,6 +82,11 @@ export default function FriendsActivityScreen() {
     return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 
+  const rows: any[][] = [];
+  for (let i = 0; i < posts.length; i += 2) {
+    rows.push(posts.slice(i, i + 2));
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.topBar}>
@@ -90,47 +97,44 @@ export default function FriendsActivityScreen() {
         <View style={styles.spacer} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
-        {posts.map((post) => {
-          const imageUrl = post.imageUrl || post.media?.[0]?.thumbnailUrl || post.media?.[0]?.url;
-          const author = post.author;
-          return (
-            <Pressable
-              key={post.id}
-              style={styles.card}
-              onPress={() => router.push({ pathname: "/post/[id]", params: { id: post.id } })}
-            >
-              <View style={styles.imageWrapper}>
-                <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
-              </View>
-              <View style={styles.meta}>
-                <View style={styles.authorRow}>
-                  {author?.profileImage ? (
-                    <Image source={{ uri: author.profileImage }} style={styles.avatar} />
-                  ) : (
-                    <View style={[styles.avatarFallback, { backgroundColor: C.avatarBg }]}>
-                      <Text style={styles.avatarInitial}>
-                        {author?.username?.[0]?.toUpperCase() || "?"}
+      <ScrollView contentContainerStyle={styles.grid} showsVerticalScrollIndicator={false}>
+        {rows.map((row, ri) => (
+          <View key={ri} style={styles.row}>
+            {row.map((post) => {
+              const imageUrl = post.imageUrl || post.media?.[0]?.thumbnailUrl || post.media?.[0]?.url;
+              const author = post.author;
+              return (
+                <View key={post.id} style={styles.card}>
+                  <View style={styles.imageWrapper}>
+                    <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
+                  </View>
+                  <View style={styles.meta}>
+                    <View style={styles.authorRow}>
+                      {author?.profileImage ? (
+                        <Image source={{ uri: author.profileImage }} style={styles.avatar} />
+                      ) : (
+                        <View style={[styles.avatarFallback, { backgroundColor: C.avatarBg }]}>
+                          <Text style={styles.avatarInitial}>
+                            {author?.username?.[0]?.toUpperCase() || "?"}
+                          </Text>
+                        </View>
+                      )}
+                      <Text style={[styles.username, { color: C.textSecondary }]} numberOfLines={1}>
+                        @{author?.username || "user"}
                       </Text>
                     </View>
-                  )}
-                  <Text style={[styles.username, { color: C.textSecondary }]} numberOfLines={1}>
-                    @{author?.username || "user"}
-                  </Text>
-                  <Text style={[styles.date, { color: C.textTertiary }]}>
-                    {formatDate(post.completedAt?.seconds)}
-                  </Text>
+                    <Text style={[styles.postTitle, { color: C.text }]} numberOfLines={2}>
+                      {post.title}
+                    </Text>
+                    <Text style={[styles.date, { color: C.textTertiary }]}>
+                      {formatDate(post.completedAt?.seconds)}
+                    </Text>
+                  </View>
                 </View>
-                <Text style={[styles.postTitle, { color: C.text }]} numberOfLines={2}>
-                  {post.title}
-                </Text>
-                {post.category ? (
-                  <Text style={[styles.category, { color: C.textTertiary }]}>{post.category}</Text>
-                ) : null}
-              </View>
-            </Pressable>
-          );
-        })}
+              );
+            })}
+          </View>
+        ))}
 
         {!loading && posts.length === 0 && (
           <View style={styles.empty}>
@@ -163,36 +167,36 @@ function makeStyles(C: ThemeColors) {
     back: { fontSize: 16, fontWeight: "700", color: C.text },
     title: { fontSize: 18, fontWeight: "900", color: C.text },
     spacer: { width: 60 },
-    list: { paddingHorizontal: 18, paddingTop: 24, gap: 32 },
-    card: {},
+    grid: { padding: PADDING, gap: GAP },
+    row: { flexDirection: "row", gap: GAP },
+    card: { width: CARD_W },
     imageWrapper: {
-      width: IMG_W,
-      height: IMG_H,
+      width: CARD_W,
+      height: CARD_H,
       borderRadius: 18,
       overflow: "hidden",
       backgroundColor: C.surface,
     },
     image: { width: "100%", height: "100%" },
-    meta: { marginTop: 10, gap: 4 },
+    meta: { paddingTop: 8, paddingHorizontal: 2, gap: 2 },
     authorRow: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 6,
-      marginBottom: 2,
+      gap: 5,
+      marginBottom: 3,
     },
-    avatar: { width: 20, height: 20, borderRadius: 10 },
+    avatar: { width: 16, height: 16, borderRadius: 8 },
     avatarFallback: {
-      width: 20,
-      height: 20,
-      borderRadius: 10,
+      width: 16,
+      height: 16,
+      borderRadius: 8,
       alignItems: "center",
       justifyContent: "center",
     },
-    avatarInitial: { fontSize: 9, fontWeight: "800", color: "#fff" },
-    username: { fontSize: 13, fontWeight: "700", flex: 1 },
-    date: { fontSize: 12 },
-    postTitle: { fontSize: 16, fontWeight: "800", lineHeight: 21 },
-    category: { fontSize: 13, fontWeight: "500" },
+    avatarInitial: { fontSize: 8, fontWeight: "800", color: "#fff" },
+    username: { fontSize: 11, fontWeight: "700", flex: 1 },
+    postTitle: { fontSize: 13, fontWeight: "800", lineHeight: 17 },
+    date: { fontSize: 11, marginTop: 2 },
     empty: { marginTop: 80, alignItems: "center" },
     emptyText: { fontSize: 15, textAlign: "center", lineHeight: 22 },
   });
