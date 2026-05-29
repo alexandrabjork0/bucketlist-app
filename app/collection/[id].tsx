@@ -52,6 +52,7 @@ export default function CollectionDetailScreen() {
   const [items, setItems] = useState<any[]>([]);
   const [subTab, setSubTab] = useState<SubTab>("ideas");
   const [loading, setLoading] = useState(true);
+  const [members, setMembers] = useState<any[]>([]);
 
   // ── (···) menu ────────────────────────────────────────────────────────────
   const [menuOpen, setMenuOpen] = useState(false);
@@ -91,8 +92,16 @@ export default function CollectionDetailScreen() {
         ),
       ]);
       if (!collSnap.exists()) { setLoading(false); return; }
-      setColl({ id: collSnap.id, ...collSnap.data() });
+      const collData = { id: collSnap.id, ...collSnap.data() } as any;
+      setColl(collData);
       setItems(itemsSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+
+      const memberIds: string[] = collData.memberIds ?? [];
+      if (memberIds.length > 0) {
+        const participantIds = [collData.userId, ...memberIds];
+        const profileDocs = await Promise.all(participantIds.map((uid) => getDoc(doc(db, "users", uid))));
+        setMembers(profileDocs.filter((d) => d.exists()).map((d) => ({ id: d.id, ...d.data() })));
+      }
     } finally {
       setLoading(false);
     }
@@ -496,6 +505,31 @@ export default function CollectionDetailScreen() {
                 ? `${total} saved · ${done} completed`
                 : `${total} saved`}
             </Text>
+
+            {isSharedCollection && members.length > 0 && (
+              <View style={styles.membersRow}>
+                <Text style={styles.membersLabel}>Members</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {members.map((m) => (
+                    <View key={m.id} style={styles.memberPill}>
+                      {m.profileImage ? (
+                        <Image source={{ uri: m.profileImage }} style={styles.memberPillAvatar} />
+                      ) : (
+                        <View style={[styles.memberPillAvatarFallback, { backgroundColor: C.avatarBg }]}>
+                          <Text style={styles.memberPillInitial}>
+                            {m.username?.[0]?.toUpperCase() || "?"}
+                          </Text>
+                        </View>
+                      )}
+                      <Text style={[styles.memberPillName, { color: C.textSecondary }]} numberOfLines={1}>
+                        @{m.username}
+                        {m.id === auth.currentUser?.uid ? " (you)" : ""}
+                      </Text>
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
           </View>
 
           {/* Tab row — sits naturally between meta and content */}
@@ -868,6 +902,31 @@ function makeStyles(C: ThemeColors) {
       lineHeight: 20,
     },
     metaText: { fontSize: 13, fontWeight: "500", color: C.textTertiary, marginTop: 6 },
+    membersRow: { marginTop: 16 },
+    membersLabel: {
+      fontSize: 11,
+      fontWeight: "700",
+      color: C.textTertiary,
+      textTransform: "uppercase",
+      letterSpacing: 0.6,
+      marginBottom: 10,
+    },
+    memberPill: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      marginRight: 16,
+    },
+    memberPillAvatar: { width: 28, height: 28, borderRadius: 14 },
+    memberPillAvatarFallback: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    memberPillInitial: { fontSize: 11, fontWeight: "800", color: "#fff" },
+    memberPillName: { fontSize: 13, fontWeight: "600" },
 
     subTabs: {
       flexDirection: "row",

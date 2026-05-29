@@ -47,9 +47,11 @@ export default function MyCollectionsScreen() {
     const ownedRaw = ownedSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
     const memberRaw = memberSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-    const memberIdsFromOwned = [...new Set(ownedRaw.flatMap((c: any) => c.memberIds || []))] as string[];
-    const ownerIdsFromMember = [...new Set(memberRaw.map((c: any) => c.userId as string))];
-    const idsToFetch = [...new Set([...memberIdsFromOwned, ...ownerIdsFromMember])];
+    const idsToFetch = [...new Set([
+      ...ownedRaw.flatMap((c: any) => c.memberIds || []),
+      ...memberRaw.map((c: any) => c.userId as string),
+      ...memberRaw.flatMap((c: any) => c.memberIds || []),
+    ])] as string[];
 
     const avatarMap = new Map<string, any>();
     if (idsToFetch.length > 0) {
@@ -67,10 +69,14 @@ export default function MyCollectionsScreen() {
 
     const member = memberRaw.map((c: any) => {
       const ownerData = avatarMap.get(c.userId);
+      const memberAvatars = [
+        ownerData?.profileImage,
+        ...(c.memberIds || []).map((mid: string) => avatarMap.get(mid)?.profileImage || null),
+      ].filter(Boolean).slice(0, 3);
       return {
         ...c,
         ownerUsername: ownerData?.username || "user",
-        memberAvatars: ownerData?.profileImage ? [ownerData.profileImage] : [],
+        memberAvatars,
       };
     });
 

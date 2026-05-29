@@ -99,23 +99,28 @@ export default function ProfileScreen({ isFocused }: { isFocused: boolean }) {
 
     const ownedRaw = ownedSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
     const sharedRaw = sharedSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    const memberIdsToFetch = [...new Set(ownedRaw.flatMap((c: any) => c.memberIds || []))] as string[];
-    const memberDataMap = new Map<string, any>();
-    if (memberIdsToFetch.length > 0) {
-      const memberDocs = await Promise.all(memberIdsToFetch.map((mid) => getDoc(doc(db, "users", mid))));
-      memberDocs.forEach((d) => { if (d.exists()) memberDataMap.set(d.id, d.data()); });
+    const allIdsToFetch = [...new Set([
+      ...ownedRaw.flatMap((c: any) => c.memberIds || []),
+      ...sharedRaw.map((c: any) => c.userId as string),
+      ...sharedRaw.flatMap((c: any) => c.memberIds || []),
+    ])] as string[];
+    const userDataMap = new Map<string, any>();
+    if (allIdsToFetch.length > 0) {
+      const userDocs = await Promise.all(allIdsToFetch.map((id) => getDoc(doc(db, "users", id))));
+      userDocs.forEach((d) => { if (d.exists()) userDataMap.set(d.id, d.data()); });
     }
     const ownedCollections = ownedRaw.map((c: any) => ({
       ...c,
       isShared: (c.memberIds || []).length > 0,
-      memberAvatars: (c.memberIds || []).map((mid: string) => memberDataMap.get(mid)?.profileImage || null).filter(Boolean).slice(0, 3),
+      memberAvatars: (c.memberIds || []).map((mid: string) => userDataMap.get(mid)?.profileImage || null).filter(Boolean).slice(0, 3),
     }));
-    const ownerIds = [...new Set(sharedRaw.map((c: any) => c.userId as string))];
-    const ownerDocs = await Promise.all(ownerIds.map((oid) => getDoc(doc(db, "users", oid))));
-    const ownerDataMap = new Map(ownerDocs.map((d) => [d.id, d.exists() ? d.data() : null]));
     const sharedCollections = sharedRaw.map((c: any) => {
-      const ownerData = ownerDataMap.get(c.userId);
-      return { ...c, isShared: true, ownerUsername: ownerData?.username || "user", memberAvatars: ownerData?.profileImage ? [ownerData.profileImage] : [] };
+      const ownerData = userDataMap.get(c.userId);
+      const memberAvatars = [
+        ownerData?.profileImage,
+        ...(c.memberIds || []).map((mid: string) => userDataMap.get(mid)?.profileImage || null),
+      ].filter(Boolean).slice(0, 3);
+      return { ...c, isShared: true, ownerUsername: ownerData?.username || "user", memberAvatars };
     });
     setCollections([...ownedCollections, ...sharedCollections]);
   };
@@ -129,23 +134,28 @@ export default function ProfileScreen({ isFocused }: { isFocused: boolean }) {
     ]);
     const ownedRaw = ownedSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
     const sharedRaw = sharedSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    const memberIdsToFetch = [...new Set(ownedRaw.flatMap((c: any) => c.memberIds || []))] as string[];
-    const memberDataMap = new Map<string, any>();
-    if (memberIdsToFetch.length > 0) {
-      const memberDocs = await Promise.all(memberIdsToFetch.map((mid) => getDoc(doc(db, "users", mid))));
-      memberDocs.forEach((d) => { if (d.exists()) memberDataMap.set(d.id, d.data()); });
+    const allIdsToFetch = [...new Set([
+      ...ownedRaw.flatMap((c: any) => c.memberIds || []),
+      ...sharedRaw.map((c: any) => c.userId as string),
+      ...sharedRaw.flatMap((c: any) => c.memberIds || []),
+    ])] as string[];
+    const userDataMap = new Map<string, any>();
+    if (allIdsToFetch.length > 0) {
+      const userDocs = await Promise.all(allIdsToFetch.map((id) => getDoc(doc(db, "users", id))));
+      userDocs.forEach((d) => { if (d.exists()) userDataMap.set(d.id, d.data()); });
     }
     const ownedCollections = ownedRaw.map((c: any) => ({
       ...c,
       isShared: (c.memberIds || []).length > 0,
-      memberAvatars: (c.memberIds || []).map((mid: string) => memberDataMap.get(mid)?.profileImage || null).filter(Boolean).slice(0, 3),
+      memberAvatars: (c.memberIds || []).map((mid: string) => userDataMap.get(mid)?.profileImage || null).filter(Boolean).slice(0, 3),
     }));
-    const ownerIds = [...new Set(sharedRaw.map((c: any) => c.userId as string))];
-    const ownerDocs = await Promise.all(ownerIds.map((oid) => getDoc(doc(db, "users", oid))));
-    const ownerDataMap = new Map(ownerDocs.map((d) => [d.id, d.exists() ? d.data() : null]));
     const sharedCollections = sharedRaw.map((c: any) => {
-      const ownerData = ownerDataMap.get(c.userId);
-      return { ...c, isShared: true, ownerUsername: ownerData?.username || "user", memberAvatars: ownerData?.profileImage ? [ownerData.profileImage] : [] };
+      const ownerData = userDataMap.get(c.userId);
+      const memberAvatars = [
+        ownerData?.profileImage,
+        ...(c.memberIds || []).map((mid: string) => userDataMap.get(mid)?.profileImage || null),
+      ].filter(Boolean).slice(0, 3);
+      return { ...c, isShared: true, ownerUsername: ownerData?.username || "user", memberAvatars };
     });
     setCollections([...ownedCollections, ...sharedCollections]);
   };

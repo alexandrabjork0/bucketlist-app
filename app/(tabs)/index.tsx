@@ -366,9 +366,11 @@ export default function HomeScreen({ isFocused }: { isFocused: boolean }) {
     const ownedRaw = ownedCollSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
     const memberRaw = memberCollSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-    const memberIdsFromOwned = [...new Set(ownedRaw.flatMap((c: any) => c.memberIds || []))] as string[];
-    const ownerIdsFromMember = [...new Set(memberRaw.map((c: any) => c.userId as string))];
-    const avatarIdsToFetch = [...new Set([...memberIdsFromOwned, ...ownerIdsFromMember])];
+    const avatarIdsToFetch = [...new Set([
+      ...ownedRaw.flatMap((c: any) => c.memberIds || []),
+      ...memberRaw.map((c: any) => c.userId as string),
+      ...memberRaw.flatMap((c: any) => c.memberIds || []),
+    ])] as string[];
 
     const avatarMap = new Map<string, any>();
     if (avatarIdsToFetch.length > 0) {
@@ -387,11 +389,15 @@ export default function HomeScreen({ isFocused }: { isFocused: boolean }) {
 
     const memberColls = memberRaw.map((c: any) => {
       const ownerData = avatarMap.get(c.userId);
+      const memberAvatars = [
+        ownerData?.profileImage,
+        ...(c.memberIds || []).map((mid: string) => avatarMap.get(mid)?.profileImage || null),
+      ].filter(Boolean).slice(0, 3);
       return {
         ...c,
         isShared: true,
         ownerUsername: ownerData?.username || "user",
-        memberAvatars: ownerData?.profileImage ? [ownerData.profileImage] : [],
+        memberAvatars,
       };
     });
 
