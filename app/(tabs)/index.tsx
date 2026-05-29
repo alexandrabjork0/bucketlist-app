@@ -530,7 +530,7 @@ export default function HomeScreen({ isFocused }: { isFocused: boolean }) {
       {myCollections.length > 0 && (
         <View style={styles.section}>
           <SectionHeader
-            title="Collections"
+            title="My collections"
             onSeeAll={() => router.push("/my-collections")}
           />
           <ScrollView
@@ -594,7 +594,7 @@ export default function HomeScreen({ isFocused }: { isFocused: boolean }) {
       {/* ── 4. Friends' lists ── */}
       {friendsCollections.length > 0 && (
         <View style={styles.section}>
-          <SectionHeader title="Friends' lists" subtle onSeeAll={() => router.push("/friends-lists")} />
+          <SectionHeader title="Friends' collections" subtle onSeeAll={() => router.push("/friends-lists")} />
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
