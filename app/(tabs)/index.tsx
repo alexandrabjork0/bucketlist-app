@@ -140,7 +140,6 @@ function ActivityTile({ post, author }: { post: any; author: any }) {
 const at = StyleSheet.create({
   card: {
     width: TILE_W,
-    marginRight: 10,
   },
   imageWrapper: {
     width: TILE_W,
@@ -249,7 +248,6 @@ const pc = StyleSheet.create({
   card: {
     width: PERSON_W,
     alignItems: "center",
-    marginRight: 12,
     paddingVertical: 4,
     paddingHorizontal: 4,
   },
@@ -678,6 +676,7 @@ function makeHomeStyles(C: ThemeColors) {
     hScroll: {
       paddingHorizontal: 18,
       paddingBottom: 4,
+      gap: 10,
     },
     emptyState: {
       marginTop: 60,
