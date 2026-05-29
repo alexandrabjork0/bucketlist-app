@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   increment,
   query,
@@ -64,12 +65,28 @@ export async function saveToCollections(
   const uid = auth.currentUser.uid;
   const newMap = new Map(existingSaved);
 
+  // Resolve createdBy once — it's the original idea creator, not necessarily the saver.
+  let createdBy: string = uid;
+  if (itemData.source === "post" && itemData.inspiredByUserId) {
+    createdBy = itemData.inspiredByUserId;
+  } else if (itemData.source === "explore" && itemData.experienceId) {
+    try {
+      const expSnap = await getDoc(doc(db, "experiences", itemData.experienceId));
+      if (expSnap.exists() && expSnap.data().userId) {
+        createdBy = expSnap.data().userId;
+      }
+    } catch {
+      // Fall back to saver's uid if the fetch fails
+    }
+  }
+
   for (const col of toAdd) {
     const batch = writeBatch(db);
     const itemRef = doc(collection(db, "userBucketlistItems"));
     batch.set(itemRef, {
       userId: uid,
-      createdBy: uid,
+      createdBy,
+      savedBy: uid,
       completedBy: null,
       collectionId: col.id,
       title: itemData.title,

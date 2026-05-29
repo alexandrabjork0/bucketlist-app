@@ -246,6 +246,7 @@ export default function CollectionDetailScreen() {
       const newRef = await addDoc(collection(db, "userBucketlistItems"), {
         userId: uid,
         createdBy: uid,
+        savedBy: uid,
         completedBy: null,
         collectionId: id,
         title: newIdeaTitle.trim(),
@@ -270,6 +271,7 @@ export default function CollectionDetailScreen() {
           id: newRef.id,
           userId: uid,
           createdBy: uid,
+          savedBy: uid,
           completedBy: null,
           collectionId: id,
           title: newIdeaTitle.trim(),
