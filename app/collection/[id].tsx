@@ -48,7 +48,7 @@ export default function CollectionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [coll, setColl] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
-  const [subTab, setSubTab] = useState<SubTab>("all");
+  const [subTab, setSubTab] = useState<SubTab>("completed");
   const [loading, setLoading] = useState(true);
 
   // ── Collection edit sheet ─────────────────────────────────────────────────
@@ -211,7 +211,7 @@ export default function CollectionDetailScreen() {
 
   const switchSubTab = (tab: SubTab) => {
     setSubTab(tab);
-    const index = tab === "all" ? 0 : tab === "completed" ? 1 : 2;
+    const index = tab === "completed" ? 0 : tab === "todo" ? 1 : 2;
     pagerRef.current?.scrollTo({ x: index * SCREEN_WIDTH, animated: true });
   };
 
@@ -353,7 +353,7 @@ export default function CollectionDetailScreen() {
 
           {/* Tab row — sits naturally between meta and content */}
           <View style={styles.subTabs}>
-            {(["all", "completed", "todo"] as SubTab[]).map((tab) => (
+            {(["completed", "todo", "all"] as SubTab[]).map((tab) => (
               <Pressable
                 key={tab}
                 style={[styles.subTab, subTab === tab && styles.subTabActive]}
@@ -363,11 +363,11 @@ export default function CollectionDetailScreen() {
                   style={[styles.subTabText, subTab === tab && styles.subTabTextActive]}
                   numberOfLines={1}
                 >
-                  {tab === "all"
-                    ? `All (${items.length})`
-                    : tab === "completed"
+                  {tab === "completed"
                     ? `Done (${completedItems.length})`
-                    : `To Do (${todoItems.length})`}
+                    : tab === "todo"
+                    ? `To Do (${todoItems.length})`
+                    : `All (${items.length})`}
                 </Text>
               </Pressable>
             ))}
@@ -383,17 +383,17 @@ export default function CollectionDetailScreen() {
             scrollEventThrottle={16}
             onMomentumScrollEnd={(e) => {
               const page = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
-              setSubTab(page === 0 ? "all" : page === 1 ? "completed" : "todo");
+              setSubTab(page === 0 ? "completed" : page === 1 ? "todo" : "all");
             }}
           >
-            <View style={{ width: SCREEN_WIDTH, minHeight: SCREEN_HEIGHT * 0.7 }}>
-              {renderPage(items, "No items yet. Save experiences to this collection.", false)}
-            </View>
             <View style={{ width: SCREEN_WIDTH, minHeight: SCREEN_HEIGHT * 0.7 }}>
               {renderPage(completedItems, "Nothing completed yet. Go do something!", true)}
             </View>
             <View style={{ width: SCREEN_WIDTH, minHeight: SCREEN_HEIGHT * 0.7 }}>
               {renderPage(todoItems, "Everything is done! 🎉", false)}
+            </View>
+            <View style={{ width: SCREEN_WIDTH, minHeight: SCREEN_HEIGHT * 0.7 }}>
+              {renderPage(items, "No items yet. Save experiences to this collection.", false)}
             </View>
           </ScrollView>
         </ScrollView>
