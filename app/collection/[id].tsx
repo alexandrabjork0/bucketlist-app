@@ -38,14 +38,13 @@ import { ThemeColors, useTheme } from "../../lib/theme";
 
 type SubTab = "all" | "completed" | "todo";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const HEADER_HEIGHT = SCREEN_WIDTH * 0.65;
 
 export default function CollectionDetailScreen() {
   const C = useTheme();
   const styles = useMemo(() => makeStyles(C), [C]);
   const pagerRef = useRef<ScrollView>(null);
-
   const { id } = useLocalSearchParams<{ id: string }>();
   const [coll, setColl] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
@@ -210,7 +209,6 @@ export default function CollectionDetailScreen() {
     }
   };
 
-  // ── Tab navigation ────────────────────────────────────────────────────────
   const switchSubTab = (tab: SubTab) => {
     setSubTab(tab);
     const index = tab === "all" ? 0 : tab === "completed" ? 1 : 2;
@@ -240,12 +238,7 @@ export default function CollectionDetailScreen() {
   }
 
   const renderPage = (pageItems: any[], emptyMessage: string, isCompletedTab: boolean) => (
-    <ScrollView
-      style={{ width: SCREEN_WIDTH }}
-      contentContainerStyle={styles.pageContent}
-      showsVerticalScrollIndicator={false}
-      nestedScrollEnabled
-    >
+    <View style={styles.pageContent}>
       {pageItems.length === 0 ? (
         <Text style={styles.emptyText}>{emptyMessage}</Text>
       ) : isCompletedTab ? (
@@ -315,76 +308,94 @@ export default function CollectionDetailScreen() {
           </View>
         ))
       )}
-    </ScrollView>
+    </View>
   );
 
   return (
     <>
       <View style={styles.container}>
-        {/* Hero header */}
-        <View style={[styles.header, { height: HEADER_HEIGHT }]}>
-          <CollectionCover coverPhoto={coll.coverPhoto} size={SCREEN_WIDTH} name={coll.name} />
+        {/* Always-visible top bar: back · title · edit */}
+        <View style={styles.topBar}>
           <Pressable style={styles.backBtn} onPress={() => router.back()}>
             <Text style={styles.backBtnText}>‹</Text>
           </Pressable>
-          {isOwner && (
+          <Text style={styles.topBarTitle} numberOfLines={1}>{coll.name}</Text>
+          {isOwner ? (
             <Pressable style={styles.editBtn} onPress={openEditSheet}>
               <Text style={styles.editBtnText}>Edit</Text>
             </Pressable>
+          ) : (
+            <View style={styles.editBtnSpacer} />
           )}
         </View>
 
-        {/* Meta */}
-        <View style={styles.headerMeta}>
-          {coll.isPrivate && <Text style={styles.privateLbl}>Private</Text>}
-          <Text style={styles.headerName}>{coll.name}</Text>
-          {coll.description ? (
-            <Text style={styles.descText}>{coll.description}</Text>
-          ) : null}
-          <Text style={styles.metaText}>
-            {total === 0
-              ? "No items yet"
-              : done > 0
-              ? `${total} saved · ${done} completed`
-              : `${total} saved`}
-          </Text>
-        </View>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {/* Hero image */}
+          <View style={[styles.header, { height: HEADER_HEIGHT }]}>
+            <CollectionCover coverPhoto={coll.coverPhoto} size={SCREEN_WIDTH} name={coll.name} />
+          </View>
 
-        {/* Sub-tabs */}
-        <View style={styles.subTabs}>
-          {(["all", "completed", "todo"] as SubTab[]).map((tab) => (
-            <Pressable
-              key={tab}
-              style={[styles.subTab, subTab === tab && styles.subTabActive]}
-              onPress={() => switchSubTab(tab)}
-            >
-              <Text style={[styles.subTabText, subTab === tab && styles.subTabTextActive]}>
-                {tab === "all"
-                  ? `All (${items.length})`
-                  : tab === "completed"
-                  ? `Completed (${completedItems.length})`
-                  : `To Do (${todoItems.length})`}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+          {/* Meta: name, description, counts */}
+          <View style={styles.headerMeta}>
+            {coll.isPrivate && <Text style={styles.privateLbl}>Private</Text>}
+            <Text style={styles.headerName}>{coll.name}</Text>
+            {coll.description ? (
+              <Text style={styles.descText}>{coll.description}</Text>
+            ) : null}
+            <Text style={styles.metaText}>
+              {total === 0
+                ? "No items yet"
+                : done > 0
+                ? `${total} saved · ${done} completed`
+                : `${total} saved`}
+            </Text>
+          </View>
 
-        {/* Swipeable pages */}
-        <ScrollView
-          ref={pagerRef}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          scrollEventThrottle={16}
-          onMomentumScrollEnd={(e) => {
-            const page = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
-            setSubTab(page === 0 ? "all" : page === 1 ? "completed" : "todo");
-          }}
-          style={{ flex: 1 }}
-        >
-          {renderPage(items, "No items yet. Save experiences to this collection.", false)}
-          {renderPage(completedItems, "Nothing completed yet. Go do something!", true)}
-          {renderPage(todoItems, "Everything is done! 🎉", false)}
+          {/* Tab row — sits naturally between meta and content */}
+          <View style={styles.subTabs}>
+            {(["all", "completed", "todo"] as SubTab[]).map((tab) => (
+              <Pressable
+                key={tab}
+                style={[styles.subTab, subTab === tab && styles.subTabActive]}
+                onPress={() => switchSubTab(tab)}
+              >
+                <Text
+                  style={[styles.subTabText, subTab === tab && styles.subTabTextActive]}
+                  numberOfLines={1}
+                >
+                  {tab === "all"
+                    ? `All (${items.length})`
+                    : tab === "completed"
+                    ? `Done (${completedItems.length})`
+                    : `To Do (${todoItems.length})`}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          {/* Horizontal pager — swipe between tabs */}
+          <ScrollView
+            ref={pagerRef}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            nestedScrollEnabled
+            scrollEventThrottle={16}
+            onMomentumScrollEnd={(e) => {
+              const page = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+              setSubTab(page === 0 ? "all" : page === 1 ? "completed" : "todo");
+            }}
+          >
+            <View style={{ width: SCREEN_WIDTH, minHeight: SCREEN_HEIGHT * 0.7 }}>
+              {renderPage(items, "No items yet. Save experiences to this collection.", false)}
+            </View>
+            <View style={{ width: SCREEN_WIDTH, minHeight: SCREEN_HEIGHT * 0.7 }}>
+              {renderPage(completedItems, "Nothing completed yet. Go do something!", true)}
+            </View>
+            <View style={{ width: SCREEN_WIDTH, minHeight: SCREEN_HEIGHT * 0.7 }}>
+              {renderPage(todoItems, "Everything is done! 🎉", false)}
+            </View>
+          </ScrollView>
         </ScrollView>
       </View>
 
@@ -544,29 +555,40 @@ function makeStyles(C: ThemeColors) {
     center: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: C.background },
     dimText: { color: C.textTertiary, fontSize: 16 },
 
-    header: { width: "100%", overflow: "hidden" },
+    topBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingTop: 56,
+      paddingBottom: 10,
+      paddingHorizontal: 18,
+      backgroundColor: C.background,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: C.border,
+    },
+    topBarTitle: {
+      flex: 1,
+      fontSize: 16,
+      fontWeight: "800",
+      color: C.text,
+      textAlign: "center",
+      marginHorizontal: 8,
+    },
     backBtn: {
-      position: "absolute",
-      top: 56,
-      left: 18,
       width: 38,
       height: 38,
       borderRadius: 19,
-      backgroundColor: "rgba(0,0,0,0.35)",
       alignItems: "center",
       justifyContent: "center",
     },
-    backBtnText: { color: "#fff", fontSize: 24, fontWeight: "700", lineHeight: 28, marginTop: -2 },
+    backBtnText: { color: C.text, fontSize: 28, fontWeight: "700", lineHeight: 32, marginTop: -2 },
     editBtn: {
-      position: "absolute",
-      top: 56,
-      right: 18,
-      backgroundColor: "rgba(0,0,0,0.35)",
-      borderRadius: 16,
       paddingHorizontal: 14,
       paddingVertical: 8,
     },
-    editBtnText: { color: "#fff", fontSize: 13, fontWeight: "700" },
+    editBtnSpacer: { width: 60 },
+    editBtnText: { fontSize: 15, fontWeight: "700", color: C.text },
+    header: { width: "100%", overflow: "hidden" },
 
     headerMeta: { paddingHorizontal: 20, paddingTop: 18, paddingBottom: 4 },
     privateLbl: {
