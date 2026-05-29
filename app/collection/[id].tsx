@@ -330,7 +330,10 @@ export default function CollectionDetailScreen() {
     () => isSharedCollection ? items.filter((i) => !i.ideaId) : items,
     [items, isSharedCollection]
   );
-  const completedItems = useMemo(() => items.filter((i) => i.completed), [items]);
+  const completedItems = useMemo(
+    () => items.filter((i) => i.completed).sort((a, b) => (b.completedAt?.seconds ?? 0) - (a.completedAt?.seconds ?? 0)),
+    [items]
+  );
   const completionsByIdeaId = useMemo(() => {
     const map = new Map<string, any[]>();
     items.forEach((item) => {
