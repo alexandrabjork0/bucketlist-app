@@ -1,4 +1,4 @@
-import { router, useFocusEffect } from "expo-router";
+import { router } from "expo-router";
 import { onAuthStateChanged, User } from "firebase/auth";
 import {
   addDoc,
@@ -17,7 +17,7 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import {
   Dimensions,
@@ -396,7 +396,7 @@ const ac = StyleSheet.create({
 
 // ── Main screen ──────────────────────────────────────────────────────────────
 
-export default function HomeScreen() {
+export default function HomeScreen({ isFocused }: { isFocused: boolean }) {
   const C = useTheme();
   const styles = useMemo(() => makeHomeStyles(C), [C]);
 
@@ -460,12 +460,11 @@ export default function HomeScreen() {
     }
   }, [user?.uid]);
 
-  useFocusEffect(
-    useCallback(() => {
-      const uid = auth.currentUser?.uid;
-      if (uid && didLoadRef.current) loadHome(uid);
-    }, [])
-  );
+  useEffect(() => {
+    if (!isFocused) return;
+    const uid = auth.currentUser?.uid;
+    if (uid && didLoadRef.current) loadHome(uid);
+  }, [isFocused]);
 
   // ── Data loading ─────────────────────────────────────────────────────────
 

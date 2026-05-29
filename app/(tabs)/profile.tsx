@@ -1,5 +1,5 @@
 import * as ImagePicker from "expo-image-picker";
-import { Link, router, useFocusEffect } from "expo-router";
+import { Link, router } from "expo-router";
 import { signOut } from "firebase/auth";
 import {
   addDoc,
@@ -13,7 +13,7 @@ import {
   where,
 } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -43,7 +43,7 @@ const CARD_GAP = 12;
 const CARD_PAD = 16;
 const CARD_WIDTH = Math.floor((SCREEN_WIDTH - CARD_PAD * 2 - CARD_GAP) / 2);
 
-export default function ProfileScreen() {
+export default function ProfileScreen({ isFocused }: { isFocused: boolean }) {
   const C = useTheme();
   const styles = useMemo(() => makeStyles(C), [C]);
   const pagerRef = useRef<ScrollView>(null);
@@ -62,11 +62,10 @@ export default function ProfileScreen() {
   const [followListUsers, setFollowListUsers] = useState<any[]>([]);
   const [loadingFollowList, setLoadingFollowList] = useState(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      load();
-    }, [])
-  );
+  useEffect(() => {
+    if (!isFocused) return;
+    load();
+  }, [isFocused]);
 
   const load = async () => {
     if (!auth.currentUser) return;
@@ -170,8 +169,7 @@ export default function ProfileScreen() {
 
   const switchTab = (tab: ActiveTab) => {
     setActiveTab(tab);
-    const index = tab === "collections" ? 0 : 1;
-    pagerRef.current?.scrollTo({ x: index * SCREEN_WIDTH, animated: true });
+    pagerRef.current?.scrollTo({ x: (tab === "collections" ? 0 : 1) * SCREEN_WIDTH, animated: true });
   };
 
   const openFollowList = async (type: "followers" | "following") => {
@@ -194,64 +192,7 @@ export default function ProfileScreen() {
     }
   };
 
-  // ── Tab renderers ──────────────────────────────────────────────────────────
-
-  const renderCollections = () => (
-    <ScrollView
-      style={{ width: SCREEN_WIDTH }}
-      contentContainerStyle={{ paddingTop: 20, paddingBottom: 48 }}
-      showsVerticalScrollIndicator={false}
-      nestedScrollEnabled
-    >
-      <View style={styles.collectionsGrid}>
-        {collections.map((coll) => (
-          <CollectionCard
-            key={coll.id}
-            collection={coll}
-            cardWidth={CARD_WIDTH}
-            onPress={() =>
-              router.push({ pathname: "/collection/[id]", params: { id: coll.id } })
-            }
-            onLongPress={() => deleteCollection(coll.id, coll.name)}
-          />
-        ))}
-      </View>
-
-      {collections.length === 0 && (
-        <Text style={styles.emptyText}>
-          Collections are your personal boards — Japan 2027, Dream Honeymoon, Food Goals…{"\n"}
-          Create one and start saving experiences.
-        </Text>
-      )}
-    </ScrollView>
-  );
-
-  const renderPosts = () => (
-    <ScrollView
-      style={{ width: SCREEN_WIDTH }}
-      contentContainerStyle={{ paddingTop: 20, paddingBottom: 48 }}
-      showsVerticalScrollIndicator={false}
-      nestedScrollEnabled
-    >
-      {completedItems.length === 0 ? (
-        <Text style={styles.emptyText}>
-          No posts yet. Complete an experience to see it here.
-        </Text>
-      ) : (
-        <View style={styles.grid}>
-          {completedItems.map((item) => (
-            <PostThumbnail
-              key={item.id}
-              post={item}
-              onPress={() =>
-                router.push({ pathname: "/post/[id]", params: { id: item.id } })
-              }
-            />
-          ))}
-        </View>
-      )}
-    </ScrollView>
-  );
+  // ── Shared page header (profile info + tab row) ───────────────────────────
 
   const openMenu = () =>
     Alert.alert("Profile options", "", [
@@ -268,7 +209,7 @@ export default function ProfileScreen() {
   return (
     <>
       <View style={styles.container}>
-        {/* Top header bar */}
+        {/* Top bar — always fixed */}
         <View style={styles.topBar}>
           <Pressable onPress={() => setCreateSheetOpen(true)} style={styles.topBarBtn} hitSlop={8}>
             <Text style={styles.topBarPlus}>+</Text>
@@ -279,79 +220,132 @@ export default function ProfileScreen() {
           </Pressable>
         </View>
 
-        {/* Profile header */}
-        <View style={styles.profileHeader}>
-          <View style={styles.headerRow}>
-            <View style={styles.headerLeft}>
-              <View style={styles.avatar}>
-                {profile?.profileImage ? (
-                  <Image source={{ uri: profile.profileImage }} style={styles.avatarImage} />
-                ) : (
-                  <Text style={styles.avatarText}>
-                    {profile?.username?.charAt(0)?.toUpperCase() || "?"}
-                  </Text>
-                )}
+        {/* Single vertical scroll: header → tabs (sticky) → content */}
+        <ScrollView
+          style={{ flex: 1 }}
+          showsVerticalScrollIndicator={false}
+          stickyHeaderIndices={[1]}
+          contentContainerStyle={{ paddingBottom: 100 }}
+        >
+          {/* 0 — profile header, scrolls away */}
+          <View style={styles.profileHeader}>
+            <View style={styles.headerRow}>
+              <View style={styles.headerLeft}>
+                <View style={styles.avatar}>
+                  {profile?.profileImage ? (
+                    <Image source={{ uri: profile.profileImage }} style={styles.avatarImage} />
+                  ) : (
+                    <Text style={styles.avatarText}>
+                      {profile?.username?.charAt(0)?.toUpperCase() || "?"}
+                    </Text>
+                  )}
+                </View>
+                <Text style={styles.username}>@{profile?.username || "loading"}</Text>
               </View>
-              <Text style={styles.username}>@{profile?.username || "loading"}</Text>
             </View>
+
+            <View style={styles.statsRow}>
+              <View style={styles.stat}>
+                <Text style={styles.statNumber}>{collections.length}</Text>
+                <Text style={styles.statLabel}>Collections</Text>
+              </View>
+              <View style={styles.stat}>
+                <Text style={styles.statNumber}>{completedItems.length}</Text>
+                <Text style={styles.statLabel}>Completed</Text>
+              </View>
+              <Pressable style={styles.stat} onPress={() => openFollowList("followers")}>
+                <Text style={styles.statNumber}>{followersCount}</Text>
+                <Text style={styles.statLabel}>Followers</Text>
+              </Pressable>
+              <Pressable style={styles.stat} onPress={() => openFollowList("following")}>
+                <Text style={styles.statNumber}>{followingCount}</Text>
+                <Text style={styles.statLabel}>Following</Text>
+              </Pressable>
+            </View>
+
+            {profile?.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
+
+            <Link href="/edit-profile" style={styles.editBtn}>
+              Edit profile
+            </Link>
           </View>
 
-          <View style={styles.statsRow}>
-            <View style={styles.stat}>
-              <Text style={styles.statNumber}>{collections.length}</Text>
-              <Text style={styles.statLabel}>Collections</Text>
-            </View>
-            <View style={styles.stat}>
-              <Text style={styles.statNumber}>{completedItems.length}</Text>
-              <Text style={styles.statLabel}>Completed</Text>
-            </View>
-            <Pressable style={styles.stat} onPress={() => openFollowList("followers")}>
-              <Text style={styles.statNumber}>{followersCount}</Text>
-              <Text style={styles.statLabel}>Followers</Text>
-            </Pressable>
-            <Pressable style={styles.stat} onPress={() => openFollowList("following")}>
-              <Text style={styles.statNumber}>{followingCount}</Text>
-              <Text style={styles.statLabel}>Following</Text>
-            </Pressable>
-          </View>
-
-          {profile?.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
-
-          <Link href="/edit-profile" style={styles.editBtn}>
-            Edit profile
-          </Link>
-        </View>
-
-        {/* Tab bar */}
-        <View style={styles.tabs}>
-          {(["collections", "posts"] as ActiveTab[]).map((tab) => (
+          {/* 1 — tab row, becomes sticky */}
+          <View style={styles.tabs}>
             <Pressable
-              key={tab}
-              style={[styles.tab, activeTab === tab && styles.tabActive]}
-              onPress={() => switchTab(tab)}
+              style={[styles.tab, activeTab === "collections" && styles.tabActive]}
+              onPress={() => switchTab("collections")}
             >
-              <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              <Text style={[styles.tabText, activeTab === "collections" && styles.tabTextActive]}>
+                Collections
               </Text>
             </Pressable>
-          ))}
-        </View>
+            <Pressable
+              style={[styles.tab, activeTab === "posts" && styles.tabActive]}
+              onPress={() => switchTab("posts")}
+            >
+              <Text style={[styles.tabText, activeTab === "posts" && styles.tabTextActive]}>
+                Posts
+              </Text>
+            </Pressable>
+          </View>
 
-        {/* Horizontal swipeable pages */}
-        <ScrollView
-          ref={pagerRef}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          scrollEventThrottle={16}
-          onMomentumScrollEnd={(e) => {
-            const page = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
-            setActiveTab(page === 0 ? "collections" : "posts");
-          }}
-          style={{ flex: 1 }}
-        >
-          {renderCollections()}
-          {renderPosts()}
+          {/* 2 — horizontal pager, no flex:1 so height comes from content */}
+          <ScrollView
+            ref={pagerRef}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            scrollEventThrottle={16}
+            onMomentumScrollEnd={(e) => {
+              const page = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+              setActiveTab(page === 0 ? "collections" : "posts");
+            }}
+          >
+            {/* Collections page */}
+            <View style={{ width: SCREEN_WIDTH, paddingTop: 16, paddingBottom: 100 }}>
+              <View style={styles.collectionsGrid}>
+                {collections.map((coll) => (
+                  <CollectionCard
+                    key={coll.id}
+                    collection={coll}
+                    cardWidth={CARD_WIDTH}
+                    onPress={() =>
+                      router.push({ pathname: "/collection/[id]", params: { id: coll.id } })
+                    }
+                    onLongPress={() => deleteCollection(coll.id, coll.name)}
+                  />
+                ))}
+              </View>
+              {collections.length === 0 && (
+                <Text style={styles.emptyText}>
+                  Collections are your personal boards — Japan 2027, Dream Honeymoon, Food Goals…{"\n"}
+                  Create one and start saving experiences.
+                </Text>
+              )}
+            </View>
+
+            {/* Posts page */}
+            <View style={{ width: SCREEN_WIDTH, paddingTop: 16, paddingBottom: 100 }}>
+              {completedItems.length === 0 ? (
+                <Text style={styles.emptyText}>
+                  No posts yet. Complete an experience to see it here.
+                </Text>
+              ) : (
+                <View style={styles.grid}>
+                  {completedItems.map((item) => (
+                    <PostThumbnail
+                      key={item.id}
+                      post={item}
+                      onPress={() =>
+                        router.push({ pathname: "/post/[id]", params: { id: item.id } })
+                      }
+                    />
+                  ))}
+                </View>
+              )}
+            </View>
+          </ScrollView>
         </ScrollView>
       </View>
 
@@ -600,14 +594,16 @@ function makeStyles(C: ThemeColors) {
     },
     tabs: {
       flexDirection: "row",
+      width: SCREEN_WIDTH,
       borderBottomWidth: 1,
       borderBottomColor: C.border,
       backgroundColor: C.background,
     },
     tab: {
-      flex: 1,
+      width: SCREEN_WIDTH / 2,
       paddingVertical: 14,
       alignItems: "center",
+      justifyContent: "center",
     },
     tabActive: {
       borderBottomWidth: 3,
