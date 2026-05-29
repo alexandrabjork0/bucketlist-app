@@ -34,7 +34,7 @@ import {
 } from "react-native";
 import CollectionCover from "../../components/CollectionCover";
 import PostThumbnail from "../../components/PostThumbnail";
-import { executeDeleteCollection } from "../../lib/collections";
+import { executeDeleteCollection, leaveCollection } from "../../lib/collections";
 import { auth, db, storage } from "../../lib/firebaseConfig";
 import { ThemeColors, useTheme } from "../../lib/theme";
 
@@ -238,6 +238,21 @@ export default function CollectionDetailScreen() {
     );
   };
 
+  const handleLeaveCollection = () => {
+    setMenuOpen(false);
+    Alert.alert("Leave collection?", "You'll lose access to this shared collection.", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Leave",
+        style: "destructive",
+        onPress: async () => {
+          await leaveCollection(id);
+          router.back();
+        },
+      },
+    ]);
+  };
+
   const addIdea = async () => {
     if (!newIdeaTitle.trim() || !auth.currentUser) return;
     setSavingIdea(true);
@@ -306,7 +321,10 @@ export default function CollectionDetailScreen() {
     pagerRef.current?.scrollTo({ x: index * SCREEN_WIDTH, animated: true });
   };
 
-  const isOwner = coll?.userId === auth.currentUser?.uid;
+  const currentUid = auth.currentUser?.uid;
+  const isOwner = coll?.userId === currentUid;
+  const isMember = !isOwner && (coll?.memberIds ?? []).includes(currentUid ?? "");
+  const isParticipant = isOwner || isMember;
   const completedItems = items.filter((i) => i.completed);
   const total = coll ? (coll.itemCount ?? items.length) : 0;
   const done = coll ? (coll.completedCount ?? completedItems.length) : 0;
@@ -363,12 +381,12 @@ export default function CollectionDetailScreen() {
                     pathname: "/post-feed/[id]",
                     params: { id: item.id, mode: "collection", filterId: id },
                   });
-                } else if (isOwner) {
+                } else if (item.userId === currentUid) {
                   router.push({ pathname: "/complete-item/[id]", params: { id: item.id } });
                 }
               }}
               onLongPress={() => {
-                if (isOwner && !item.completed) openEditItem(item);
+                if (item.userId === currentUid && !item.completed) openEditItem(item);
               }}
             >
               <Text style={styles.itemTitle} numberOfLines={2}>{item.title}</Text>
@@ -378,7 +396,7 @@ export default function CollectionDetailScreen() {
                 ) : null}
                 {item.completed ? (
                   <Text style={styles.doneBadge}>Done</Text>
-                ) : isOwner ? (
+                ) : item.userId === currentUid ? (
                   <Text style={styles.tapHint}>
                     {item.notes ? "Hold to edit · Tap to complete" : "Tap to complete →"}
                   </Text>
@@ -389,8 +407,8 @@ export default function CollectionDetailScreen() {
               ) : null}
             </Pressable>
 
-            {/* Delete button only for to-do items */}
-            {isOwner && !item.completed && (
+            {/* Delete button — owner can delete any to-do; member can delete their own */}
+            {!item.completed && (isOwner || item.userId === currentUid) && (
               <Pressable onPress={() => deleteItem(item.id)} style={styles.deleteBtn}>
                 <Text style={styles.deleteBtnText}>×</Text>
               </Pressable>
@@ -410,7 +428,7 @@ export default function CollectionDetailScreen() {
             <Text style={styles.backBtnText}>‹</Text>
           </Pressable>
           <Text style={styles.topBarTitle} numberOfLines={1}>{coll.name}</Text>
-          {isOwner ? (
+          {isParticipant ? (
             <Pressable style={styles.menuBtn} onPress={() => setMenuOpen(true)}>
               <Text style={styles.menuBtnText}>···</Text>
             </Pressable>
@@ -427,7 +445,8 @@ export default function CollectionDetailScreen() {
 
           {/* Meta: name, description, counts */}
           <View style={styles.headerMeta}>
-            {coll.isPrivate && <Text style={styles.privateLbl}>Private</Text>}
+            {isMember && <Text style={styles.sharedLbl}>Shared collection</Text>}
+            {coll.isPrivate && !isMember && <Text style={styles.privateLbl}>Private</Text>}
             <Text style={styles.headerName}>{coll.name}</Text>
             {coll.description ? (
               <Text style={styles.descText}>{coll.description}</Text>
@@ -473,7 +492,7 @@ export default function CollectionDetailScreen() {
             }}
           >
             <View style={{ width: SCREEN_WIDTH, minHeight: SCREEN_HEIGHT * 0.7 }}>
-              {isOwner && (
+              {isParticipant && (
                 <View style={styles.addIdeaRow}>
                   <Pressable style={styles.addIdeaBtn} onPress={() => setAddIdeaOpen(true)}>
                     <Text style={styles.addIdeaBtnText}>+</Text>
@@ -502,16 +521,34 @@ export default function CollectionDetailScreen() {
         <View style={styles.sheetWrapper}>
           <View style={styles.sheet}>
             <View style={styles.sheetHandle} />
-            <Pressable
-              style={styles.menuItem}
-              onPress={() => { setMenuOpen(false); openEditSheet(); }}
-            >
-              <Text style={styles.menuItemText}>Edit Collection</Text>
-            </Pressable>
-            <View style={styles.menuDivider} />
-            <Pressable style={styles.menuItem} onPress={handleDeleteCollection}>
-              <Text style={[styles.menuItemText, styles.menuItemDestructive]}>Delete Collection</Text>
-            </Pressable>
+            {isOwner ? (
+              <>
+                <Pressable
+                  style={styles.menuItem}
+                  onPress={() => {
+                    setMenuOpen(false);
+                    router.push({ pathname: "/invite-to-collection/[id]", params: { id } });
+                  }}
+                >
+                  <Text style={styles.menuItemText}>Invite Friend</Text>
+                </Pressable>
+                <View style={styles.menuDivider} />
+                <Pressable
+                  style={styles.menuItem}
+                  onPress={() => { setMenuOpen(false); openEditSheet(); }}
+                >
+                  <Text style={styles.menuItemText}>Edit Collection</Text>
+                </Pressable>
+                <View style={styles.menuDivider} />
+                <Pressable style={styles.menuItem} onPress={handleDeleteCollection}>
+                  <Text style={[styles.menuItemText, styles.menuItemDestructive]}>Delete Collection</Text>
+                </Pressable>
+              </>
+            ) : (
+              <Pressable style={styles.menuItem} onPress={handleLeaveCollection}>
+                <Text style={[styles.menuItemText, styles.menuItemDestructive]}>Leave Collection</Text>
+              </Pressable>
+            )}
           </View>
         </View>
       </Modal>
@@ -773,6 +810,14 @@ function makeStyles(C: ThemeColors) {
       fontSize: 11,
       fontWeight: "800",
       color: C.textTertiary,
+      textTransform: "uppercase",
+      letterSpacing: 1,
+      marginBottom: 6,
+    },
+    sharedLbl: {
+      fontSize: 11,
+      fontWeight: "800",
+      color: C.accent,
       textTransform: "uppercase",
       letterSpacing: 1,
       marginBottom: 6,

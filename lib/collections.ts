@@ -1,4 +1,6 @@
 import {
+  arrayRemove,
+  arrayUnion,
   collection,
   doc,
   getDoc,
@@ -46,6 +48,7 @@ export async function createCollection(params: {
     itemCount: 0,
     completedCount: 0,
     memberIds: [],
+    invitedIds: [],
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
@@ -173,6 +176,82 @@ export async function executeDeleteCollection(collectionId: string): Promise<voi
 
   batch.delete(doc(db, "collections", collectionId));
   await batch.commit();
+}
+
+// Send a collection invite. Uses a deterministic ID to prevent duplicate pending invites.
+export async function sendCollectionInvite(params: {
+  collectionId: string;
+  collectionName: string;
+  invitedUserId: string;
+}): Promise<void> {
+  if (!auth.currentUser) throw new Error("Not authenticated");
+  const uid = auth.currentUser.uid;
+  if (uid === params.invitedUserId) return;
+
+  const inviteId = `${params.collectionId}_${params.invitedUserId}`;
+  const batch = writeBatch(db);
+  batch.set(doc(db, "collectionInvites", inviteId), {
+    collectionId: params.collectionId,
+    collectionName: params.collectionName,
+    invitedBy: uid,
+    invitedUserId: params.invitedUserId,
+    status: "pending",
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  batch.update(doc(db, "collections", params.collectionId), {
+    invitedIds: arrayUnion(params.invitedUserId),
+    updatedAt: serverTimestamp(),
+  });
+  await batch.commit();
+}
+
+// Accept a collection invite — adds uid to memberIds, removes from invitedIds.
+export async function acceptCollectionInvite(params: {
+  inviteId: string;
+  collectionId: string;
+}): Promise<void> {
+  if (!auth.currentUser) throw new Error("Not authenticated");
+  const uid = auth.currentUser.uid;
+  const batch = writeBatch(db);
+  batch.update(doc(db, "collectionInvites", params.inviteId), {
+    status: "accepted",
+    updatedAt: serverTimestamp(),
+  });
+  batch.update(doc(db, "collections", params.collectionId), {
+    memberIds: arrayUnion(uid),
+    invitedIds: arrayRemove(uid),
+    updatedAt: serverTimestamp(),
+  });
+  await batch.commit();
+}
+
+// Decline a collection invite — removes from invitedIds.
+export async function declineCollectionInvite(params: {
+  inviteId: string;
+  collectionId: string;
+}): Promise<void> {
+  if (!auth.currentUser) throw new Error("Not authenticated");
+  const uid = auth.currentUser.uid;
+  const batch = writeBatch(db);
+  batch.update(doc(db, "collectionInvites", params.inviteId), {
+    status: "declined",
+    updatedAt: serverTimestamp(),
+  });
+  batch.update(doc(db, "collections", params.collectionId), {
+    invitedIds: arrayRemove(uid),
+    updatedAt: serverTimestamp(),
+  });
+  await batch.commit();
+}
+
+// Leave a shared collection as a member.
+export async function leaveCollection(collectionId: string): Promise<void> {
+  if (!auth.currentUser) throw new Error("Not authenticated");
+  await updateDoc(doc(db, "collections", collectionId), {
+    memberIds: arrayRemove(auth.currentUser.uid),
+    updatedAt: serverTimestamp(),
+  });
 }
 
 // Complete an item. Caller handles media uploads and passes the resulting URLs.

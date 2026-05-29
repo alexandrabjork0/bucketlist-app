@@ -1,9 +1,10 @@
-import { Image, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 type Props = { notification: any };
 
 function getDisplayText(notification: any): string {
-  const { type, actors = [], actorCount = 1, postTitle } = notification;
+  const { type, actors = [], actorCount = 1, postTitle, previewText } = notification;
   const names = actors.map((a: any) => a.username || "Someone");
 
   let actorLabel = "";
@@ -38,9 +39,17 @@ function getDisplayText(notification: any): string {
         ? `${actorLabel} just completed "${postTitle}"`
         : `${actorLabel} just completed something new`;
     case "milestone":
-      return notification.previewText || "You reached a milestone!";
+      return previewText || "You reached a milestone!";
     case "system":
-      return notification.previewText || "Welcome to Bucketlist!";
+      return previewText || "Welcome to Bucketlist!";
+    case "collection_invite":
+      return previewText
+        ? `${actorLabel} invited you to join "${previewText}"`
+        : `${actorLabel} invited you to a collection`;
+    case "collection_invite_accepted":
+      return previewText
+        ? `${actorLabel} joined your "${previewText}" collection`
+        : `${actorLabel} joined your collection`;
     default:
       return "New notification";
   }
@@ -56,12 +65,28 @@ function getRelativeTime(updatedAt: any): string {
   return `${Math.floor(diff / 604800000)}w`;
 }
 
+function getOnPress(notification: any): (() => void) | undefined {
+  if (notification.type === "collection_invite" && notification.inviteId) {
+    return () =>
+      router.push({
+        pathname: "/collection-invite/[inviteId]",
+        params: { inviteId: notification.inviteId },
+      });
+  }
+  return undefined;
+}
+
 export default function NotificationRow({ notification }: Props) {
   const firstActor = notification.actors?.[0];
   const isUnread = notification.read === false;
+  const onPress = getOnPress(notification);
 
   return (
-    <View style={[styles.row, isUnread && styles.unreadRow]}>
+    <Pressable
+      style={[styles.row, isUnread && styles.unreadRow]}
+      onPress={onPress}
+      disabled={!onPress}
+    >
       <View style={styles.avatarWrapper}>
         {isUnread && <View style={styles.unreadDot} />}
         {firstActor?.profileImage ? (
@@ -83,7 +108,7 @@ export default function NotificationRow({ notification }: Props) {
       {notification.postImageUrl ? (
         <Image source={{ uri: notification.postImageUrl }} style={styles.thumbnail} />
       ) : null}
-    </View>
+    </Pressable>
   );
 }
 

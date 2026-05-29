@@ -8,7 +8,9 @@ export type NotificationType =
   | "save"
   | "friend_completion"
   | "milestone"
-  | "system";
+  | "system"
+  | "collection_invite"
+  | "collection_invite_accepted";
 
 type Params = {
   recipientId: string;
@@ -16,6 +18,8 @@ type Params = {
   actorId: string;
   postId?: string;
   previewText?: string;
+  inviteId?: string;
+  collectionId?: string;
 };
 
 export async function createNotification({
@@ -24,6 +28,8 @@ export async function createNotification({
   actorId,
   postId,
   previewText,
+  inviteId,
+  collectionId,
 }: Params): Promise<void> {
   if (recipientId === actorId) return;
 
@@ -78,6 +84,14 @@ export async function createNotification({
       groupKey = `system_${recipientId}_${previewText}`;
       tab = "system";
       break;
+    case "collection_invite":
+      groupKey = `collection_invite_${inviteId ?? collectionId}_${recipientId}`;
+      tab = "personal";
+      break;
+    case "collection_invite_accepted":
+      groupKey = `collection_invite_accepted_${collectionId}_${actorId}`;
+      tab = "personal";
+      break;
     default:
       return;
   }
@@ -113,6 +127,8 @@ export async function createNotification({
       postTitle,
       postImageUrl,
       previewText: previewText || null,
+      inviteId: inviteId || null,
+      collectionId: collectionId || null,
       read: false,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),

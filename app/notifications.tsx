@@ -16,9 +16,9 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Dimensions, ScrollView, StyleSheet, Text, View } from "react-native";
 import { TabBar, TabView } from "react-native-tab-view";
-import NotificationRow from "../../components/NotificationRow";
-import { auth, db } from "../../lib/firebaseConfig";
-import { ThemeColors, useTheme } from "../../lib/theme";
+import NotificationRow from "../components/NotificationRow";
+import { auth, db } from "../lib/firebaseConfig";
+import { ThemeColors, useTheme } from "../lib/theme";
 
 export default function NotificationsScreen() {
   const C = useTheme();

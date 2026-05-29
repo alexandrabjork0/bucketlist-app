@@ -72,7 +72,7 @@ export default function ProfileScreen({ isFocused }: { isFocused: boolean }) {
     if (!auth.currentUser) return;
     const uid = auth.currentUser.uid;
 
-    const [userSnap, postsSnap, followersSnap, followingSnap, collectionsSnap] =
+    const [userSnap, postsSnap, followersSnap, followingSnap, ownedSnap, sharedSnap] =
       await Promise.all([
         getDoc(doc(db, "users", uid)),
         getDocs(
@@ -85,6 +85,7 @@ export default function ProfileScreen({ isFocused }: { isFocused: boolean }) {
         getDocs(query(collection(db, "follows"), where("followingId", "==", uid))),
         getDocs(query(collection(db, "follows"), where("followerId", "==", uid))),
         getDocs(query(collection(db, "collections"), where("userId", "==", uid))),
+        getDocs(query(collection(db, "collections"), where("memberIds", "array-contains", uid))),
       ]);
 
     if (userSnap.exists()) setProfile(userSnap.data());
@@ -95,15 +96,38 @@ export default function ProfileScreen({ isFocused }: { isFocused: boolean }) {
     );
     setFollowersCount(followersSnap.size);
     setFollowingCount(followingSnap.size);
-    setCollections(collectionsSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+
+    const ownedCollections = ownedSnap.docs.map((d) => ({ id: d.id, ...d.data(), isShared: false }));
+    const sharedRaw = sharedSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const ownerIds = [...new Set(sharedRaw.map((c: any) => c.userId as string))];
+    const ownerDocs = await Promise.all(ownerIds.map((oid) => getDoc(doc(db, "users", oid))));
+    const ownerMap = new Map(ownerDocs.map((d) => [d.id, d.exists() ? (d.data() as any).username : "user"]));
+    const sharedCollections = sharedRaw.map((c: any) => ({
+      ...c,
+      isShared: true,
+      ownerUsername: ownerMap.get(c.userId) || "user",
+    }));
+    setCollections([...ownedCollections, ...sharedCollections]);
   };
 
   const reloadCollections = async () => {
     if (!auth.currentUser) return;
-    const snap = await getDocs(
-      query(collection(db, "collections"), where("userId", "==", auth.currentUser.uid))
-    );
-    setCollections(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    const uid = auth.currentUser.uid;
+    const [ownedSnap, sharedSnap] = await Promise.all([
+      getDocs(query(collection(db, "collections"), where("userId", "==", uid))),
+      getDocs(query(collection(db, "collections"), where("memberIds", "array-contains", uid))),
+    ]);
+    const ownedCollections = ownedSnap.docs.map((d) => ({ id: d.id, ...d.data(), isShared: false }));
+    const sharedRaw = sharedSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const ownerIds = [...new Set(sharedRaw.map((c: any) => c.userId as string))];
+    const ownerDocs = await Promise.all(ownerIds.map((oid) => getDoc(doc(db, "users", oid))));
+    const ownerMap = new Map(ownerDocs.map((d) => [d.id, d.exists() ? (d.data() as any).username : "user"]));
+    const sharedCollections = sharedRaw.map((c: any) => ({
+      ...c,
+      isShared: true,
+      ownerUsername: ownerMap.get(c.userId) || "user",
+    }));
+    setCollections([...ownedCollections, ...sharedCollections]);
   };
 
   const pickCoverPhoto = async () => {
@@ -318,10 +342,12 @@ export default function ProfileScreen({ isFocused }: { isFocused: boolean }) {
                     key={coll.id}
                     collection={coll}
                     cardWidth={CARD_WIDTH}
+                    isShared={coll.isShared}
+                    ownerUsername={coll.ownerUsername}
                     onPress={() =>
                       router.push({ pathname: "/collection/[id]", params: { id: coll.id } })
                     }
-                    onLongPress={() => handleDeleteCollection(coll.id, coll.name)}
+                    onLongPress={coll.isShared ? undefined : () => handleDeleteCollection(coll.id, coll.name)}
                   />
                 ))}
               </View>

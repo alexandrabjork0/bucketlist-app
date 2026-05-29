@@ -19,9 +19,10 @@ interface Props {
   onPress: () => void;
   onLongPress?: () => void;
   ownerUsername?: string;
+  isShared?: boolean;
 }
 
-export default function CollectionCard({ collection, cardWidth, onPress, onLongPress, ownerUsername }: Props) {
+export default function CollectionCard({ collection, cardWidth, onPress, onLongPress, ownerUsername, isShared }: Props) {
   const C = useTheme();
   const styles = useMemo(() => makeStyles(C), [C]);
 
@@ -39,6 +40,11 @@ export default function CollectionCard({ collection, cardWidth, onPress, onLongP
         {isPrivate && (
           <View style={styles.lockBadge}>
             <Text style={styles.lockIcon}>🔒</Text>
+          </View>
+        )}
+        {isShared && (
+          <View style={styles.sharedBadge}>
+            <Text style={styles.sharedIcon}>👥</Text>
           </View>
         )}
       </View>
@@ -78,9 +84,19 @@ function makeStyles(C: ThemeColors) {
       alignItems: "center",
       justifyContent: "center",
     },
-    lockIcon: {
-      fontSize: 12,
+    lockIcon: { fontSize: 12 },
+    sharedBadge: {
+      position: "absolute",
+      top: 8,
+      left: 8,
+      backgroundColor: "rgba(0,0,0,0.45)",
+      borderRadius: 999,
+      width: 26,
+      height: 26,
+      alignItems: "center",
+      justifyContent: "center",
     },
+    sharedIcon: { fontSize: 12 },
     info: {
       paddingTop: 8,
       paddingHorizontal: 2,
