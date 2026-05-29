@@ -36,7 +36,7 @@ import PostThumbnail from "../../components/PostThumbnail";
 import { auth, db, storage } from "../../lib/firebaseConfig";
 import { ThemeColors, useTheme } from "../../lib/theme";
 
-type SubTab = "all" | "completed" | "todo";
+type SubTab = "ideas" | "memories";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const HEADER_HEIGHT = SCREEN_WIDTH * 0.65;
@@ -48,7 +48,7 @@ export default function CollectionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [coll, setColl] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
-  const [subTab, setSubTab] = useState<SubTab>("completed");
+  const [subTab, setSubTab] = useState<SubTab>("ideas");
   const [loading, setLoading] = useState(true);
 
   // ── Collection edit sheet ─────────────────────────────────────────────────
@@ -211,13 +211,12 @@ export default function CollectionDetailScreen() {
 
   const switchSubTab = (tab: SubTab) => {
     setSubTab(tab);
-    const index = tab === "completed" ? 0 : tab === "todo" ? 1 : 2;
+    const index = tab === "ideas" ? 0 : 1;
     pagerRef.current?.scrollTo({ x: index * SCREEN_WIDTH, animated: true });
   };
 
   const isOwner = coll?.userId === auth.currentUser?.uid;
   const completedItems = items.filter((i) => i.completed);
-  const todoItems = items.filter((i) => !i.completed);
   const total = coll ? (coll.itemCount ?? items.length) : 0;
   const done = coll ? (coll.completedCount ?? completedItems.length) : 0;
 
@@ -353,7 +352,7 @@ export default function CollectionDetailScreen() {
 
           {/* Tab row — sits naturally between meta and content */}
           <View style={styles.subTabs}>
-            {(["completed", "todo", "all"] as SubTab[]).map((tab) => (
+            {(["ideas", "memories"] as SubTab[]).map((tab) => (
               <Pressable
                 key={tab}
                 style={[styles.subTab, subTab === tab && styles.subTabActive]}
@@ -363,11 +362,7 @@ export default function CollectionDetailScreen() {
                   style={[styles.subTabText, subTab === tab && styles.subTabTextActive]}
                   numberOfLines={1}
                 >
-                  {tab === "completed"
-                    ? `Done (${completedItems.length})`
-                    : tab === "todo"
-                    ? `To Do (${todoItems.length})`
-                    : `All (${items.length})`}
+                  {tab === "ideas" ? "Ideas" : "Memories"}
                 </Text>
               </Pressable>
             ))}
@@ -383,17 +378,14 @@ export default function CollectionDetailScreen() {
             scrollEventThrottle={16}
             onMomentumScrollEnd={(e) => {
               const page = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
-              setSubTab(page === 0 ? "completed" : page === 1 ? "todo" : "all");
+              setSubTab(page === 0 ? "ideas" : "memories");
             }}
           >
             <View style={{ width: SCREEN_WIDTH, minHeight: SCREEN_HEIGHT * 0.7 }}>
-              {renderPage(completedItems, "Nothing completed yet. Go do something!", true)}
-            </View>
-            <View style={{ width: SCREEN_WIDTH, minHeight: SCREEN_HEIGHT * 0.7 }}>
-              {renderPage(todoItems, "Everything is done! 🎉", false)}
-            </View>
-            <View style={{ width: SCREEN_WIDTH, minHeight: SCREEN_HEIGHT * 0.7 }}>
               {renderPage(items, "No items yet. Save experiences to this collection.", false)}
+            </View>
+            <View style={{ width: SCREEN_WIDTH, minHeight: SCREEN_HEIGHT * 0.7 }}>
+              {renderPage(completedItems, "Nothing completed yet. Go do something!", true)}
             </View>
           </ScrollView>
         </ScrollView>
