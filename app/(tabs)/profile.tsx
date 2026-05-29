@@ -2,17 +2,15 @@ import * as ImagePicker from "expo-image-picker";
 import { Link, router } from "expo-router";
 import { signOut } from "firebase/auth";
 import {
-  addDoc,
   collection,
-  deleteDoc,
   doc,
   getDoc,
   getDocs,
   query,
-  serverTimestamp,
   where,
 } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { createCollection, executeDeleteCollection } from "../../lib/collections";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -26,6 +24,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   TouchableWithoutFeedback,
@@ -56,7 +55,9 @@ export default function ProfileScreen({ isFocused }: { isFocused: boolean }) {
   const [collections, setCollections] = useState<any[]>([]);
   const [createSheetOpen, setCreateSheetOpen] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState("");
+  const [newCollectionDesc, setNewCollectionDesc] = useState("");
   const [newCollectionCover, setNewCollectionCover] = useState<string | null>(null);
+  const [newCollectionPrivate, setNewCollectionPrivate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [followListType, setFollowListType] = useState<"followers" | "following" | null>(null);
   const [followListUsers, setFollowListUsers] = useState<any[]>([]);
@@ -117,12 +118,11 @@ export default function ProfileScreen({ isFocused }: { isFocused: boolean }) {
     }
   };
 
-  const createCollection = async () => {
+  const handleCreateCollection = async () => {
     if (!auth.currentUser || !newCollectionName.trim()) return;
     setCreating(true);
     try {
       let coverPhoto: string | undefined;
-
       if (newCollectionCover) {
         const uid = auth.currentUser.uid;
         const resp = await fetch(newCollectionCover);
@@ -131,21 +131,16 @@ export default function ProfileScreen({ isFocused }: { isFocused: boolean }) {
         await uploadBytes(storageRef, blob);
         coverPhoto = await getDownloadURL(storageRef);
       }
-
-      await addDoc(collection(db, "collections"), {
-        userId: auth.currentUser.uid,
+      await createCollection({
         name: newCollectionName.trim(),
-        isPrivate: false,
-        coverImages: [],
+        description: newCollectionDesc.trim(),
+        isPrivate: newCollectionPrivate,
         ...(coverPhoto ? { coverPhoto } : {}),
-        itemCount: 0,
-        completedCount: 0,
-        order: 0,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
       });
       setNewCollectionName("");
+      setNewCollectionDesc("");
       setNewCollectionCover(null);
+      setNewCollectionPrivate(false);
       setCreateSheetOpen(false);
       await reloadCollections();
     } finally {
@@ -153,14 +148,27 @@ export default function ProfileScreen({ isFocused }: { isFocused: boolean }) {
     }
   };
 
-  const deleteCollection = (collId: string, name: string) => {
-    Alert.alert(`Delete "${name}"?`, "Items in this collection won't be deleted.", [
+  const handleDeleteCollection = (collId: string, name: string) => {
+    const coll = collections.find((c) => c.id === collId);
+    const completedCount = coll?.completedCount ?? 0;
+    const todoCount = Math.max(0, (coll?.itemCount ?? 0) - completedCount);
+
+    const lines: string[] = [];
+    if (todoCount > 0)
+      lines.push(`${todoCount} to-do ${todoCount === 1 ? "item" : "items"} will be removed.`);
+    if (completedCount > 0)
+      lines.push(
+        `${completedCount} completed ${completedCount === 1 ? "memory" : "memories"} will stay in your Posts.`
+      );
+    const body = lines.length > 0 ? lines.join(" ") : "This collection is empty.";
+
+    Alert.alert(`Delete "${name}"?`, body, [
       { text: "Cancel", style: "cancel" },
       {
         text: "Delete",
         style: "destructive",
         onPress: async () => {
-          await deleteDoc(doc(db, "collections", collId));
+          await executeDeleteCollection(collId);
           setCollections((prev) => prev.filter((c) => c.id !== collId));
         },
       },
@@ -313,7 +321,7 @@ export default function ProfileScreen({ isFocused }: { isFocused: boolean }) {
                     onPress={() =>
                       router.push({ pathname: "/collection/[id]", params: { id: coll.id } })
                     }
-                    onLongPress={() => deleteCollection(coll.id, coll.name)}
+                    onLongPress={() => handleDeleteCollection(coll.id, coll.name)}
                   />
                 ))}
               </View>
@@ -413,6 +421,7 @@ export default function ProfileScreen({ isFocused }: { isFocused: boolean }) {
         onRequestClose={() => {
           setCreateSheetOpen(false);
           setNewCollectionCover(null);
+          setNewCollectionPrivate(false);
         }}
       >
         <TouchableWithoutFeedback
@@ -420,6 +429,7 @@ export default function ProfileScreen({ isFocused }: { isFocused: boolean }) {
             Keyboard.dismiss();
             setCreateSheetOpen(false);
             setNewCollectionCover(null);
+            setNewCollectionPrivate(false);
           }}
         >
           <View style={styles.overlay} />
@@ -456,12 +466,32 @@ export default function ProfileScreen({ isFocused }: { isFocused: boolean }) {
               onChangeText={setNewCollectionName}
               autoFocus
               returnKeyType="done"
-              onSubmitEditing={createCollection}
+              onSubmitEditing={handleCreateCollection}
             />
+
+            <TextInput
+              style={[styles.sheetInput, { marginTop: -6 }]}
+              placeholder="Description (optional)"
+              placeholderTextColor={C.inputPlaceholder}
+              value={newCollectionDesc}
+              onChangeText={setNewCollectionDesc}
+              returnKeyType="done"
+              onSubmitEditing={handleCreateCollection}
+            />
+
+            <View style={styles.privateRow}>
+              <Text style={styles.privateLabel}>Private collection</Text>
+              <Switch
+                value={newCollectionPrivate}
+                onValueChange={setNewCollectionPrivate}
+                trackColor={{ false: C.border, true: C.text }}
+                thumbColor={C.background}
+              />
+            </View>
 
             <Pressable
               style={[styles.sheetBtn, creating && styles.sheetBtnOff]}
-              onPress={createCollection}
+              onPress={handleCreateCollection}
               disabled={creating}
             >
               <Text style={styles.sheetBtnText}>
@@ -474,6 +504,7 @@ export default function ProfileScreen({ isFocused }: { isFocused: boolean }) {
               onPress={() => {
                 setCreateSheetOpen(false);
                 setNewCollectionCover(null);
+                setNewCollectionPrivate(false);
               }}
             >
               <Text style={styles.sheetCancelText}>Cancel</Text>
@@ -633,6 +664,19 @@ function makeStyles(C: ThemeColors) {
       flexWrap: "wrap",
       gap: CARD_GAP,
       paddingHorizontal: CARD_PAD,
+    },
+
+    privateRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 20,
+      paddingHorizontal: 2,
+    },
+    privateLabel: {
+      fontSize: 15,
+      fontWeight: "600",
+      color: C.text,
     },
 
     // Cover photo picker

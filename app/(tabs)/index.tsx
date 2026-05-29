@@ -1,20 +1,17 @@
 import { router } from "expo-router";
 import { onAuthStateChanged, User } from "firebase/auth";
 import {
-  addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
-  increment,
   limit,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
   setDoc,
-  deleteDoc,
-  updateDoc,
   where,
 } from "firebase/firestore";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -29,7 +26,8 @@ import {
   View,
 } from "react-native";
 import CollectionCard from "../../components/CollectionCard";
-import CollectionPickerSheet, { CollectionRef } from "../../components/CollectionPickerSheet";
+import CollectionPickerSheet from "../../components/CollectionPickerSheet";
+import { CollectionRef, saveToCollections } from "../../lib/collections";
 import { auth, db } from "../../lib/firebaseConfig";
 import { createNotification } from "../../lib/notifications";
 import { ThemeColors, useTheme } from "../../lib/theme";
@@ -630,50 +628,21 @@ export default function HomeScreen({ isFocused }: { isFocused: boolean }) {
     if (!auth.currentUser || !post) return;
 
     const existingMap = savedItemMaps.get(post.id) ?? new Map<string, string>();
-    const newMap = new Map(existingMap);
     const isFirstSave = existingMap.size === 0 && toAdd.length > 0;
 
-    for (const col of toAdd) {
-      const ref = await addDoc(collection(db, "userBucketlistItems"), {
-        userId: auth.currentUser.uid,
-        collectionId: col.id,
+    const newMap = await saveToCollections(
+      {
         title: post.title,
         category: post.category,
-        completed: false,
-        imageUrl: null,
-        caption: "",
-        media: [],
-        createdAt: serverTimestamp(),
-        completedAt: null,
-        fromPost: true,
+        source: "post",
+        experienceId: post.experienceId || null,
         inspiredByPostId: post.id,
         inspiredByUserId: post.userId,
-        experienceId: post.experienceId || null,
-      });
-      newMap.set(col.id, ref.id);
-
-      if (post.experienceId) {
-        updateDoc(doc(db, "experiences", post.experienceId), {
-          savesCount: increment(1),
-        }).catch(() => {});
-      }
-      updateDoc(doc(db, "collections", col.id), {
-        itemCount: increment(1),
-        updatedAt: serverTimestamp(),
-      }).catch(() => {});
-    }
-
-    for (const colId of toRemove) {
-      const docId = existingMap.get(colId);
-      if (docId) {
-        deleteDoc(doc(db, "userBucketlistItems", docId)).catch(() => {});
-        updateDoc(doc(db, "collections", colId), {
-          itemCount: increment(-1),
-          updatedAt: serverTimestamp(),
-        }).catch(() => {});
-        newMap.delete(colId);
-      }
-    }
+      },
+      toAdd,
+      toRemove,
+      existingMap
+    );
 
     setSavedItemMaps((prev) => new Map([...prev, [post.id, newMap]]));
     if (newMap.size > 0) {

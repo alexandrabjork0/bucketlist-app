@@ -7,11 +7,10 @@ export interface CollectionData {
   id: string;
   name: string;
   isPrivate?: boolean;
-  coverImages?: string[];
   coverPhoto?: string;
   itemCount?: number;
   completedCount?: number;
-  itemIds?: string[]; // legacy field, kept for backward compat
+  description?: string;
 }
 
 interface Props {
@@ -26,8 +25,8 @@ export default function CollectionCard({ collection, cardWidth, onPress, onLongP
   const C = useTheme();
   const styles = useMemo(() => makeStyles(C), [C]);
 
-  const { name, isPrivate, coverImages = [], coverPhoto, itemCount, completedCount = 0, itemIds } = collection;
-  const total = itemCount ?? (itemIds?.length ?? 0);
+  const { name, isPrivate, coverPhoto, itemCount, completedCount = 0 } = collection;
+  const total = itemCount ?? 0;
 
   return (
     <Pressable
@@ -36,7 +35,7 @@ export default function CollectionCard({ collection, cardWidth, onPress, onLongP
       onLongPress={onLongPress}
     >
       <View style={styles.imageWrapper}>
-        <CollectionCover images={coverImages} coverPhoto={coverPhoto} size={cardWidth} name={name} />
+        <CollectionCover coverPhoto={coverPhoto} size={cardWidth} name={name} />
         {isPrivate && (
           <View style={styles.lockBadge}>
             <Text style={styles.lockIcon}>🔒</Text>

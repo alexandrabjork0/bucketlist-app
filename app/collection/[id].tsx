@@ -1,3 +1,4 @@
+import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
 import {
   collection,
@@ -11,6 +12,7 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
@@ -31,7 +33,7 @@ import {
 } from "react-native";
 import CollectionCover from "../../components/CollectionCover";
 import PostThumbnail from "../../components/PostThumbnail";
-import { auth, db } from "../../lib/firebaseConfig";
+import { auth, db, storage } from "../../lib/firebaseConfig";
 import { ThemeColors, useTheme } from "../../lib/theme";
 
 type SubTab = "all" | "completed" | "todo";
@@ -50,11 +52,22 @@ export default function CollectionDetailScreen() {
   const [subTab, setSubTab] = useState<SubTab>("all");
   const [loading, setLoading] = useState(true);
 
-  // Edit sheet state
+  // ── Collection edit sheet ─────────────────────────────────────────────────
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [editName, setEditName] = useState("");
+  const [editDesc, setEditDesc] = useState("");
   const [editPrivate, setEditPrivate] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+
+  // ── Item edit sheet ───────────────────────────────────────────────────────
+  const [editItemOpen, setEditItemOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<any>(null);
+  const [editItemTitle, setEditItemTitle] = useState("");
+  const [editItemCategory, setEditItemCategory] = useState("");
+  const [editItemNotes, setEditItemNotes] = useState("");
+  const [editItemPrivate, setEditItemPrivate] = useState(false);
+  const [savingItem, setSavingItem] = useState(false);
 
   useEffect(() => {
     if (id) load();
@@ -65,18 +78,10 @@ export default function CollectionDetailScreen() {
       const [collSnap, itemsSnap] = await Promise.all([
         getDoc(doc(db, "collections", id)),
         getDocs(
-          query(
-            collection(db, "userBucketlistItems"),
-            where("collectionId", "==", id)
-          )
+          query(collection(db, "userBucketlistItems"), where("collectionId", "==", id))
         ),
       ]);
-
-      if (!collSnap.exists()) {
-        setLoading(false);
-        return;
-      }
-
+      if (!collSnap.exists()) { setLoading(false); return; }
       setColl({ id: collSnap.id, ...collSnap.data() });
       setItems(itemsSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
     } finally {
@@ -84,40 +89,36 @@ export default function CollectionDetailScreen() {
     }
   };
 
+  // ── Item deletion — completed items can never be deleted ──────────────────
   const deleteItem = (itemId: string) => {
+    const target = items.find((i) => i.id === itemId);
+    if (!target || target.completed) return;
+
     Alert.alert("Remove item?", "This will permanently remove this from your collection.", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Remove",
         style: "destructive",
         onPress: async () => {
-          const target = items.find((i) => i.id === itemId);
           await deleteDoc(doc(db, "userBucketlistItems", itemId));
           setItems((prev) => prev.filter((i) => i.id !== itemId));
-          // Update Firestore counts
-          const updates: Record<string, any> = {
+          updateDoc(doc(db, "collections", id), {
             itemCount: increment(-1),
             updatedAt: serverTimestamp(),
-          };
-          if (target?.completed) updates.completedCount = increment(-1);
-          updateDoc(doc(db, "collections", id), updates).catch(() => {});
-          setColl((prev: any) => {
-            if (!prev) return prev;
-            return {
-              ...prev,
-              itemCount: Math.max(0, (prev.itemCount ?? 0) - 1),
-              completedCount: target?.completed
-                ? Math.max(0, (prev.completedCount ?? 0) - 1)
-                : prev.completedCount ?? 0,
-            };
-          });
+          }).catch(() => {});
+          setColl((prev: any) => prev
+            ? { ...prev, itemCount: Math.max(0, (prev.itemCount ?? 0) - 1) }
+            : prev
+          );
         },
       },
     ]);
   };
 
+  // ── Collection edit ───────────────────────────────────────────────────────
   const openEditSheet = () => {
     setEditName(coll?.name ?? "");
+    setEditDesc(coll?.description ?? "");
     setEditPrivate(coll?.isPrivate ?? false);
     setEditSheetOpen(true);
   };
@@ -128,16 +129,88 @@ export default function CollectionDetailScreen() {
     try {
       await updateDoc(doc(db, "collections", id), {
         name: editName.trim(),
+        description: editDesc.trim(),
         isPrivate: editPrivate,
         updatedAt: serverTimestamp(),
       });
-      setColl((prev: any) => ({ ...prev, name: editName.trim(), isPrivate: editPrivate }));
+      setColl((prev: any) => ({
+        ...prev,
+        name: editName.trim(),
+        description: editDesc.trim(),
+        isPrivate: editPrivate,
+      }));
       setEditSheetOpen(false);
     } finally {
       setSaving(false);
     }
   };
 
+  const pickCoverPhoto = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: "images",
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (result.canceled || !result.assets[0]) return;
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+
+    setUploadingCover(true);
+    try {
+      const resp = await fetch(result.assets[0].uri);
+      const blob = await resp.blob();
+      const storageRef = ref(storage, `collections/${uid}/${id}/${Date.now()}.jpg`);
+      await uploadBytes(storageRef, blob);
+      const url = await getDownloadURL(storageRef);
+      await updateDoc(doc(db, "collections", id), { coverPhoto: url, updatedAt: serverTimestamp() });
+      setColl((prev: any) => ({ ...prev, coverPhoto: url }));
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
+  // ── Item edit ─────────────────────────────────────────────────────────────
+  const openEditItem = (item: any) => {
+    setEditingItem(item);
+    setEditItemTitle(item.title ?? "");
+    setEditItemCategory(item.category ?? "");
+    setEditItemNotes(item.notes ?? "");
+    setEditItemPrivate(item.isPrivate ?? false);
+    setEditItemOpen(true);
+  };
+
+  const saveEditItem = async () => {
+    if (!editingItem || !editItemTitle.trim()) return;
+    setSavingItem(true);
+    try {
+      await updateDoc(doc(db, "userBucketlistItems", editingItem.id), {
+        title: editItemTitle.trim(),
+        category: editItemCategory.trim(),
+        notes: editItemNotes.trim(),
+        isPrivate: editItemPrivate,
+        updatedAt: serverTimestamp(),
+      });
+      setItems((prev) =>
+        prev.map((i) =>
+          i.id === editingItem.id
+            ? {
+                ...i,
+                title: editItemTitle.trim(),
+                category: editItemCategory.trim(),
+                notes: editItemNotes.trim(),
+                isPrivate: editItemPrivate,
+              }
+            : i
+        )
+      );
+      setEditItemOpen(false);
+    } finally {
+      setSavingItem(false);
+    }
+  };
+
+  // ── Tab navigation ────────────────────────────────────────────────────────
   const switchSubTab = (tab: SubTab) => {
     setSubTab(tab);
     const index = tab === "all" ? 0 : tab === "completed" ? 1 : 2;
@@ -147,7 +220,6 @@ export default function CollectionDetailScreen() {
   const isOwner = coll?.userId === auth.currentUser?.uid;
   const completedItems = items.filter((i) => i.completed);
   const todoItems = items.filter((i) => !i.completed);
-
   const total = coll ? (coll.itemCount ?? items.length) : 0;
   const done = coll ? (coll.completedCount ?? completedItems.length) : 0;
 
@@ -209,11 +281,11 @@ export default function CollectionDetailScreen() {
                     params: { id: item.id, mode: "collection", filterId: id },
                   });
                 } else if (isOwner) {
-                  router.push({
-                    pathname: "/complete-item/[id]",
-                    params: { id: item.id },
-                  });
+                  router.push({ pathname: "/complete-item/[id]", params: { id: item.id } });
                 }
+              }}
+              onLongPress={() => {
+                if (isOwner && !item.completed) openEditItem(item);
               }}
             >
               <Text style={styles.itemTitle} numberOfLines={2}>{item.title}</Text>
@@ -224,12 +296,18 @@ export default function CollectionDetailScreen() {
                 {item.completed ? (
                   <Text style={styles.doneBadge}>Done</Text>
                 ) : isOwner ? (
-                  <Text style={styles.tapHint}>Tap to complete →</Text>
+                  <Text style={styles.tapHint}>
+                    {item.notes ? "Hold to edit · Tap to complete" : "Tap to complete →"}
+                  </Text>
                 ) : null}
               </View>
+              {item.notes ? (
+                <Text style={styles.itemNotes} numberOfLines={1}>{item.notes}</Text>
+              ) : null}
             </Pressable>
 
-            {isOwner && (
+            {/* Delete button only for to-do items */}
+            {isOwner && !item.completed && (
               <Pressable onPress={() => deleteItem(item.id)} style={styles.deleteBtn}>
                 <Text style={styles.deleteBtnText}>×</Text>
               </Pressable>
@@ -245,12 +323,7 @@ export default function CollectionDetailScreen() {
       <View style={styles.container}>
         {/* Hero header */}
         <View style={[styles.header, { height: HEADER_HEIGHT }]}>
-          <CollectionCover
-            images={coll.coverImages ?? []}
-            coverPhoto={coll.coverPhoto}
-            size={SCREEN_WIDTH}
-            name={coll.name}
-          />
+          <CollectionCover coverPhoto={coll.coverPhoto} size={SCREEN_WIDTH} name={coll.name} />
           <Pressable style={styles.backBtn} onPress={() => router.back()}>
             <Text style={styles.backBtnText}>‹</Text>
           </Pressable>
@@ -265,6 +338,9 @@ export default function CollectionDetailScreen() {
         <View style={styles.headerMeta}>
           {coll.isPrivate && <Text style={styles.privateLbl}>Private</Text>}
           <Text style={styles.headerName}>{coll.name}</Text>
+          {coll.description ? (
+            <Text style={styles.descText}>{coll.description}</Text>
+          ) : null}
           <Text style={styles.metaText}>
             {total === 0
               ? "No items yet"
@@ -283,9 +359,11 @@ export default function CollectionDetailScreen() {
               onPress={() => switchSubTab(tab)}
             >
               <Text style={[styles.subTabText, subTab === tab && styles.subTabTextActive]}>
-                {tab === "all" ? `All (${items.length})` :
-                 tab === "completed" ? `Completed (${completedItems.length})` :
-                 `To Do (${todoItems.length})`}
+                {tab === "all"
+                  ? `All (${items.length})`
+                  : tab === "completed"
+                  ? `Completed (${completedItems.length})`
+                  : `To Do (${todoItems.length})`}
               </Text>
             </Pressable>
           ))}
@@ -310,7 +388,7 @@ export default function CollectionDetailScreen() {
         </ScrollView>
       </View>
 
-      {/* Edit collection sheet */}
+      {/* ── Edit collection sheet ─────────────────────────────────────────── */}
       <Modal
         visible={editSheetOpen}
         transparent
@@ -335,9 +413,30 @@ export default function CollectionDetailScreen() {
               value={editName}
               onChangeText={setEditName}
               autoFocus
+              returnKeyType="next"
+            />
+
+            <TextInput
+              style={[styles.sheetInput, { marginTop: -6 }]}
+              placeholder="Description (optional)"
+              placeholderTextColor={C.inputPlaceholder}
+              value={editDesc}
+              onChangeText={setEditDesc}
               returnKeyType="done"
               onSubmitEditing={saveEdit}
             />
+
+            {/* Cover photo */}
+            <Pressable style={styles.coverRow} onPress={pickCoverPhoto} disabled={uploadingCover}>
+              {coll.coverPhoto ? (
+                <Image source={{ uri: coll.coverPhoto }} style={styles.coverThumb} />
+              ) : (
+                <View style={styles.coverThumbEmpty} />
+              )}
+              <Text style={styles.coverRowLabel}>
+                {uploadingCover ? "Uploading…" : coll.coverPhoto ? "Change cover photo" : "Add cover photo"}
+              </Text>
+            </Pressable>
 
             <View style={styles.privateRow}>
               <Text style={styles.privateLabel}>Private collection</Text>
@@ -350,14 +449,86 @@ export default function CollectionDetailScreen() {
             </View>
 
             <Pressable
-              style={[styles.sheetBtn, saving && styles.sheetBtnOff]}
+              style={[styles.sheetBtn, (saving || uploadingCover) && styles.sheetBtnOff]}
               onPress={saveEdit}
-              disabled={saving}
+              disabled={saving || uploadingCover}
             >
               <Text style={styles.sheetBtnText}>{saving ? "Saving…" : "Save"}</Text>
             </Pressable>
 
             <Pressable style={styles.sheetCancel} onPress={() => setEditSheetOpen(false)}>
+              <Text style={styles.sheetCancelText}>Cancel</Text>
+            </Pressable>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* ── Edit item sheet ───────────────────────────────────────────────── */}
+      <Modal
+        visible={editItemOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setEditItemOpen(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => { Keyboard.dismiss(); setEditItemOpen(false); }}>
+          <View style={styles.overlay} />
+        </TouchableWithoutFeedback>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.sheetWrapper}
+        >
+          <View style={styles.sheet}>
+            <View style={styles.sheetHandle} />
+            <Text style={styles.sheetTitle}>Edit item</Text>
+
+            <TextInput
+              style={styles.sheetInput}
+              placeholder="Title"
+              placeholderTextColor={C.inputPlaceholder}
+              value={editItemTitle}
+              onChangeText={setEditItemTitle}
+              autoFocus
+              returnKeyType="next"
+            />
+
+            <TextInput
+              style={[styles.sheetInput, { marginTop: -6 }]}
+              placeholder="Category"
+              placeholderTextColor={C.inputPlaceholder}
+              value={editItemCategory}
+              onChangeText={setEditItemCategory}
+              returnKeyType="next"
+            />
+
+            <TextInput
+              style={[styles.sheetInput, styles.notesInput, { marginTop: -6 }]}
+              placeholder="Notes (optional)"
+              placeholderTextColor={C.inputPlaceholder}
+              value={editItemNotes}
+              onChangeText={setEditItemNotes}
+              multiline
+              returnKeyType="done"
+            />
+
+            <View style={styles.privateRow}>
+              <Text style={styles.privateLabel}>Keep this item private</Text>
+              <Switch
+                value={editItemPrivate}
+                onValueChange={setEditItemPrivate}
+                trackColor={{ false: C.border, true: C.text }}
+                thumbColor={C.background}
+              />
+            </View>
+
+            <Pressable
+              style={[styles.sheetBtn, savingItem && styles.sheetBtnOff]}
+              onPress={saveEditItem}
+              disabled={savingItem}
+            >
+              <Text style={styles.sheetBtnText}>{savingItem ? "Saving…" : "Save"}</Text>
+            </Pressable>
+
+            <Pressable style={styles.sheetCancel} onPress={() => setEditItemOpen(false)}>
               <Text style={styles.sheetCancelText}>Cancel</Text>
             </Pressable>
           </View>
@@ -369,25 +540,11 @@ export default function CollectionDetailScreen() {
 
 function makeStyles(C: ThemeColors) {
   return StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: C.background,
-    },
-    center: {
-      flex: 1,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: C.background,
-    },
-    dimText: {
-      color: C.textTertiary,
-      fontSize: 16,
-    },
+    container: { flex: 1, backgroundColor: C.background },
+    center: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: C.background },
+    dimText: { color: C.textTertiary, fontSize: 16 },
 
-    header: {
-      width: "100%",
-      overflow: "hidden",
-    },
+    header: { width: "100%", overflow: "hidden" },
     backBtn: {
       position: "absolute",
       top: 56,
@@ -399,13 +556,7 @@ function makeStyles(C: ThemeColors) {
       alignItems: "center",
       justifyContent: "center",
     },
-    backBtnText: {
-      color: "#fff",
-      fontSize: 24,
-      fontWeight: "700",
-      lineHeight: 28,
-      marginTop: -2,
-    },
+    backBtnText: { color: "#fff", fontSize: 24, fontWeight: "700", lineHeight: 28, marginTop: -2 },
     editBtn: {
       position: "absolute",
       top: 56,
@@ -415,16 +566,9 @@ function makeStyles(C: ThemeColors) {
       paddingHorizontal: 14,
       paddingVertical: 8,
     },
-    editBtnText: {
-      color: "#fff",
-      fontSize: 13,
-      fontWeight: "700",
-    },
-    headerMeta: {
-      paddingHorizontal: 20,
-      paddingTop: 18,
-      paddingBottom: 4,
-    },
+    editBtnText: { color: "#fff", fontSize: 13, fontWeight: "700" },
+
+    headerMeta: { paddingHorizontal: 20, paddingTop: 18, paddingBottom: 4 },
     privateLbl: {
       fontSize: 11,
       fontWeight: "800",
@@ -433,55 +577,28 @@ function makeStyles(C: ThemeColors) {
       letterSpacing: 1,
       marginBottom: 6,
     },
-    headerName: {
-      fontSize: 30,
-      fontWeight: "900",
-      color: C.text,
-      lineHeight: 36,
-    },
-    metaText: {
-      fontSize: 13,
-      fontWeight: "500",
-      color: C.textTertiary,
+    headerName: { fontSize: 30, fontWeight: "900", color: C.text, lineHeight: 36 },
+    descText: {
+      fontSize: 14,
+      color: C.textSecondary,
       marginTop: 6,
+      lineHeight: 20,
     },
+    metaText: { fontSize: 13, fontWeight: "500", color: C.textTertiary, marginTop: 6 },
 
-    // Sub-tabs
     subTabs: {
       flexDirection: "row",
       borderBottomWidth: 1,
       borderBottomColor: C.border,
       backgroundColor: C.background,
     },
-    subTab: {
-      flex: 1,
-      paddingVertical: 13,
-      alignItems: "center",
-    },
-    subTabActive: {
-      borderBottomWidth: 2,
-      borderBottomColor: C.text,
-    },
-    subTabText: {
-      fontSize: 12,
-      fontWeight: "700",
-      color: C.textTertiary,
-    },
-    subTabTextActive: {
-      color: C.text,
-    },
+    subTab: { flex: 1, paddingVertical: 13, alignItems: "center" },
+    subTabActive: { borderBottomWidth: 2, borderBottomColor: C.text },
+    subTabText: { fontSize: 12, fontWeight: "700", color: C.textTertiary },
+    subTabTextActive: { color: C.text },
 
-    // Pages
-    pageContent: {
-      paddingHorizontal: 16,
-      paddingTop: 16,
-      paddingBottom: 48,
-    },
-    grid: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      marginHorizontal: -16,
-    },
+    pageContent: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 48 },
+    grid: { flexDirection: "row", flexWrap: "wrap", marginHorizontal: -16 },
     emptyText: {
       color: C.textTertiary,
       textAlign: "center",
@@ -491,7 +608,6 @@ function makeStyles(C: ThemeColors) {
       paddingHorizontal: 24,
     },
 
-    // List item
     itemRow: {
       flexDirection: "row",
       alignItems: "center",
@@ -500,72 +616,21 @@ function makeStyles(C: ThemeColors) {
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: C.divider,
     },
-    itemThumb: {
-      width: 64,
-      height: 64,
-      borderRadius: 12,
-      resizeMode: "cover",
-    },
-    itemThumbFallback: {
-      width: 64,
-      height: 64,
-      borderRadius: 12,
-      backgroundColor: C.surface,
-    },
-    itemInfo: {
-      flex: 1,
-    },
-    itemTitle: {
-      fontSize: 15,
-      fontWeight: "700",
-      color: C.text,
-      lineHeight: 20,
-    },
-    itemMeta: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 8,
-      marginTop: 5,
-    },
-    itemCat: {
-      fontSize: 12,
-      fontWeight: "500",
-      color: C.textTertiary,
-    },
-    doneBadge: {
-      fontSize: 12,
-      color: C.accent,
-      fontWeight: "800",
-    },
-    tapHint: {
-      fontSize: 12,
-      color: C.textTertiary,
-      fontWeight: "600",
-    },
-    deleteBtn: {
-      width: 32,
-      height: 32,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    deleteBtnText: {
-      fontSize: 24,
-      color: C.border,
-      fontWeight: "300",
-      lineHeight: 28,
-    },
+    itemThumb: { width: 64, height: 64, borderRadius: 12, resizeMode: "cover" },
+    itemThumbFallback: { width: 64, height: 64, borderRadius: 12, backgroundColor: C.surface },
+    itemInfo: { flex: 1 },
+    itemTitle: { fontSize: 15, fontWeight: "700", color: C.text, lineHeight: 20 },
+    itemMeta: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 5 },
+    itemCat: { fontSize: 12, fontWeight: "500", color: C.textTertiary },
+    doneBadge: { fontSize: 12, color: C.accent, fontWeight: "800" },
+    tapHint: { fontSize: 12, color: C.textTertiary, fontWeight: "600" },
+    itemNotes: { fontSize: 12, color: C.textTertiary, marginTop: 4, fontStyle: "italic" },
+    deleteBtn: { width: 32, height: 32, alignItems: "center", justifyContent: "center" },
+    deleteBtnText: { fontSize: 24, color: C.border, fontWeight: "300", lineHeight: 28 },
 
-    // Edit sheet
-    overlay: {
-      flex: 1,
-      backgroundColor: C.overlay,
-    },
-    sheetWrapper: {
-      position: "absolute",
-      bottom: 0,
-      left: 0,
-      right: 0,
-    },
+    // Sheets
+    overlay: { flex: 1, backgroundColor: C.overlay },
+    sheetWrapper: { position: "absolute", bottom: 0, left: 0, right: 0 },
     sheet: {
       backgroundColor: C.background,
       borderTopLeftRadius: 28,
@@ -582,12 +647,7 @@ function makeStyles(C: ThemeColors) {
       alignSelf: "center",
       marginBottom: 20,
     },
-    sheetTitle: {
-      fontSize: 22,
-      fontWeight: "800",
-      marginBottom: 18,
-      color: C.text,
-    },
+    sheetTitle: { fontSize: 22, fontWeight: "800", marginBottom: 18, color: C.text },
     sheetInput: {
       backgroundColor: C.inputBackground,
       padding: 15,
@@ -596,6 +656,30 @@ function makeStyles(C: ThemeColors) {
       marginBottom: 16,
       color: C.text,
     },
+    notesInput: { minHeight: 80, textAlignVertical: "top" },
+
+    coverRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      marginBottom: 16,
+    },
+    coverThumb: {
+      width: 48,
+      height: 48,
+      borderRadius: 10,
+      resizeMode: "cover",
+    },
+    coverThumbEmpty: {
+      width: 48,
+      height: 48,
+      borderRadius: 10,
+      backgroundColor: C.surface,
+      borderWidth: 1,
+      borderColor: C.border,
+    },
+    coverRowLabel: { fontSize: 15, fontWeight: "600", color: C.textSecondary },
+
     privateRow: {
       flexDirection: "row",
       alignItems: "center",
@@ -603,33 +687,17 @@ function makeStyles(C: ThemeColors) {
       marginBottom: 20,
       paddingHorizontal: 2,
     },
-    privateLabel: {
-      fontSize: 15,
-      fontWeight: "600",
-      color: C.text,
-    },
+    privateLabel: { fontSize: 15, fontWeight: "600", color: C.text },
+
     sheetBtn: {
       backgroundColor: C.buttonPrimary,
       padding: 16,
       borderRadius: 18,
       alignItems: "center",
     },
-    sheetBtnOff: {
-      backgroundColor: C.disabled,
-    },
-    sheetBtnText: {
-      color: C.buttonPrimaryText,
-      fontWeight: "800",
-      fontSize: 16,
-    },
-    sheetCancel: {
-      alignItems: "center",
-      marginTop: 14,
-    },
-    sheetCancelText: {
-      color: C.textSecondary,
-      fontWeight: "700",
-      fontSize: 15,
-    },
+    sheetBtnOff: { backgroundColor: C.disabled },
+    sheetBtnText: { color: C.buttonPrimaryText, fontWeight: "800", fontSize: 16 },
+    sheetCancel: { alignItems: "center", marginTop: 14 },
+    sheetCancelText: { color: C.textSecondary, fontWeight: "700", fontSize: 15 },
   });
 }

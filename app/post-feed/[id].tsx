@@ -1,28 +1,23 @@
 import { router, useLocalSearchParams } from "expo-router";
 import {
-  addDoc,
   collection,
-  deleteDoc,
   doc,
   getDoc,
   getDocs,
-  increment,
   query,
-  serverTimestamp,
-  updateDoc,
   where,
 } from "firebase/firestore";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
-import CollectionPickerSheet, { CollectionRef } from "../../components/CollectionPickerSheet";
+import CollectionPickerSheet from "../../components/CollectionPickerSheet";
+import { CollectionRef, saveToCollections } from "../../lib/collections";
 import PostCard from "../../components/PostCard";
 import { auth, db } from "../../lib/firebaseConfig";
 import { createNotification } from "../../lib/notifications";
@@ -115,50 +110,21 @@ export default function PostFeedScreen() {
     if (!auth.currentUser || !post) return;
 
     const existingMap = savedItemMaps.get(post.id) ?? new Map<string, string>();
-    const newMap = new Map(existingMap);
     const isFirstSave = existingMap.size === 0 && toAdd.length > 0;
 
-    for (const col of toAdd) {
-      const ref = await addDoc(collection(db, "userBucketlistItems"), {
-        userId: auth.currentUser.uid,
-        collectionId: col.id,
+    const newMap = await saveToCollections(
+      {
         title: post.title,
         category: post.category,
-        completed: false,
-        imageUrl: null,
-        caption: "",
-        media: [],
-        createdAt: serverTimestamp(),
-        completedAt: null,
-        fromPost: true,
+        source: "post",
+        experienceId: post.experienceId || null,
         inspiredByPostId: post.id,
         inspiredByUserId: post.userId,
-        experienceId: post.experienceId || null,
-      });
-      newMap.set(col.id, ref.id);
-
-      if (post.experienceId) {
-        updateDoc(doc(db, "experiences", post.experienceId), {
-          savesCount: increment(1),
-        }).catch(() => {});
-      }
-      updateDoc(doc(db, "collections", col.id), {
-        itemCount: increment(1),
-        updatedAt: serverTimestamp(),
-      }).catch(() => {});
-    }
-
-    for (const colId of toRemove) {
-      const docId = existingMap.get(colId);
-      if (docId) {
-        deleteDoc(doc(db, "userBucketlistItems", docId)).catch(() => {});
-        updateDoc(doc(db, "collections", colId), {
-          itemCount: increment(-1),
-          updatedAt: serverTimestamp(),
-        }).catch(() => {});
-        newMap.delete(colId);
-      }
-    }
+      },
+      toAdd,
+      toRemove,
+      existingMap
+    );
 
     setSavedItemMaps((prev) => new Map([...prev, [post.id, newMap]]));
 
@@ -170,22 +136,6 @@ export default function PostFeedScreen() {
         postId: post.id,
       }).catch(() => {});
     }
-  };
-
-  const handleDelete = (postId: string) => {
-    Alert.alert("Delete post?", "This will permanently delete this post.", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          await deleteDoc(doc(db, "userBucketlistItems", postId));
-          const updated = posts.filter((p) => p.id !== postId);
-          setPosts(updated);
-          if (updated.length === 0) router.back();
-        },
-      },
-    ]);
   };
 
   return (
@@ -221,7 +171,6 @@ export default function PostFeedScreen() {
                   key={post.id}
                   post={post}
                   author={post.author}
-                  onDelete={isOwn ? () => handleDelete(post.id) : undefined}
                   onSave={!isOwn ? () => handleSave(post) : undefined}
                   savedCount={!isOwn ? (postSavedMap?.size ?? 0) : 0}
                 />

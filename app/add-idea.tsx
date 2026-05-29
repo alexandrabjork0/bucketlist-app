@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { addDoc, collection, doc, increment, serverTimestamp, updateDoc } from "firebase/firestore";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { useMemo, useState } from "react";
 import {
     Alert,
@@ -13,7 +13,8 @@ import {
     TouchableWithoutFeedback,
     View,
 } from "react-native";
-import CollectionPickerSheet, { CollectionRef } from "../components/CollectionPickerSheet";
+import CollectionPickerSheet from "../components/CollectionPickerSheet";
+import { CollectionRef, saveToCollections } from "../lib/collections";
 import { auth, db } from "../lib/firebaseConfig";
 import { ThemeColors, useTheme } from "../lib/theme";
 
@@ -67,8 +68,8 @@ export default function AddIdeaScreen() {
     const cleanTitle = title.trim();
     const cleanCategory = (category === "Other" ? customCategory : category).trim();
 
+    // Create an experience entry so others can discover this idea (unless private)
     let experienceId: string | null = null;
-
     if (!isPrivate) {
       const expRef = await addDoc(collection(db, "experiences"), {
         title: cleanTitle,
@@ -88,28 +89,18 @@ export default function AddIdeaScreen() {
       experienceId = expRef.id;
     }
 
-    for (const col of toAdd) {
-      await addDoc(collection(db, "userBucketlistItems"), {
-        userId: auth.currentUser.uid,
-        collectionId: col.id,
+    await saveToCollections(
+      {
         title: cleanTitle,
         category: cleanCategory,
-        completed: false,
-        imageUrl: null,
-        caption: "",
-        media: [],
-        createdAt: serverTimestamp(),
-        completedAt: null,
-        customIdea: true,
         isPrivate,
+        source: "custom",
         experienceId,
-      });
-
-      updateDoc(doc(db, "collections", col.id), {
-        itemCount: increment(1),
-        updatedAt: serverTimestamp(),
-      }).catch(() => {});
-    }
+      },
+      toAdd,
+      [],
+      new Map()
+    );
 
     const firstName = toAdd[0].name;
     Alert.alert(

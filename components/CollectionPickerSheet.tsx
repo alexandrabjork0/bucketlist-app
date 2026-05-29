@@ -1,11 +1,4 @@
-import {
-  addDoc,
-  collection,
-  getDocs,
-  query,
-  serverTimestamp,
-  where,
-} from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -18,26 +11,25 @@ import {
   Platform,
   Pressable,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { CollectionRef, createCollection } from "../lib/collections";
 import { auth, db } from "../lib/firebaseConfig";
 import { ThemeColors, useTheme } from "../lib/theme";
 import CollectionCover from "./CollectionCover";
 
+export type { CollectionRef };
+
 interface CollectionRow {
   id: string;
   name: string;
-  coverImages?: string[];
+  coverPhoto?: string;
   itemCount?: number;
-}
-
-export interface CollectionRef {
-  id: string;
-  name: string;
 }
 
 interface Props {
@@ -71,16 +63,14 @@ export default function CollectionPickerSheet({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showNewInput, setShowNewInput] = useState(false);
   const [newName, setNewName] = useState("");
+  const [newIsPrivate, setNewIsPrivate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [keyboardH, setKeyboardH] = useState(0);
 
   const prevInitiallySelected = useRef<string[]>([]);
 
-  // ── Keyboard listeners (iOS only — Android handles via adjustResize) ──────
-
   useEffect(() => {
     if (Platform.OS !== "ios") return;
-
     const handleShow = (e: KeyboardEvent) => {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setKeyboardH(e.endCoordinates.height);
@@ -89,21 +79,14 @@ export default function CollectionPickerSheet({
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setKeyboardH(0);
     };
-
     const showSub = Keyboard.addListener("keyboardWillShow", handleShow);
     const hideSub = Keyboard.addListener("keyboardWillHide", handleHide);
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
+    return () => { showSub.remove(); hideSub.remove(); };
   }, []);
 
-  // Reset keyboard state when sheet closes
   useEffect(() => {
     if (!visible) setKeyboardH(0);
   }, [visible]);
-
-  // ── Data loading & selection sync ─────────────────────────────────────────
 
   useEffect(() => {
     if (visible) {
@@ -111,6 +94,7 @@ export default function CollectionPickerSheet({
       prevInitiallySelected.current = initiallySelected;
       setShowNewInput(false);
       setNewName("");
+      setNewIsPrivate(false);
       loadCollections();
     }
   }, [visible]);
@@ -132,20 +116,13 @@ export default function CollectionPickerSheet({
     setLoading(true);
     try {
       const snap = await getDocs(
-        query(
-          collection(db, "collections"),
-          where("userId", "==", auth.currentUser.uid)
-        )
+        query(collection(db, "collections"), where("userId", "==", auth.currentUser.uid))
       );
-      setCollections(
-        snap.docs.map((d) => ({ id: d.id, ...d.data() } as CollectionRow))
-      );
+      setCollections(snap.docs.map((d) => ({ id: d.id, ...d.data() } as CollectionRow)));
     } finally {
       setLoading(false);
     }
   };
-
-  // ── Actions ───────────────────────────────────────────────────────────────
 
   const toggleCollection = (id: string) => {
     setSelectedIds((prev) => {
@@ -156,31 +133,17 @@ export default function CollectionPickerSheet({
     });
   };
 
-  const createCollection = async () => {
-    if (!auth.currentUser || !newName.trim() || creating) return;
+  const handleCreate = async () => {
+    if (!newName.trim() || creating) return;
     setCreating(true);
     try {
-      const ref = await addDoc(collection(db, "collections"), {
-        userId: auth.currentUser.uid,
-        name: newName.trim(),
-        isPrivate: false,
-        coverImages: [],
-        itemCount: 0,
-        completedCount: 0,
-        order: 0,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-      const newRow: CollectionRow = {
-        id: ref.id,
-        name: newName.trim(),
-        coverImages: [],
-        itemCount: 0,
-      };
+      const newId = await createCollection({ name: newName.trim(), isPrivate: newIsPrivate });
+      const newRow: CollectionRow = { id: newId, name: newName.trim(), itemCount: 0 };
       setCollections((prev) => [newRow, ...prev]);
-      setSelectedIds((prev) => new Set([...prev, ref.id]));
+      setSelectedIds((prev) => new Set([...prev, newId]));
       setShowNewInput(false);
       setNewName("");
+      setNewIsPrivate(false);
     } finally {
       setCreating(false);
     }
@@ -202,14 +165,8 @@ export default function CollectionPickerSheet({
     [...selectedIds].some((id) => !new Set(initiallySelected).has(id)) ||
     initiallySelected.some((id) => !selectedIds.has(id));
 
-  // ── Computed layout values ────────────────────────────────────────────────
-
-  // Sheet stays at bottom: 0. When keyboard is up we push content above it
-  // via paddingBottom, and shrink the grid to compensate.
   const sheetPadBottom = keyboardH > 0 ? keyboardH + 8 : safeBottom + 20;
   const gridMaxH = Math.max(80, BASE_GRID_H - keyboardH);
-
-  // ── Render ────────────────────────────────────────────────────────────────
 
   const listData: ListItem[] = ["new", ...collections];
 
@@ -232,22 +189,14 @@ export default function CollectionPickerSheet({
     return (
       <Pressable style={styles.card} onPress={() => toggleCollection(item.id)}>
         <View style={styles.cardCover}>
-          <CollectionCover
-            images={item.coverImages ?? []}
-            size={CARD_W}
-            name={item.name}
-          />
+          <CollectionCover coverPhoto={item.coverPhoto} size={CARD_W} name={item.name} />
         </View>
-
         <View style={styles.cardOverlay}>
-          <Text style={styles.cardName} numberOfLines={1}>
-            {item.name}
-          </Text>
+          <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
           <Text style={styles.cardCount}>
             {total} {total === 1 ? "idea" : "ideas"}
           </Text>
         </View>
-
         {isSelected && (
           <View style={styles.checkBadge}>
             <Text style={styles.checkMark}>✓</Text>
@@ -259,23 +208,11 @@ export default function CollectionPickerSheet({
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      {/* Dimmed backdrop — tapping closes the sheet */}
-      <TouchableWithoutFeedback
-        onPress={() => {
-          Keyboard.dismiss();
-          onClose();
-        }}
-      >
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <TouchableWithoutFeedback onPress={() => { Keyboard.dismiss(); onClose(); }}>
         <View style={styles.overlay} />
       </TouchableWithoutFeedback>
 
-      {/* Sheet — anchored hard to the bottom, never moves */}
       <View style={styles.sheetAnchor}>
         <View style={[styles.sheet, { paddingBottom: sheetPadBottom }]}>
           <View style={styles.handle} />
@@ -288,43 +225,44 @@ export default function CollectionPickerSheet({
           </View>
 
           {showNewInput && (
-            <View style={styles.newInputRow}>
-              <TextInput
-                style={styles.newInput}
-                placeholder="Collection name…"
-                placeholderTextColor={C.inputPlaceholder}
-                value={newName}
-                onChangeText={setNewName}
-                autoFocus
-                returnKeyType="done"
-                onSubmitEditing={createCollection}
-              />
-              <Pressable
-                style={[
-                  styles.createBtn,
-                  (!newName.trim() || creating) && styles.createBtnOff,
-                ]}
-                onPress={createCollection}
-                disabled={!newName.trim() || creating}
-              >
-                <Text style={styles.createBtnText}>
-                  {creating ? "…" : "Create"}
-                </Text>
-              </Pressable>
+            <View style={styles.newBlock}>
+              <View style={styles.newInputRow}>
+                <TextInput
+                  style={styles.newInput}
+                  placeholder="Collection name…"
+                  placeholderTextColor={C.inputPlaceholder}
+                  value={newName}
+                  onChangeText={setNewName}
+                  autoFocus
+                  returnKeyType="done"
+                  onSubmitEditing={handleCreate}
+                />
+                <Pressable
+                  style={[styles.createBtn, (!newName.trim() || creating) && styles.createBtnOff]}
+                  onPress={handleCreate}
+                  disabled={!newName.trim() || creating}
+                >
+                  <Text style={styles.createBtnText}>{creating ? "…" : "Create"}</Text>
+                </Pressable>
+              </View>
+              <View style={styles.newPrivacyRow}>
+                <Text style={styles.newPrivacyLabel}>Private</Text>
+                <Switch
+                  value={newIsPrivate}
+                  onValueChange={setNewIsPrivate}
+                  trackColor={{ false: C.border, true: C.text }}
+                  thumbColor={C.background}
+                />
+              </View>
             </View>
           )}
 
           {loading ? (
-            <ActivityIndicator
-              style={styles.loadingSpinner}
-              color={C.textSecondary}
-            />
+            <ActivityIndicator style={styles.loadingSpinner} color={C.textSecondary} />
           ) : (
             <FlatList
               data={listData}
-              keyExtractor={(item) =>
-                typeof item === "string" ? "new" : item.id
-              }
+              keyExtractor={(item) => (typeof item === "string" ? "new" : item.id)}
               numColumns={2}
               columnWrapperStyle={styles.columnWrapper}
               contentContainerStyle={styles.gridContent}
@@ -336,9 +274,7 @@ export default function CollectionPickerSheet({
           )}
 
           <Pressable style={styles.doneBtn} onPress={handleDone}>
-            <Text style={styles.doneBtnText}>
-              {hasChanges ? "Save changes" : "Done"}
-            </Text>
+            <Text style={styles.doneBtnText}>{hasChanges ? "Save changes" : "Done"}</Text>
           </Pressable>
         </View>
       </View>
@@ -348,17 +284,8 @@ export default function CollectionPickerSheet({
 
 function makeStyles(C: ThemeColors) {
   return StyleSheet.create({
-    overlay: {
-      flex: 1,
-      backgroundColor: C.overlay,
-    },
-    // Hard-anchored to the bottom of the screen — never moves
-    sheetAnchor: {
-      position: "absolute",
-      bottom: 0,
-      left: 0,
-      right: 0,
-    },
+    overlay: { flex: 1, backgroundColor: C.overlay },
+    sheetAnchor: { position: "absolute", bottom: 0, left: 0, right: 0 },
     sheet: {
       backgroundColor: C.background,
       borderTopLeftRadius: 28,
@@ -366,7 +293,6 @@ function makeStyles(C: ThemeColors) {
       paddingHorizontal: H_PAD,
       paddingTop: 14,
       maxHeight: "88%",
-      // paddingBottom is set dynamically (safeArea or keyboard)
     },
     handle: {
       width: 40,
@@ -382,11 +308,7 @@ function makeStyles(C: ThemeColors) {
       justifyContent: "space-between",
       marginBottom: 18,
     },
-    title: {
-      fontSize: 22,
-      fontWeight: "900",
-      color: C.text,
-    },
+    title: { fontSize: 22, fontWeight: "900", color: C.text },
     closeBtn: {
       width: 30,
       height: 30,
@@ -395,17 +317,9 @@ function makeStyles(C: ThemeColors) {
       alignItems: "center",
       justifyContent: "center",
     },
-    closeIcon: {
-      fontSize: 12,
-      fontWeight: "700",
-      color: C.textSecondary,
-    },
-    newInputRow: {
-      flexDirection: "row",
-      gap: 10,
-      marginBottom: 16,
-      alignItems: "center",
-    },
+    closeIcon: { fontSize: 12, fontWeight: "700", color: C.textSecondary },
+    newBlock: { marginBottom: 16 },
+    newInputRow: { flexDirection: "row", gap: 10, alignItems: "center" },
     newInput: {
       flex: 1,
       backgroundColor: C.inputBackground,
@@ -421,28 +335,20 @@ function makeStyles(C: ThemeColors) {
       paddingVertical: 12,
       borderRadius: 12,
     },
-    createBtnOff: {
-      backgroundColor: C.disabled,
+    createBtnOff: { backgroundColor: C.disabled },
+    createBtnText: { color: C.buttonPrimaryText, fontWeight: "800", fontSize: 14 },
+    newPrivacyRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginTop: 10,
+      paddingHorizontal: 2,
     },
-    createBtnText: {
-      color: C.buttonPrimaryText,
-      fontWeight: "800",
-      fontSize: 14,
-    },
-    loadingSpinner: {
-      marginVertical: 48,
-    },
-    grid: {
-      flexGrow: 0,
-      // maxHeight is set dynamically
-    },
-    gridContent: {
-      paddingBottom: 4,
-    },
-    columnWrapper: {
-      gap: GAP,
-      marginBottom: GAP,
-    },
+    newPrivacyLabel: { fontSize: 14, fontWeight: "600", color: C.textSecondary },
+    loadingSpinner: { marginVertical: 48 },
+    grid: { flexGrow: 0 },
+    gridContent: { paddingBottom: 4 },
+    columnWrapper: { gap: GAP, marginBottom: GAP },
     card: {
       width: CARD_W,
       height: CARD_H,
@@ -450,13 +356,7 @@ function makeStyles(C: ThemeColors) {
       overflow: "hidden",
       backgroundColor: C.surface,
     },
-    cardCover: {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      width: CARD_W,
-      height: CARD_H,
-    },
+    cardCover: { position: "absolute", top: 0, left: 0, width: CARD_W, height: CARD_H },
     cardOverlay: {
       position: "absolute",
       bottom: 0,
@@ -467,17 +367,8 @@ function makeStyles(C: ThemeColors) {
       paddingTop: 20,
       backgroundColor: "rgba(0,0,0,0.58)",
     },
-    cardName: {
-      fontSize: 13,
-      fontWeight: "800",
-      color: "#fff",
-    },
-    cardCount: {
-      fontSize: 11,
-      fontWeight: "600",
-      color: "rgba(255,255,255,0.6)",
-      marginTop: 2,
-    },
+    cardName: { fontSize: 13, fontWeight: "800", color: "#fff" },
+    cardCount: { fontSize: 11, fontWeight: "600", color: "rgba(255,255,255,0.6)", marginTop: 2 },
     checkBadge: {
       position: "absolute",
       top: 8,
@@ -489,11 +380,7 @@ function makeStyles(C: ThemeColors) {
       alignItems: "center",
       justifyContent: "center",
     },
-    checkMark: {
-      color: "#fff",
-      fontWeight: "900",
-      fontSize: 13,
-    },
+    checkMark: { color: "#fff", fontWeight: "900", fontSize: 13 },
     selectedRing: {
       position: "absolute",
       top: 0,
@@ -512,16 +399,8 @@ function makeStyles(C: ThemeColors) {
       borderStyle: "dashed",
       gap: 6,
     },
-    newPlus: {
-      fontSize: 26,
-      fontWeight: "300",
-      color: C.textSecondary,
-    },
-    newLabel: {
-      fontSize: 12,
-      fontWeight: "700",
-      color: C.textSecondary,
-    },
+    newPlus: { fontSize: 26, fontWeight: "300", color: C.textSecondary },
+    newLabel: { fontSize: 12, fontWeight: "700", color: C.textSecondary },
     doneBtn: {
       marginTop: 16,
       backgroundColor: C.buttonPrimary,
@@ -529,10 +408,6 @@ function makeStyles(C: ThemeColors) {
       borderRadius: 16,
       alignItems: "center",
     },
-    doneBtnText: {
-      color: C.buttonPrimaryText,
-      fontWeight: "800",
-      fontSize: 16,
-    },
+    doneBtnText: { color: C.buttonPrimaryText, fontWeight: "800", fontSize: 16 },
   });
 }

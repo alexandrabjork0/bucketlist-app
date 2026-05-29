@@ -296,7 +296,7 @@ export default function ExploreScreen() {
         media: [],
         createdAt: serverTimestamp(),
         completedAt: null,
-        customIdea: true,
+        source: "custom",
         isPrivate: newIsPrivate,
         experienceId,
       });

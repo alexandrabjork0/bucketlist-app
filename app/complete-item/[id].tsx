@@ -2,16 +2,13 @@ import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
 import * as VideoThumbnails from "expo-video-thumbnails";
 import {
-  arrayUnion,
   collection,
   doc,
   getDoc,
   getDocs,
-  increment,
   query,
   serverTimestamp,
   setDoc,
-  updateDoc,
   where,
 } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
@@ -28,6 +25,7 @@ import {
   View,
 } from "react-native";
 import VideoPlayer from "../../components/VideoPlayer";
+import { completeItem as saveCompletion } from "../../lib/collections";
 import { auth, db, storage } from "../../lib/firebaseConfig";
 import { createNotification } from "../../lib/notifications";
 import { ThemeColors, useTheme } from "../../lib/theme";
@@ -227,35 +225,19 @@ export default function CompleteItemScreen() {
 
       const firstImage = cleanMedia.find((m: any) => m.type === "image");
       const firstMedia = cleanMedia[0] as any;
+      const imageUrl = firstImage?.url || firstMedia?.url || null;
 
-      const itemRef = doc(db, "userBucketlistItems", id);
-
-      await updateDoc(itemRef, {
-        completed: true,
-        completedAt: serverTimestamp(),
-        caption: caption.trim(),
-        imageUrl: firstImage?.url || firstMedia?.url || null,
+      await saveCompletion({
+        itemId: id as string,
+        collectionId: item?.collectionId ?? null,
+        experienceId: item?.experienceId ?? null,
+        caption,
+        imageUrl,
         media: cleanMedia,
+        isPrivate: item?.isPrivate ?? false,
       });
 
       notifyCompletion(id).catch(() => {});
-
-      const firstImageUrl = cleanMedia.find((m: any) => m.type === "image")?.url;
-
-      if (item?.experienceId) {
-        updateDoc(doc(db, "experiences", item.experienceId), {
-          completionsCount: increment(1),
-        }).catch(() => {});
-      }
-
-      if (item?.collectionId) {
-        const collUpdate: Record<string, any> = {
-          completedCount: increment(1),
-          updatedAt: serverTimestamp(),
-        };
-        if (firstImageUrl) collUpdate.coverImages = arrayUnion(firstImageUrl);
-        updateDoc(doc(db, "collections", item.collectionId), collUpdate).catch(() => {});
-      }
 
       Alert.alert("Posted", "Your experience is now posted!");
       router.back();

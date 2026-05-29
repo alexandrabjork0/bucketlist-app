@@ -1,15 +1,10 @@
 import { router, useLocalSearchParams } from "expo-router";
 import {
-  addDoc,
   collection,
-  deleteDoc,
   doc,
   getDoc,
   getDocs,
-  increment,
   query,
-  serverTimestamp,
-  updateDoc,
   where,
 } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
@@ -23,7 +18,8 @@ import {
   Text,
   View,
 } from "react-native";
-import CollectionPickerSheet, { CollectionRef } from "../../components/CollectionPickerSheet";
+import CollectionPickerSheet from "../../components/CollectionPickerSheet";
+import { CollectionRef, saveToCollections } from "../../lib/collections";
 import PostThumbnail from "../../components/PostThumbnail";
 import { auth, db } from "../../lib/firebaseConfig";
 import { ThemeColors, useTheme } from "../../lib/theme";
@@ -126,42 +122,17 @@ export default function ExperienceScreen() {
     setPickerVisible(false);
     if (!auth.currentUser || !experience) return;
 
-    const newMap = new Map(savedItems);
-
-    for (const col of toAdd) {
-      const ref = await addDoc(collection(db, "userBucketlistItems"), {
-        userId: auth.currentUser.uid,
-        collectionId: col.id,
+    const newMap = await saveToCollections(
+      {
         title: experience.title,
         category: experience.category,
-        completed: false,
-        imageUrl: null,
-        caption: "",
-        media: [],
-        createdAt: serverTimestamp(),
-        completedAt: null,
-        fromExplore: true,
+        source: "explore",
         experienceId: String(id),
-      });
-      newMap.set(col.id, ref.id);
-      updateDoc(doc(db, "experiences", String(id)), { savesCount: increment(1) }).catch(() => {});
-      updateDoc(doc(db, "collections", col.id), {
-        itemCount: increment(1),
-        updatedAt: serverTimestamp(),
-      }).catch(() => {});
-    }
-
-    for (const colId of toRemove) {
-      const docId = savedItems.get(colId);
-      if (docId) {
-        deleteDoc(doc(db, "userBucketlistItems", docId)).catch(() => {});
-        updateDoc(doc(db, "collections", colId), {
-          itemCount: increment(-1),
-          updatedAt: serverTimestamp(),
-        }).catch(() => {});
-        newMap.delete(colId);
-      }
-    }
+      },
+      toAdd,
+      toRemove,
+      savedItems
+    );
 
     setSavedItems(newMap);
   };

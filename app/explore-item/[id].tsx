@@ -135,7 +135,7 @@ export default function ExploreItemScreen() {
       media: [],
       createdAt: serverTimestamp(),
       completedAt: null,
-      fromPost: true,
+      source: "post",
       inspiredByPostId: item.id,
       inspiredByUserId: item.userId,
       experienceId: String(id),
