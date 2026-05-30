@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import {
   addDoc,
   collection,
@@ -170,6 +171,11 @@ export default function PostComments({ postId, authorId, expanded, onClose }: Pr
               <Pressable
                 key={c.id}
                 style={styles.commentRow}
+                onPress={() => {
+                  if (c.userId === auth.currentUser?.uid) return;
+                  onClose();
+                  router.push({ pathname: "/user/[id]", params: { id: c.userId } });
+                }}
                 onLongPress={() => deleteComment(c.id, c.userId)}
                 delayLongPress={400}
               >

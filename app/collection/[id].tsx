@@ -511,7 +511,14 @@ export default function CollectionDetailScreen() {
                 <Text style={styles.membersLabel}>Members</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                   {members.map((m) => (
-                    <View key={m.id} style={styles.memberPill}>
+                    <Pressable
+                      key={m.id}
+                      style={styles.memberPill}
+                      onPress={() => {
+                        if (m.id === auth.currentUser?.uid) return;
+                        router.push({ pathname: "/user/[id]", params: { id: m.id } });
+                      }}
+                    >
                       {m.profileImage ? (
                         <Image source={{ uri: m.profileImage }} style={styles.memberPillAvatar} />
                       ) : (
@@ -525,7 +532,7 @@ export default function CollectionDetailScreen() {
                         @{m.username}
                         {m.id === auth.currentUser?.uid ? " (you)" : ""}
                       </Text>
-                    </View>
+                    </Pressable>
                   ))}
                 </ScrollView>
               </View>

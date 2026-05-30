@@ -37,11 +37,8 @@ export default function PostCard({ post, author, onSave, savedCount = 0, onDelet
   const [commentOpen, setCommentOpen] = useState(false);
 
   const goToProfile = () => {
-    if (author.userId === auth.currentUser?.uid) {
-      router.push("/profile");
-    } else {
-      router.push({ pathname: "/user/[id]", params: { id: author.userId } });
-    }
+    if (author.userId === auth.currentUser?.uid) return;
+    router.push({ pathname: "/user/[id]", params: { id: author.userId } });
   };
 
   const formatDate = () => {
