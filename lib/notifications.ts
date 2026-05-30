@@ -73,8 +73,8 @@ export async function createNotification({
       tab = "personal";
       break;
     case "friend_completion":
-      groupKey = `friend_completion_${actorId}_${postId}`;
-      tab = "friends";
+      groupKey = `friend_completion_${recipientId}_${actorId}_${postId}`;
+      tab = "personal";
       break;
     case "milestone":
       groupKey = `milestone_${recipientId}_${previewText}`;
@@ -134,4 +134,31 @@ export async function createNotification({
       updatedAt: serverTimestamp(),
     });
   }
+}
+
+export async function createMilestoneNotification(
+  uid: string,
+  message: string,
+  count: number
+): Promise<void> {
+  const notifRef = doc(db, "notifications", `milestone_${uid}_${count}`);
+  await setDoc(
+    notifRef,
+    {
+      recipientId: uid,
+      type: "milestone",
+      tab: "personal",
+      actors: [],
+      actorCount: 0,
+      postId: null,
+      postTitle: null,
+      postImageUrl: null,
+      previewText: message,
+      read: false,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    },
+    // merge: true so a re-trigger never resets an already-read notification
+    { merge: true }
+  );
 }

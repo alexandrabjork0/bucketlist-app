@@ -7,8 +7,6 @@ import {
   getDoc,
   getDocs,
   query,
-  serverTimestamp,
-  setDoc,
   where,
 } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
@@ -27,7 +25,7 @@ import {
 import VideoPlayer from "../../components/VideoPlayer";
 import { completeItem as saveCompletion } from "../../lib/collections";
 import { auth, db, storage } from "../../lib/firebaseConfig";
-import { createNotification } from "../../lib/notifications";
+import { createMilestoneNotification, createNotification } from "../../lib/notifications";
 import { ThemeColors, useTheme } from "../../lib/theme";
 
 const MILESTONES: Record<number, string> = {
@@ -70,23 +68,7 @@ async function notifyCompletion(postId: string) {
   const message = MILESTONES[count];
 
   if (message) {
-    await setDoc(
-      doc(db, "notifications", `milestone_${currentUser.uid}_${count}`),
-      {
-        recipientId: currentUser.uid,
-        type: "milestone",
-        tab: "personal",
-        actors: [],
-        actorCount: 0,
-        postId: null,
-        postTitle: null,
-        postImageUrl: null,
-        previewText: message,
-        read: false,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      }
-    );
+    await createMilestoneNotification(currentUser.uid, message, count);
   }
 }
 

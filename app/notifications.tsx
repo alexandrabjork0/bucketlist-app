@@ -14,8 +14,7 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Dimensions, ScrollView, StyleSheet, Text, View } from "react-native";
-import { TabBar, TabView } from "react-native-tab-view";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import NotificationRow from "../components/NotificationRow";
 import { auth, db } from "../lib/firebaseConfig";
 import { ThemeColors, useTheme } from "../lib/theme";
@@ -24,13 +23,7 @@ export default function NotificationsScreen() {
   const C = useTheme();
   const styles = useMemo(() => makeStyles(C), [C]);
 
-  const [personalNotifs, setPersonalNotifs] = useState<any[]>([]);
-  const [friendNotifs, setFriendNotifs] = useState<any[]>([]);
-  const [tabIndex, setTabIndex] = useState(0);
-  const [routes] = useState([
-    { key: "personal", title: "Personal" },
-    { key: "friends", title: "Friends" },
-  ]);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   useEffect(() => {
     let unsubNotifs: (() => void) | null = null;
@@ -39,8 +32,7 @@ export default function NotificationsScreen() {
       if (unsubNotifs) { unsubNotifs(); unsubNotifs = null; }
 
       if (!user) {
-        setPersonalNotifs([]);
-        setFriendNotifs([]);
+        setNotifications([]);
         return;
       }
 
@@ -49,14 +41,10 @@ export default function NotificationsScreen() {
           collection(db, "notifications"),
           where("recipientId", "==", user.uid),
           orderBy("updatedAt", "desc"),
-          limit(50)
+          limit(100)
         ),
         (snap) => {
-          const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-          setPersonalNotifs(
-            all.filter((n: any) => n.tab === "personal" || n.tab === "system")
-          );
-          setFriendNotifs(all.filter((n: any) => n.tab === "friends"));
+          setNotifications(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
         }
       );
     });
@@ -87,50 +75,26 @@ export default function NotificationsScreen() {
 
         updateDoc(doc(db, "users", auth.currentUser!.uid), {
           notificationsLastSeen: serverTimestamp(),
-        });
+        }).catch(() => {});
       };
 
       markRead();
     }, [])
   );
 
-  const renderScene = ({ route }: any) => {
-    const data = route.key === "personal" ? personalNotifs : friendNotifs;
-
-    return (
-      <ScrollView style={styles.scene}>
-        {data.length === 0 ? (
-          <Text style={styles.emptyText}>
-            {route.key === "personal"
-              ? "No notifications yet.\nComplete something and share it!"
-              : "Follow people to see their activity here."}
-          </Text>
-        ) : (
-          data.map((notif) => <NotificationRow key={notif.id} notification={notif} />)
-        )}
-      </ScrollView>
-    );
-  };
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Notifications</Text>
-
-      <TabView
-        navigationState={{ index: tabIndex, routes }}
-        renderScene={renderScene}
-        onIndexChange={setTabIndex}
-        initialLayout={{ width: Dimensions.get("window").width }}
-        renderTabBar={(props: any) => (
-          <TabBar
-            {...props}
-            indicatorStyle={styles.tabIndicator}
-            style={styles.tabBar}
-            activeColor={C.text}
-            inactiveColor={C.textTertiary}
-          />
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        {notifications.length === 0 ? (
+          <Text style={styles.emptyText}>No notifications yet.</Text>
+        ) : (
+          notifications.map((notif) => (
+            <NotificationRow key={notif.id} notification={notif} />
+          ))
         )}
-      />
+        <View style={{ height: 40 }} />
+      </ScrollView>
     </View>
   );
 }
@@ -149,19 +113,8 @@ function makeStyles(C: ThemeColors) {
       paddingBottom: 10,
       color: C.text,
     },
-    tabBar: {
-      backgroundColor: C.background,
-      elevation: 0,
-      shadowOpacity: 0,
-    },
-    tabIndicator: {
-      backgroundColor: C.text,
-      height: 3,
-      borderRadius: 999,
-    },
-    scene: {
+    scroll: {
       flex: 1,
-      backgroundColor: C.background,
     },
     emptyText: {
       paddingHorizontal: 20,

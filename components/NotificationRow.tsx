@@ -1,5 +1,7 @@
 import { router } from "expo-router";
+import { useMemo } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { ThemeColors, useTheme } from "../lib/theme";
 
 type Props = { notification: any };
 
@@ -66,17 +68,33 @@ function getRelativeTime(updatedAt: any): string {
 }
 
 function getOnPress(notification: any): (() => void) | undefined {
-  if (notification.type === "collection_invite" && notification.inviteId) {
-    return () =>
-      router.push({
-        pathname: "/collection-invite/[inviteId]",
-        params: { inviteId: notification.inviteId },
-      });
+  const { type, postId, collectionId, inviteId, actors } = notification;
+  const actorId = actors?.[0]?.userId;
+
+  switch (type) {
+    case "like":
+    case "comment":
+    case "save":
+    case "friend_completion":
+      if (postId) return () => router.push({ pathname: "/explore-post/[id]", params: { id: postId } });
+      return undefined;
+    case "follow":
+      if (actorId) return () => router.push({ pathname: "/user/[id]", params: { id: actorId } });
+      return undefined;
+    case "collection_invite":
+      if (inviteId) return () => router.push({ pathname: "/collection-invite/[inviteId]", params: { inviteId } });
+      return undefined;
+    case "collection_invite_accepted":
+      if (collectionId) return () => router.push({ pathname: "/collection/[id]", params: { id: collectionId } });
+      return undefined;
+    default:
+      return undefined;
   }
-  return undefined;
 }
 
 export default function NotificationRow({ notification }: Props) {
+  const C = useTheme();
+  const styles = useMemo(() => makeStyles(C), [C]);
   const firstActor = notification.actors?.[0];
   const isUnread = notification.read === false;
   const onPress = getOnPress(notification);
@@ -112,70 +130,72 @@ export default function NotificationRow({ notification }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-  },
-  unreadRow: {
-    backgroundColor: "#fafafa",
-  },
-  avatarWrapper: {
-    position: "relative",
-    marginRight: 12,
-  },
-  unreadDot: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: "#111",
-    zIndex: 1,
-    borderWidth: 2,
-    borderColor: "#fff",
-  },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-  },
-  avatarFallback: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#eee",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarInitial: {
-    fontWeight: "700",
-    fontSize: 16,
-    color: "#111",
-  },
-  content: {
-    flex: 1,
-    paddingRight: 8,
-  },
-  text: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: "#111",
-  },
-  time: {
-    fontSize: 12,
-    color: "#999",
-    marginTop: 3,
-  },
-  thumbnail: {
-    width: 50,
-    height: 50,
-    borderRadius: 6,
-    backgroundColor: "#eee",
-  },
-});
+function makeStyles(C: ThemeColors) {
+  return StyleSheet.create({
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: C.divider,
+    },
+    unreadRow: {
+      backgroundColor: C.surface,
+    },
+    avatarWrapper: {
+      position: "relative",
+      marginRight: 12,
+    },
+    unreadDot: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: C.text,
+      zIndex: 1,
+      borderWidth: 2,
+      borderColor: C.background,
+    },
+    avatar: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+    },
+    avatarFallback: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: C.surfaceElevated,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    avatarInitial: {
+      fontWeight: "700",
+      fontSize: 16,
+      color: C.text,
+    },
+    content: {
+      flex: 1,
+      paddingRight: 8,
+    },
+    text: {
+      fontSize: 14,
+      lineHeight: 20,
+      color: C.text,
+    },
+    time: {
+      fontSize: 12,
+      color: C.textTertiary,
+      marginTop: 3,
+    },
+    thumbnail: {
+      width: 50,
+      height: 50,
+      borderRadius: 6,
+      backgroundColor: C.surfaceElevated,
+    },
+  });
+}
