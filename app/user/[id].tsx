@@ -250,7 +250,7 @@ export default function UserProfileScreen() {
                   key={item.id}
                   post={item}
                   onPress={() =>
-                    router.push({ pathname: "/explore-post/[id]", params: { id: item.id } })
+                    router.push({ pathname: "/post/[id]", params: { id: item.id, userId: id } })
                   }
                 />
               ))}

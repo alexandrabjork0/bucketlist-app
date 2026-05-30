@@ -90,6 +90,7 @@ const sh = StyleSheet.create({
 function ActivityTile({ post, author }: { post: any; author: any }) {
   const C = useTheme();
   const imageUrl = post.imageUrl || post.media?.[0]?.thumbnailUrl || post.media?.[0]?.url;
+  const handlePress = () => router.push({ pathname: "/friends-feed/[id]", params: { id: post.id } });
 
   const shortDate = () => {
     if (!post.completedAt?.seconds) return "";
@@ -101,7 +102,7 @@ function ActivityTile({ post, author }: { post: any; author: any }) {
   };
 
   return (
-    <View style={at.card}>
+    <Pressable style={at.card} onPress={handlePress}>
       <View style={[at.imageWrapper, { backgroundColor: C.surfaceElevated }]}>
         {imageUrl ? (
           <Image source={{ uri: imageUrl }} style={at.image} resizeMode="cover" />
@@ -131,7 +132,7 @@ function ActivityTile({ post, author }: { post: any; author: any }) {
         <Text style={[at.title, { color: C.text }]} numberOfLines={2}>{post.title}</Text>
         <Text style={[at.date, { color: C.textTertiary }]}>{shortDate()}</Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 

@@ -50,6 +50,7 @@ export default function RootLayout() {
         <Stack.Screen name="my-collections" options={{ headerShown: false }} />
         <Stack.Screen name="friends-activity" options={{ headerShown: false }} />
         <Stack.Screen name="friends-lists" options={{ headerShown: false }} />
+        <Stack.Screen name="friends-feed/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: "modal", title: "Modal" }} />
       </Stack>
       <StatusBar style="auto" />

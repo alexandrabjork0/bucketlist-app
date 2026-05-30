@@ -104,7 +104,11 @@ export default function FriendsActivityScreen() {
               const imageUrl = post.imageUrl || post.media?.[0]?.thumbnailUrl || post.media?.[0]?.url;
               const author = post.author;
               return (
-                <View key={post.id} style={styles.card}>
+                <Pressable
+                  key={post.id}
+                  style={styles.card}
+                  onPress={() => router.push({ pathname: "/friends-feed/[id]", params: { id: post.id } })}
+                >
                   <View style={styles.imageWrapper}>
                     <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
                   </View>
@@ -130,7 +134,7 @@ export default function FriendsActivityScreen() {
                       {formatDate(post.completedAt?.seconds)}
                     </Text>
                   </View>
-                </View>
+                </Pressable>
               );
             })}
           </View>

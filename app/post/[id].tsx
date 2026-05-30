@@ -25,17 +25,20 @@ export default function PostScreen() {
   const C = useTheme();
   const styles = useMemo(() => makeStyles(C), [C]);
 
-  const { id } = useLocalSearchParams();
+  const { id, userId } = useLocalSearchParams<{ id: string; userId?: string }>();
   const scrollViewRef = useRef<ScrollView>(null);
 
   const [posts, setPosts] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
 
+  const targetUserId = userId || auth.currentUser?.uid;
+  const isOwnPosts = !userId || userId === auth.currentUser?.uid;
+
   useEffect(() => {
     const loadPosts = async () => {
-      if (!auth.currentUser) return;
+      if (!targetUserId) return;
 
-      const userRef = doc(db, "users", auth.currentUser.uid);
+      const userRef = doc(db, "users", targetUserId);
       const userSnap = await getDoc(userRef);
 
       if (userSnap.exists()) {
@@ -44,7 +47,7 @@ export default function PostScreen() {
 
       const postsQuery = query(
         collection(db, "userBucketlistItems"),
-        where("userId", "==", auth.currentUser.uid),
+        where("userId", "==", targetUserId),
         where("completed", "==", true)
       );
 
@@ -76,7 +79,7 @@ export default function PostScreen() {
     };
 
     loadPosts();
-  }, [id]);
+  }, [id, userId]);
 
   const deletePost = async (postId: string) => {
     Alert.alert("Delete post?", "This will permanently delete this post.", [
@@ -115,11 +118,11 @@ export default function PostScreen() {
             key={post.id}
             post={post}
             author={{
-              userId: auth.currentUser?.uid || "",
+              userId: targetUserId || "",
               username: profile?.username,
               profileImage: profile?.profileImage,
             }}
-            onDelete={() => deletePost(post.id)}
+            onDelete={isOwnPosts ? () => deletePost(post.id) : undefined}
           />
         ))}
       </ScrollView>
