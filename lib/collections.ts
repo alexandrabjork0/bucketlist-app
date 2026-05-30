@@ -245,6 +245,44 @@ export async function declineCollectionInvite(params: {
   await batch.commit();
 }
 
+// Link a completion post to an existing Discover experience.
+export async function linkCompletionToExperience(
+  completionId: string,
+  experienceId: string
+): Promise<void> {
+  const batch = writeBatch(db);
+  batch.update(doc(db, "userBucketlistItems", completionId), { experienceId });
+  batch.update(doc(db, "experiences", experienceId), { completionsCount: increment(1) });
+  await batch.commit();
+}
+
+// Create a new Discover experience and link the completion post to it.
+export async function publishNewExperience(params: {
+  completionId: string;
+  title: string;
+  category: string;
+  heroImageUrl: string | null;
+  createdBy: string;
+}): Promise<string> {
+  const expRef = doc(collection(db, "experiences"));
+  const batch = writeBatch(db);
+  batch.set(expRef, {
+    title: params.title.trim(),
+    category: params.category || "Other",
+    heroImageUrl: params.heroImageUrl,
+    createdBy: params.createdBy,
+    completionsCount: 1,
+    savesCount: 0,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  batch.update(doc(db, "userBucketlistItems", params.completionId), {
+    experienceId: expRef.id,
+  });
+  await batch.commit();
+  return expRef.id;
+}
+
 // Leave a shared collection as a member.
 export async function leaveCollection(collectionId: string): Promise<void> {
   if (!auth.currentUser) throw new Error("Not authenticated");

@@ -39,6 +39,7 @@ export default function SignupScreen() {
       await setDoc(doc(db, "users", userCredential.user.uid), {
         email: email.trim(),
         username: username.trim(),
+        usernameLower: username.trim().toLowerCase(),
         bio: "",
         profileImage: "",
         createdAt: serverTimestamp(),

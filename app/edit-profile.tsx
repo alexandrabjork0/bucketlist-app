@@ -90,6 +90,7 @@ export default function EditProfileScreen() {
   
     await updateDoc(doc(db, "users", auth.currentUser.uid), {
       username: username.trim(),
+      usernameLower: username.trim().toLowerCase(),
       bio: bio.trim(),
       profileImage: profileImageUrl,
     });

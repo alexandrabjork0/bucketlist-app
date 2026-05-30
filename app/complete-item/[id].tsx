@@ -12,8 +12,12 @@ import {
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -23,7 +27,7 @@ import {
   View,
 } from "react-native";
 import VideoPlayer from "../../components/VideoPlayer";
-import { completeItem as saveCompletion } from "../../lib/collections";
+import { completeItem as saveCompletion, linkCompletionToExperience, publishNewExperience } from "../../lib/collections";
 import { auth, db, storage } from "../../lib/firebaseConfig";
 import { createMilestoneNotification, createNotification } from "../../lib/notifications";
 import { ThemeColors, useTheme } from "../../lib/theme";
@@ -91,6 +95,14 @@ export default function CompleteItemScreen() {
   const [step, setStep] = useState<1 | 2>(1);
   const [previewIndex, setPreviewIndex] = useState(0);
   const [captionIndex, setCaptionIndex] = useState(0);
+
+  const [discoverSheet, setDiscoverSheet] = useState(false);
+  const [discoverQuery, setDiscoverQuery] = useState("");
+  const [allExperiences, setAllExperiences] = useState<any[]>([]);
+  const [discoverResults, setDiscoverResults] = useState<any[]>([]);
+  const [discoverLoading, setDiscoverLoading] = useState(false);
+  const [pendingCompletionId, setPendingCompletionId] = useState<string | null>(null);
+  const [pendingImageUrl, setPendingImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const loadItem = async () => {
@@ -224,6 +236,12 @@ export default function CompleteItemScreen() {
 
       notifyCompletion(completionId).catch(() => {});
 
+      if (!item?.experienceId) {
+        setSaving(false);
+        openDiscoverSheet(completionId, imageUrl);
+        return;
+      }
+
       Alert.alert("Posted", "Your experience is now posted!");
       router.back();
     } catch (error) {
@@ -232,6 +250,55 @@ export default function CompleteItemScreen() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const openDiscoverSheet = async (completionId: string, imageUrl: string | null) => {
+    setPendingCompletionId(completionId);
+    setPendingImageUrl(imageUrl);
+    setDiscoverQuery(item?.title || "");
+    setDiscoverLoading(true);
+    setDiscoverSheet(true);
+    const snap = await getDocs(collection(db, "experiences"));
+    const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    setAllExperiences(all);
+    filterDiscoverResults(all, item?.title || "");
+    setDiscoverLoading(false);
+  };
+
+  const filterDiscoverResults = (all: any[], q: string) => {
+    const lower = q.trim().toLowerCase();
+    if (!lower) { setDiscoverResults([]); return; }
+    setDiscoverResults(
+      all.filter((e: any) => e.title?.toLowerCase().includes(lower)).slice(0, 8)
+    );
+  };
+
+  const handleDiscoverSearch = (q: string) => {
+    setDiscoverQuery(q);
+    filterDiscoverResults(allExperiences, q);
+  };
+
+  const handleLinkExperience = async (expId: string) => {
+    if (!pendingCompletionId) return;
+    await linkCompletionToExperience(pendingCompletionId, expId);
+    closeDiscoverSheet();
+  };
+
+  const handleCreateNew = async () => {
+    if (!pendingCompletionId || !discoverQuery.trim() || !auth.currentUser) return;
+    await publishNewExperience({
+      completionId: pendingCompletionId,
+      title: discoverQuery.trim(),
+      category: item?.category || "Other",
+      heroImageUrl: pendingImageUrl,
+      createdBy: auth.currentUser.uid,
+    });
+    closeDiscoverSheet();
+  };
+
+  const closeDiscoverSheet = () => {
+    setDiscoverSheet(false);
+    router.back();
   };
 
   return (
@@ -403,6 +470,80 @@ export default function CompleteItemScreen() {
           </View>
         </ScrollView>
       )}
+
+      <Modal
+        visible={discoverSheet}
+        animationType="slide"
+        transparent
+        onRequestClose={closeDiscoverSheet}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.discoverOverlay}
+        >
+          <Pressable style={StyleSheet.absoluteFill} onPress={closeDiscoverSheet} />
+          <View style={styles.discoverSheet}>
+            <View style={styles.discoverHandle} />
+
+            <View style={styles.discoverHeader}>
+              <Text style={styles.discoverTitle}>Add to Discover</Text>
+              <Pressable onPress={closeDiscoverSheet}>
+                <Text style={styles.discoverSkip}>Not now</Text>
+              </Pressable>
+            </View>
+
+            <Text style={styles.discoverSubtitle}>
+              Your post is live! Want to add it to Discover so others can find and save it?
+            </Text>
+
+            <TextInput
+              style={styles.discoverSearchInput}
+              value={discoverQuery}
+              onChangeText={handleDiscoverSearch}
+              placeholder="Search experiences…"
+              placeholderTextColor={C.inputPlaceholder}
+              autoCorrect={false}
+            />
+
+            {discoverLoading ? (
+              <ActivityIndicator style={{ marginTop: 24 }} color={C.text} />
+            ) : discoverResults.length > 0 ? (
+              <ScrollView style={styles.discoverList} showsVerticalScrollIndicator={false}>
+                {discoverResults.map((exp) => (
+                  <Pressable
+                    key={exp.id}
+                    style={styles.discoverResultRow}
+                    onPress={() => handleLinkExperience(exp.id)}
+                  >
+                    {exp.heroImageUrl ? (
+                      <Image source={{ uri: exp.heroImageUrl }} style={styles.discoverResultThumb} />
+                    ) : (
+                      <View style={[styles.discoverResultThumb, { backgroundColor: C.surfaceElevated }]} />
+                    )}
+                    <View style={styles.discoverResultInfo}>
+                      <Text style={styles.discoverResultTitle} numberOfLines={1}>{exp.title}</Text>
+                      <Text style={styles.discoverResultMeta}>
+                        {exp.completionsCount || 0} {exp.completionsCount === 1 ? "completion" : "completions"}
+                      </Text>
+                    </View>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            ) : (
+              <View style={styles.discoverEmpty}>
+                <Text style={styles.discoverEmptyText}>No matching experiences found.</Text>
+                {discoverQuery.trim().length > 0 && (
+                  <Pressable style={styles.discoverNewBtn} onPress={handleCreateNew}>
+                    <Text style={styles.discoverNewBtnText}>
+                      Add "{discoverQuery.trim()}" as new experience
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
+            )}
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -608,6 +749,109 @@ function makeStyles(C: ThemeColors) {
       color: C.textTertiary,
       fontWeight: "600",
       textAlign: "right",
+    },
+
+    discoverOverlay: {
+      flex: 1,
+      justifyContent: "flex-end",
+    },
+    discoverSheet: {
+      backgroundColor: C.background,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      paddingTop: 12,
+      paddingHorizontal: 20,
+      paddingBottom: 48,
+      maxHeight: "80%",
+    },
+    discoverHandle: {
+      width: 40,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: C.handle,
+      alignSelf: "center",
+      marginBottom: 16,
+    },
+    discoverHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 4,
+    },
+    discoverTitle: {
+      fontSize: 18,
+      fontWeight: "900",
+      color: C.text,
+    },
+    discoverSkip: {
+      fontSize: 15,
+      fontWeight: "700",
+      color: C.textSecondary,
+    },
+    discoverSubtitle: {
+      fontSize: 14,
+      color: C.textSecondary,
+      marginBottom: 16,
+    },
+    discoverSearchInput: {
+      backgroundColor: C.inputBackground,
+      borderRadius: 12,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      fontSize: 15,
+      color: C.text,
+      marginBottom: 16,
+    },
+    discoverList: {
+      maxHeight: 320,
+    },
+    discoverResultRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: 10,
+      gap: 12,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: C.divider,
+    },
+    discoverResultThumb: {
+      width: 52,
+      height: 52,
+      borderRadius: 10,
+    },
+    discoverResultInfo: {
+      flex: 1,
+    },
+    discoverResultTitle: {
+      fontSize: 15,
+      fontWeight: "800",
+      color: C.text,
+    },
+    discoverResultMeta: {
+      fontSize: 13,
+      color: C.textTertiary,
+      marginTop: 2,
+    },
+    discoverEmpty: {
+      paddingTop: 20,
+      alignItems: "center",
+      gap: 16,
+    },
+    discoverEmptyText: {
+      fontSize: 15,
+      color: C.textSecondary,
+    },
+    discoverNewBtn: {
+      backgroundColor: C.buttonPrimary,
+      borderRadius: 14,
+      paddingHorizontal: 20,
+      paddingVertical: 13,
+      width: "100%",
+      alignItems: "center",
+    },
+    discoverNewBtnText: {
+      color: C.buttonPrimaryText,
+      fontWeight: "800",
+      fontSize: 15,
     },
   });
 }

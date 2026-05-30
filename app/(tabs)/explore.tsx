@@ -3,10 +3,11 @@ import {
   collection,
   getDocs,
   limit,
+  orderBy,
   query,
   where,
 } from "firebase/firestore";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Dimensions,
   Image,
@@ -175,11 +176,34 @@ export default function ExploreScreen() {
   const [recommended, setRecommended] = useState<Experience[]>([]);
   const [topCategory, setTopCategory] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [people, setPeople] = useState<any[]>([]);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     fetchExperiences();
     fetchPersonalized();
   }, []);
+
+  useEffect(() => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    if (!search.trim()) { setPeople([]); return; }
+    searchTimer.current = setTimeout(() => searchUsers(search.trim()), 300);
+    return () => { if (searchTimer.current) clearTimeout(searchTimer.current); };
+  }, [search]);
+
+  const searchUsers = async (q: string) => {
+    const lower = q.toLowerCase();
+    const snap = await getDocs(
+      query(
+        collection(db, "users"),
+        where("usernameLower", ">=", lower),
+        where("usernameLower", "<=", lower + ""),
+        orderBy("usernameLower"),
+        limit(8)
+      )
+    );
+    setPeople(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+  };
 
   const fetchExperiences = async () => {
     const expSnap = await getDocs(query(collection(db, "experiences"), limit(1)));
@@ -261,6 +285,40 @@ export default function ExploreScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
+
+        {/* ── 0. People results ── */}
+        {search.trim().length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>People</Text>
+            {people.length === 0 ? (
+              <Text style={styles.noResults}>No users found.</Text>
+            ) : (
+              people.map((user) => (
+                <Pressable
+                  key={user.id}
+                  style={styles.personRow}
+                  onPress={() => router.push({ pathname: "/user/[id]", params: { id: user.id } })}
+                >
+                  {user.profileImage ? (
+                    <Image source={{ uri: user.profileImage }} style={styles.personAvatar} />
+                  ) : (
+                    <View style={styles.personAvatarFallback}>
+                      <Text style={styles.personAvatarInitial}>
+                        {user.username?.charAt(0)?.toUpperCase() || "?"}
+                      </Text>
+                    </View>
+                  )}
+                  <View style={styles.personInfo}>
+                    <Text style={styles.personUsername}>@{user.username}</Text>
+                    {user.bio ? (
+                      <Text style={styles.personBio} numberOfLines={1}>{user.bio}</Text>
+                    ) : null}
+                  </View>
+                </Pressable>
+              ))
+            )}
+          </View>
+        )}
 
         {/* ── 1. Featured / Trending ── */}
         {!search && trending.length > 0 && (
@@ -370,6 +428,51 @@ function makeStyles(C: ThemeColors) {
       borderRadius: 14,
       fontSize: 15,
       color: C.text,
+    },
+
+    // People search results
+    personRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 18,
+      paddingVertical: 10,
+      gap: 12,
+    },
+    personAvatar: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+    },
+    personAvatarFallback: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: C.surfaceElevated,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    personAvatarInitial: {
+      fontSize: 16,
+      fontWeight: "700",
+      color: C.text,
+    },
+    personInfo: {
+      flex: 1,
+    },
+    personUsername: {
+      fontSize: 15,
+      fontWeight: "800",
+      color: C.text,
+    },
+    personBio: {
+      fontSize: 13,
+      color: C.textSecondary,
+      marginTop: 2,
+    },
+    noResults: {
+      paddingHorizontal: 18,
+      color: C.textSecondary,
+      fontSize: 14,
     },
 
     // Sections
