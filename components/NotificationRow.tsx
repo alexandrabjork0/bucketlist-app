@@ -1,6 +1,15 @@
 import { router } from "expo-router";
-import { useMemo } from "react";
+import {
+  deleteDoc,
+  doc,
+  getDoc,
+  serverTimestamp,
+  setDoc,
+} from "firebase/firestore";
+import { useEffect, useMemo, useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { auth, db } from "../lib/firebaseConfig";
+import { createNotification } from "../lib/notifications";
 import { ThemeColors, useTheme } from "../lib/theme";
 
 type Props = { notification: any };
@@ -92,12 +101,121 @@ function getOnPress(notification: any): (() => void) | undefined {
   }
 }
 
+// ── Follow back button ────────────────────────────────────────────────────────
+
+function FollowButton({ actorId }: { actorId: string }) {
+  const C = useTheme();
+  const styles = useMemo(() => makeStyles(C), [C]);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const uid = auth.currentUser?.uid;
+    if (!uid || !actorId) return;
+    getDoc(doc(db, "follows", `${uid}_${actorId}`)).then((d) => {
+      setIsFollowing(d.exists());
+      setLoading(false);
+    });
+  }, [actorId]);
+
+  const toggle = async () => {
+    const uid = auth.currentUser?.uid;
+    if (!uid || !actorId) return;
+    const ref = doc(db, "follows", `${uid}_${actorId}`);
+    if (isFollowing) {
+      await deleteDoc(ref);
+      setIsFollowing(false);
+    } else {
+      await setDoc(ref, { followerId: uid, followingId: actorId, createdAt: serverTimestamp() });
+      setIsFollowing(true);
+      createNotification({ recipientId: actorId, type: "follow", actorId: uid }).catch(() => {});
+    }
+  };
+
+  if (loading) return null;
+
+  return (
+    <Pressable
+      style={[
+        styles.followBtn,
+        isFollowing
+          ? { backgroundColor: "transparent", borderWidth: 1, borderColor: C.border }
+          : { backgroundColor: C.buttonPrimary },
+      ]}
+      onPress={toggle}
+    >
+      <Text
+        style={[
+          styles.followBtnText,
+          { color: isFollowing ? C.textSecondary : C.buttonPrimaryText },
+        ]}
+      >
+        {isFollowing ? "Following" : "Follow"}
+      </Text>
+    </Pressable>
+  );
+}
+
+// ── Avatar stack ──────────────────────────────────────────────────────────────
+
+function AvatarStack({
+  actors,
+  isUnread,
+  styles,
+  C,
+}: {
+  actors: any[];
+  isUnread: boolean;
+  styles: ReturnType<typeof makeStyles>;
+  C: ThemeColors;
+}) {
+  const first = actors[0];
+  const second = actors[1];
+
+  return (
+    <View style={styles.avatarWrapper}>
+      {isUnread && <View style={styles.unreadDot} />}
+
+      {/* Primary avatar */}
+      {first?.profileImage ? (
+        <Image source={{ uri: first.profileImage }} style={styles.avatar} />
+      ) : (
+        <View style={styles.avatarFallback}>
+          <Text style={styles.avatarInitial}>
+            {first?.username?.charAt(0)?.toUpperCase() || "?"}
+          </Text>
+        </View>
+      )}
+
+      {/* Secondary avatar peek when grouped */}
+      {second && (
+        <View style={[styles.secondAvatar, { borderColor: C.background }]}>
+          {second.profileImage ? (
+            <Image source={{ uri: second.profileImage }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+          ) : (
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: C.surfaceElevated, alignItems: "center", justifyContent: "center" }]}>
+              <Text style={styles.secondAvatarInitial}>
+                {second.username?.charAt(0)?.toUpperCase() || "?"}
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
+    </View>
+  );
+}
+
+// ── Row ───────────────────────────────────────────────────────────────────────
+
 export default function NotificationRow({ notification }: Props) {
   const C = useTheme();
   const styles = useMemo(() => makeStyles(C), [C]);
-  const firstActor = notification.actors?.[0];
+
+  const actors: any[] = notification.actors || [];
   const isUnread = notification.read === false;
   const onPress = getOnPress(notification);
+  const isFollow = notification.type === "follow";
+  const actorId = actors[0]?.userId;
 
   return (
     <Pressable
@@ -105,25 +223,16 @@ export default function NotificationRow({ notification }: Props) {
       onPress={onPress}
       disabled={!onPress}
     >
-      <View style={styles.avatarWrapper}>
-        {isUnread && <View style={styles.unreadDot} />}
-        {firstActor?.profileImage ? (
-          <Image source={{ uri: firstActor.profileImage }} style={styles.avatar} />
-        ) : (
-          <View style={styles.avatarFallback}>
-            <Text style={styles.avatarInitial}>
-              {firstActor?.username?.charAt(0)?.toUpperCase() || "?"}
-            </Text>
-          </View>
-        )}
-      </View>
+      <AvatarStack actors={actors} isUnread={isUnread} styles={styles} C={C} />
 
       <View style={styles.content}>
         <Text style={styles.text}>{getDisplayText(notification)}</Text>
         <Text style={styles.time}>{getRelativeTime(notification.updatedAt)}</Text>
       </View>
 
-      {notification.postImageUrl ? (
+      {isFollow && actorId ? (
+        <FollowButton actorId={actorId} />
+      ) : notification.postImageUrl ? (
         <Image source={{ uri: notification.postImageUrl }} style={styles.thumbnail} />
       ) : null}
     </Pressable>
@@ -145,7 +254,9 @@ function makeStyles(C: ThemeColors) {
     },
     avatarWrapper: {
       position: "relative",
-      marginRight: 12,
+      width: 44,
+      height: 44,
+      marginRight: 14,
     },
     unreadDot: {
       position: "absolute",
@@ -155,7 +266,7 @@ function makeStyles(C: ThemeColors) {
       height: 10,
       borderRadius: 5,
       backgroundColor: C.text,
-      zIndex: 1,
+      zIndex: 2,
       borderWidth: 2,
       borderColor: C.background,
     },
@@ -177,6 +288,21 @@ function makeStyles(C: ThemeColors) {
       fontSize: 16,
       color: C.text,
     },
+    secondAvatar: {
+      position: "absolute",
+      bottom: -4,
+      right: -8,
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      borderWidth: 2,
+      overflow: "hidden",
+    },
+    secondAvatarInitial: {
+      fontSize: 8,
+      fontWeight: "800",
+      color: C.text,
+    },
     content: {
       flex: 1,
       paddingRight: 8,
@@ -196,6 +322,15 @@ function makeStyles(C: ThemeColors) {
       height: 50,
       borderRadius: 6,
       backgroundColor: C.surfaceElevated,
+    },
+    followBtn: {
+      paddingHorizontal: 16,
+      paddingVertical: 7,
+      borderRadius: 999,
+    },
+    followBtnText: {
+      fontSize: 13,
+      fontWeight: "800",
     },
   });
 }

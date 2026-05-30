@@ -1,4 +1,26 @@
 import { useFocusEffect } from "expo-router";
+
+const DAY = 86400000;
+const WEEK = 7 * DAY;
+const MONTH = 30 * DAY;
+
+function groupByTime(notifications: any[]) {
+  const now = Date.now();
+  const buckets: { label: string; items: any[] }[] = [
+    { label: "New", items: [] },
+    { label: "This week", items: [] },
+    { label: "This month", items: [] },
+    { label: "Earlier", items: [] },
+  ];
+  for (const n of notifications) {
+    const age = now - (n.updatedAt?.seconds || 0) * 1000;
+    if (age < DAY) buckets[0].items.push(n);
+    else if (age < WEEK) buckets[1].items.push(n);
+    else if (age < MONTH) buckets[2].items.push(n);
+    else buckets[3].items.push(n);
+  }
+  return buckets.filter((b) => b.items.length > 0);
+}
 import { onAuthStateChanged } from "firebase/auth";
 import {
   collection,
@@ -89,8 +111,13 @@ export default function NotificationsScreen() {
         {notifications.length === 0 ? (
           <Text style={styles.emptyText}>No notifications yet.</Text>
         ) : (
-          notifications.map((notif) => (
-            <NotificationRow key={notif.id} notification={notif} />
+          groupByTime(notifications).map((group) => (
+            <View key={group.label}>
+              <Text style={styles.sectionHeader}>{group.label}</Text>
+              {group.items.map((notif) => (
+                <NotificationRow key={notif.id} notification={notif} />
+              ))}
+            </View>
           ))
         )}
         <View style={{ height: 40 }} />
@@ -115,6 +142,16 @@ function makeStyles(C: ThemeColors) {
     },
     scroll: {
       flex: 1,
+    },
+    sectionHeader: {
+      fontSize: 12,
+      fontWeight: "800",
+      color: C.textTertiary,
+      textTransform: "uppercase",
+      letterSpacing: 0.7,
+      paddingHorizontal: 16,
+      paddingTop: 22,
+      paddingBottom: 6,
     },
     emptyText: {
       paddingHorizontal: 20,
