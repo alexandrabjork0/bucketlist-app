@@ -1,3 +1,4 @@
+import { Image as ExpoImage } from "expo-image";
 import * as MediaLibrary from "expo-media-library";
 import { router, useLocalSearchParams } from "expo-router";
 import * as VideoThumbnails from "expo-video-thumbnails";
@@ -99,22 +100,6 @@ type SelectedMedia = {
   type: "image" | "video";
 };
 
-type GalleryAsset = MediaLibrary.Asset & { resolvedUri: string };
-
-async function resolveAssets(assets: MediaLibrary.Asset[]): Promise<GalleryAsset[]> {
-  return Promise.all(
-    assets.map(async (asset) => {
-      let resolvedUri = asset.uri;
-      if (Platform.OS === "ios" && asset.uri.startsWith("ph://")) {
-        try {
-          const info = await MediaLibrary.getAssetInfoAsync(asset);
-          resolvedUri = info.localUri || asset.uri;
-        } catch {}
-      }
-      return { ...asset, resolvedUri };
-    })
-  );
-}
 
 export default function CompleteItemScreen() {
   const C = useTheme();
@@ -131,12 +116,12 @@ export default function CompleteItemScreen() {
 
   // Gallery
   const [galleryPermission, setGalleryPermission] = useState<boolean | null>(null);
-  const [galleryAssets, setGalleryAssets] = useState<GalleryAsset[]>([]);
+  const [galleryAssets, setGalleryAssets] = useState<MediaLibrary.Asset[]>([]);
   const [galleryLoading, setGalleryLoading] = useState(false);
   const [galleryHasMore, setGalleryHasMore] = useState(false);
   const [galleryEndCursor, setGalleryEndCursor] = useState<string | undefined>(undefined);
-  const [selectedAssets, setSelectedAssets] = useState<GalleryAsset[]>([]);
-  const [previewAsset, setPreviewAsset] = useState<GalleryAsset | null>(null);
+  const [selectedAssets, setSelectedAssets] = useState<MediaLibrary.Asset[]>([]);
+  const [previewAsset, setPreviewAsset] = useState<MediaLibrary.Asset | null>(null);
 
   // Discover sheet
   const [discoverSheet, setDiscoverSheet] = useState(false);
@@ -173,13 +158,12 @@ export default function CompleteItemScreen() {
       first: 60,
       sortBy: [[MediaLibrary.SortBy.creationTime, false]],
     });
-    const resolved = await resolveAssets(result.assets);
-    setGalleryAssets(resolved);
+    setGalleryAssets(result.assets);
     setGalleryHasMore(result.hasNextPage);
     setGalleryEndCursor(result.endCursor);
-    if (resolved.length > 0) {
-      setPreviewAsset(resolved[0]);
-      setSelectedAssets([resolved[0]]);
+    if (result.assets.length > 0) {
+      setPreviewAsset(result.assets[0]);
+      setSelectedAssets([result.assets[0]]);
     }
     setGalleryLoading(false);
   };
@@ -192,13 +176,12 @@ export default function CompleteItemScreen() {
       after: galleryEndCursor,
       sortBy: [[MediaLibrary.SortBy.creationTime, false]],
     });
-    const resolved = await resolveAssets(result.assets);
-    setGalleryAssets((prev) => [...prev, ...resolved]);
+    setGalleryAssets((prev) => [...prev, ...result.assets]);
     setGalleryHasMore(result.hasNextPage);
     setGalleryEndCursor(result.endCursor);
   };
 
-  const toggleAsset = (asset: GalleryAsset) => {
+  const toggleAsset = (asset: MediaLibrary.Asset) => {
     setPreviewAsset(asset);
     setSelectedAssets((prev) => {
       const idx = prev.findIndex((a) => a.id === asset.id);
@@ -208,17 +191,24 @@ export default function CompleteItemScreen() {
     });
   };
 
-  const goNext = () => {
+  const goNext = async () => {
     if (selectedAssets.length === 0) {
       Alert.alert("Select media", "Please select at least one photo or video.");
       return;
     }
-    setMedia(
-      selectedAssets.map((asset) => ({
-        uri: asset.resolvedUri,
-        type: asset.mediaType === "video" ? "video" : "image",
-      }))
+    const resolvedMedia: SelectedMedia[] = await Promise.all(
+      selectedAssets.map(async (asset) => {
+        let uri = asset.uri;
+        if (Platform.OS === "ios") {
+          try {
+            const info = await MediaLibrary.getAssetInfoAsync(asset);
+            uri = info.localUri || asset.uri;
+          } catch {}
+        }
+        return { uri, type: asset.mediaType === "video" ? "video" : "image" };
+      })
     );
+    setMedia(resolvedMedia);
     setStep(2);
   };
 
@@ -356,12 +346,12 @@ export default function CompleteItemScreen() {
     router.back();
   };
 
-  const renderGridItem = ({ item: asset }: { item: GalleryAsset }) => {
+  const renderGridItem = ({ item: asset }: { item: MediaLibrary.Asset }) => {
     const selectedIndex = selectedAssets.findIndex((a) => a.id === asset.id);
     const isSelected = selectedIndex !== -1;
     return (
       <Pressable onPress={() => toggleAsset(asset)} style={styles.gridCell}>
-        <Image source={{ uri: asset.resolvedUri }} style={styles.gridCellImage} />
+        <ExpoImage source={{ uri: asset.uri }} style={styles.gridCellImage} contentFit="cover" />
         {asset.mediaType === "video" && (
           <Text style={styles.videoDuration}>{formatDuration(asset.duration || 0)}</Text>
         )}
@@ -392,8 +382,8 @@ export default function CompleteItemScreen() {
         <Text style={styles.topTitle}>{step === 1 ? "New post" : "Caption"}</Text>
 
         {step === 1 ? (
-          <Pressable onPress={goNext} disabled={selectedAssets.length === 0 || galleryLoading}>
-            <Text style={[styles.actionText, (selectedAssets.length === 0 || galleryLoading) && styles.actionTextDisabled]}>
+          <Pressable onPress={goNext} disabled={selectedAssets.length === 0}>
+            <Text style={[styles.actionText, selectedAssets.length === 0 && styles.actionTextDisabled]}>
               Next
             </Text>
           </Pressable>
@@ -412,10 +402,10 @@ export default function CompleteItemScreen() {
           <View style={styles.previewBox}>
             {previewAsset ? (
               <>
-                <Image
-                  source={{ uri: previewAsset.resolvedUri }}
+                <ExpoImage
+                  source={{ uri: previewAsset.uri }}
                   style={{ width: "100%", height: "100%" }}
-                  resizeMode="contain"
+                  contentFit="contain"
                 />
                 {previewAsset.mediaType === "video" && (
                   <View style={styles.previewPlayIcon}>
