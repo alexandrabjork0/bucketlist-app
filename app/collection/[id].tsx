@@ -392,76 +392,78 @@ export default function CollectionDetailScreen() {
           ))}
         </View>
       ) : (
-        pageItems.map((item) => (
-          <View key={item.id} style={styles.itemRow}>
-            {item.imageUrl ? (
-              <Image source={{ uri: item.imageUrl }} style={styles.itemThumb} />
-            ) : (
-              <View style={styles.itemThumbFallback} />
-            )}
+        pageItems.map((item) => {
+          const myCompletion = isSharedCollection
+            ? (completionsByIdeaId.get(item.id) ?? []).find((c: any) => c.userId === currentUid)
+            : null;
+          const canComplete = isSharedCollection
+            ? isParticipant && !myCompletion
+            : item.userId === currentUid && !item.completed;
 
-            <Pressable
-              style={styles.itemInfo}
-              onPress={() => {
-                if (item.completed) {
-                  router.push({
-                    pathname: "/post-feed/[id]",
-                    params: { id: item.id, mode: "collection", filterId: id },
-                  });
-                } else if (isSharedCollection && isParticipant) {
-                  const myC = (completionsByIdeaId.get(item.id) ?? []).find((c: any) => c.userId === currentUid);
-                  if (myC) {
-                    router.push({ pathname: "/post-feed/[id]", params: { id: myC.id, mode: "collection", filterId: id } });
-                  } else {
-                    router.push({ pathname: "/complete-item/[id]", params: { id: item.id, isShared: "true" } });
-                  }
-                } else if (item.userId === currentUid) {
-                  router.push({ pathname: "/complete-item/[id]", params: { id: item.id } });
-                }
-              }}
-              onLongPress={() => {
-                if (item.userId === currentUid && !item.completed) openEditItem(item);
-              }}
-            >
-              <Text style={styles.itemTitle} numberOfLines={2}>{item.title}</Text>
-              <View style={styles.itemMeta}>
-                {item.category ? (
-                  <Text style={styles.itemCat} numberOfLines={1}>{item.category}</Text>
-                ) : null}
-                {isSharedCollection ? (
-                  (() => {
-                    const myC = (completionsByIdeaId.get(item.id) ?? []).find((c: any) => c.userId === currentUid);
-                    if (myC) return <Text style={styles.doneBadge}>You completed this ✓</Text>;
-                    if (isParticipant) return <Text style={styles.tapHint}>Tap to complete →</Text>;
-                    return null;
-                  })()
-                ) : item.userId === currentUid ? (
-                  <Text style={styles.tapHint}>
-                    {item.notes ? "Hold to edit · Tap to complete" : "Tap to complete →"}
-                  </Text>
-                ) : null}
-              </View>
-              {(() => {
-                const completions = completionsByIdeaId.get(item.id) ?? [];
-                if (!isSharedCollection || completions.length === 0) return null;
-                const names = completions
-                  .map((c: any) => c.completedByUsername ? `@${c.completedByUsername}` : "someone")
-                  .join(", ");
-                return <Text style={styles.doneByText}>done by {names}</Text>;
-              })()}
-              {item.notes ? (
-                <Text style={styles.itemNotes} numberOfLines={1}>{item.notes}</Text>
-              ) : null}
-            </Pressable>
+          const handlePress = () => {
+            if (!canComplete) return;
+            if (isSharedCollection) {
+              router.push({ pathname: "/complete-item/[id]", params: { id: item.id, isShared: "true" } });
+            } else {
+              router.push({ pathname: "/complete-item/[id]", params: { id: item.id } });
+            }
+          };
 
-            {/* Delete button — owner can delete any to-do; member can delete their own */}
-            {!item.completed && (isOwner || item.userId === currentUid) && (
-              <Pressable onPress={() => deleteItem(item.id)} style={styles.deleteBtn}>
-                <Text style={styles.deleteBtnText}>×</Text>
+          return (
+            <View key={item.id} style={styles.itemRow}>
+              {item.imageUrl ? (
+                <Image source={{ uri: item.imageUrl }} style={styles.itemThumb} />
+              ) : (
+                <View style={styles.itemThumbFallback} />
+              )}
+
+              <Pressable
+                style={styles.itemInfo}
+                onPress={canComplete ? handlePress : undefined}
+                onLongPress={() => {
+                  if (item.userId === currentUid && !item.completed) openEditItem(item);
+                }}
+              >
+                <Text style={styles.itemTitle} numberOfLines={2}>{item.title}</Text>
+                <View style={styles.itemMeta}>
+                  {item.category ? (
+                    <Text style={styles.itemCat} numberOfLines={1}>{item.category}</Text>
+                  ) : null}
+                  {isSharedCollection ? (
+                    myCompletion
+                      ? <Text style={styles.doneBadge}>You completed this ✓</Text>
+                      : isParticipant
+                        ? <Text style={styles.tapHint}>Tap to complete →</Text>
+                        : null
+                  ) : item.completed ? (
+                    <Text style={styles.doneBadge}>Completed ✓</Text>
+                  ) : item.userId === currentUid ? (
+                    <Text style={styles.tapHint}>
+                      {item.notes ? "Hold to edit · Tap to complete" : "Tap to complete →"}
+                    </Text>
+                  ) : null}
+                </View>
+                {(() => {
+                  const completions = completionsByIdeaId.get(item.id) ?? [];
+                  if (!isSharedCollection || completions.length === 0) return null;
+                  const names = completions
+                    .map((c: any) => c.completedByUsername ? `@${c.completedByUsername}` : "someone")
+                    .join(", ");
+                  return <Text style={styles.doneByText}>done by {names}</Text>;
+                })()}
+                {item.notes ? (
+                  <Text style={styles.itemNotes} numberOfLines={1}>{item.notes}</Text>
+                ) : null}
               </Pressable>
-            )}
-          </View>
-        ))
+
+              {!item.completed && (isOwner || item.userId === currentUid) && (
+                <Pressable onPress={() => deleteItem(item.id)} style={styles.deleteBtn}>
+                  <Text style={styles.deleteBtnText}>×</Text>
+                </Pressable>
+              )}
+            </View>
+          );
+        })
       )}
     </View>
   );
