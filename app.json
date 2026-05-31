@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "bucketlist-app",
-    "slug": "bucketlist-app",
+    "name": "LivedIt",
+    "slug": "livedit",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",

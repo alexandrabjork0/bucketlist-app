@@ -1,17 +1,30 @@
 import { Link, router } from "expo-router";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { sendPasswordResetEmail, signInWithEmailAndPassword } from "firebase/auth";
 import { useMemo, useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { auth } from "../lib/firebaseConfig";
 import { ThemeColors, useTheme } from "../lib/theme";
+
+function getAuthError(code: string): string {
+  switch (code) {
+    case "auth/user-not-found":
+    case "auth/wrong-password":
+    case "auth/invalid-credential": return "Incorrect email or password.";
+    case "auth/invalid-email": return "Please enter a valid email address.";
+    case "auth/too-many-requests": return "Too many attempts. Please try again later.";
+    case "auth/network-request-failed": return "Network error. Check your connection.";
+    default: return "Something went wrong. Please try again.";
+  }
+}
 
 export default function LoginScreen() {
   const C = useTheme();
@@ -19,13 +32,34 @@ export default function LoginScreen() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
+    if (!email.trim()) {
+      Alert.alert("Missing email", "Please enter your email address.");
+      return;
+    }
+    setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password);
       router.replace("/(tabs)");
     } catch (error: any) {
-      alert(error.message);
+      Alert.alert("Log in failed", getAuthError(error.code));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      Alert.alert("Reset password", "Enter your email address above, then tap Forgot password.");
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
+      Alert.alert("Email sent", "Check your inbox for a password reset link.");
+    } catch (error: any) {
+      Alert.alert("Error", getAuthError(error.code));
     }
   };
 
@@ -35,9 +69,9 @@ export default function LoginScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <View style={styles.card}>
-        <Text style={styles.logo}>Bucketlist</Text>
+        <Text style={styles.logo}>LivedIt</Text>
         <Text style={styles.title}>Welcome back</Text>
-        <Text style={styles.subtitle}>Log in to continue your dreams.</Text>
+        <Text style={styles.subtitle}>Log in to continue living it.</Text>
 
         <TextInput
           placeholder="Email"
@@ -58,8 +92,16 @@ export default function LoginScreen() {
           style={styles.input}
         />
 
-        <Pressable style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>Log in</Text>
+        <Pressable onPress={handleForgotPassword} style={styles.forgotRow}>
+          <Text style={styles.forgotText}>Forgot password?</Text>
+        </Pressable>
+
+        <Pressable
+          style={[styles.button, loading && styles.buttonDisabled]}
+          onPress={handleLogin}
+          disabled={loading}
+        >
+          <Text style={styles.buttonText}>{loading ? "Logging in…" : "Log in"}</Text>
         </Pressable>
 
         <Text style={styles.bottomText}>
@@ -115,12 +157,24 @@ function makeStyles(C: ThemeColors) {
       fontSize: 16,
       color: C.text,
     },
+    forgotRow: {
+      alignItems: "flex-end",
+      marginBottom: 16,
+      marginTop: -4,
+    },
+    forgotText: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: C.textSecondary,
+    },
     button: {
       backgroundColor: C.buttonPrimary,
       padding: 17,
       borderRadius: 18,
       alignItems: "center",
-      marginTop: 8,
+    },
+    buttonDisabled: {
+      opacity: 0.5,
     },
     buttonText: {
       color: C.buttonPrimaryText,

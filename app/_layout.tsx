@@ -51,6 +51,18 @@ export default function RootLayout() {
         <Stack.Screen name="friends-activity" options={{ headerShown: false }} />
         <Stack.Screen name="friends-lists" options={{ headerShown: false }} />
         <Stack.Screen name="friends-feed/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="collection/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="complete-item/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="post/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="post-feed/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="add-idea" options={{ headerShown: false }} />
+        <Stack.Screen name="edit-profile" options={{ headerShown: false }} />
+        <Stack.Screen name="user/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="experience/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="explore-item/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="explore-post/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="collection-invite/[inviteId]" options={{ headerShown: false }} />
+        <Stack.Screen name="invite-to-collection/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: "modal", title: "Modal" }} />
       </Stack>
       <StatusBar style="auto" />
