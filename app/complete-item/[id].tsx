@@ -1,4 +1,4 @@
-import * as ImagePicker from "expo-image-picker";
+import * as MediaLibrary from "expo-media-library";
 import { router, useLocalSearchParams } from "expo-router";
 import * as VideoThumbnails from "expo-video-thumbnails";
 import {
@@ -14,8 +14,11 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
+  FlatList,
   Image,
   KeyboardAvoidingView,
+  Linking,
   Modal,
   Platform,
   Pressable,
@@ -23,14 +26,24 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  useWindowDimensions,
   View,
 } from "react-native";
 import VideoPlayer from "../../components/VideoPlayer";
-import { completeItem as saveCompletion, linkCompletionToExperience, publishNewExperience } from "../../lib/collections";
+import {
+  completeItem as saveCompletion,
+  linkCompletionToExperience,
+  publishNewExperience,
+} from "../../lib/collections";
 import { auth, db, storage } from "../../lib/firebaseConfig";
-import { createMilestoneNotification, createNotification } from "../../lib/notifications";
+import {
+  createMilestoneNotification,
+  createNotification,
+} from "../../lib/notifications";
 import { ThemeColors, useTheme } from "../../lib/theme";
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+const CELL_SIZE = Math.floor(SCREEN_WIDTH / 3);
+const MAX_MEDIA = 10;
 
 const MILESTONES: Record<number, string> = {
   1: "You completed your first experience! 🎉",
@@ -70,10 +83,15 @@ async function notifyCompletion(postId: string) {
 
   const count = completedSnap.size;
   const message = MILESTONES[count];
-
   if (message) {
     await createMilestoneNotification(currentUser.uid, message, count);
   }
+}
+
+function formatDuration(seconds: number) {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
 type SelectedMedia = {
@@ -81,21 +99,46 @@ type SelectedMedia = {
   type: "image" | "video";
 };
 
+type GalleryAsset = MediaLibrary.Asset & { resolvedUri: string };
+
+async function resolveAssets(assets: MediaLibrary.Asset[]): Promise<GalleryAsset[]> {
+  return Promise.all(
+    assets.map(async (asset) => {
+      let resolvedUri = asset.uri;
+      if (Platform.OS === "ios" && asset.uri.startsWith("ph://")) {
+        try {
+          const info = await MediaLibrary.getAssetInfoAsync(asset);
+          resolvedUri = info.localUri || asset.uri;
+        } catch {}
+      }
+      return { ...asset, resolvedUri };
+    })
+  );
+}
+
 export default function CompleteItemScreen() {
   const C = useTheme();
   const styles = useMemo(() => makeStyles(C), [C]);
 
   const { id, isShared } = useLocalSearchParams<{ id: string; isShared?: string }>();
-  const { width } = useWindowDimensions();
 
   const [item, setItem] = useState<any>(null);
   const [media, setMedia] = useState<SelectedMedia[]>([]);
   const [caption, setCaption] = useState("");
   const [saving, setSaving] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
-  const [previewIndex, setPreviewIndex] = useState(0);
   const [captionIndex, setCaptionIndex] = useState(0);
 
+  // Gallery
+  const [galleryPermission, setGalleryPermission] = useState<boolean | null>(null);
+  const [galleryAssets, setGalleryAssets] = useState<GalleryAsset[]>([]);
+  const [galleryLoading, setGalleryLoading] = useState(false);
+  const [galleryHasMore, setGalleryHasMore] = useState(false);
+  const [galleryEndCursor, setGalleryEndCursor] = useState<string | undefined>(undefined);
+  const [selectedAssets, setSelectedAssets] = useState<GalleryAsset[]>([]);
+  const [previewAsset, setPreviewAsset] = useState<GalleryAsset | null>(null);
+
+  // Discover sheet
   const [discoverSheet, setDiscoverSheet] = useState(false);
   const [discoverQuery, setDiscoverQuery] = useState("");
   const [allExperiences, setAllExperiences] = useState<any[]>([]);
@@ -107,97 +150,110 @@ export default function CompleteItemScreen() {
   useEffect(() => {
     const loadItem = async () => {
       if (!id || typeof id !== "string") return;
-
-      const itemRef = doc(db, "userBucketlistItems", id);
-      const itemSnap = await getDoc(itemRef);
-
-      if (itemSnap.exists()) {
-        setItem(itemSnap.data());
-      }
+      const itemSnap = await getDoc(doc(db, "userBucketlistItems", id));
+      if (itemSnap.exists()) setItem(itemSnap.data());
     };
-
     loadItem();
   }, [id]);
 
-  const pickMedia = async () => {
-    if (saving) return;
+  useEffect(() => {
+    loadGallery();
+  }, []);
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ["images", "videos"],
-        allowsMultipleSelection: true,
-        selectionLimit: 6,
-        quality: 0.8,
-      });
-      
-    if (result.canceled) return;
-
-    const selectedMedia: SelectedMedia[] = result.assets.slice(0, 6).map((asset) => ({
-      uri: asset.uri,
-      type: asset.type === "video" ? "video" : "image",
-    }));
-
-    setMedia(selectedMedia);
-    setPreviewIndex(0);
+  const loadGallery = async () => {
+    setGalleryLoading(true);
+    const perm = await MediaLibrary.requestPermissionsAsync();
+    setGalleryPermission(perm.granted);
+    if (!perm.granted) {
+      setGalleryLoading(false);
+      return;
+    }
+    const result = await MediaLibrary.getAssetsAsync({
+      mediaType: [MediaLibrary.MediaType.photo, MediaLibrary.MediaType.video],
+      first: 60,
+      sortBy: [[MediaLibrary.SortBy.creationTime, false]],
+    });
+    const resolved = await resolveAssets(result.assets);
+    setGalleryAssets(resolved);
+    setGalleryHasMore(result.hasNextPage);
+    setGalleryEndCursor(result.endCursor);
+    if (resolved.length > 0) {
+      setPreviewAsset(resolved[0]);
+      setSelectedAssets([resolved[0]]);
+    }
+    setGalleryLoading(false);
   };
 
-  const removeMedia = (indexToRemove: number) => {
-    setMedia((prev) => prev.filter((_, index) => index !== indexToRemove));
+  const loadMoreGallery = async () => {
+    if (!galleryHasMore || galleryLoading || !galleryEndCursor) return;
+    const result = await MediaLibrary.getAssetsAsync({
+      mediaType: [MediaLibrary.MediaType.photo, MediaLibrary.MediaType.video],
+      first: 60,
+      after: galleryEndCursor,
+      sortBy: [[MediaLibrary.SortBy.creationTime, false]],
+    });
+    const resolved = await resolveAssets(result.assets);
+    setGalleryAssets((prev) => [...prev, ...resolved]);
+    setGalleryHasMore(result.hasNextPage);
+    setGalleryEndCursor(result.endCursor);
+  };
+
+  const toggleAsset = (asset: GalleryAsset) => {
+    setPreviewAsset(asset);
+    setSelectedAssets((prev) => {
+      const idx = prev.findIndex((a) => a.id === asset.id);
+      if (idx !== -1) return prev.filter((a) => a.id !== asset.id);
+      if (prev.length >= MAX_MEDIA) return prev;
+      return [...prev, asset];
+    });
+  };
+
+  const goNext = () => {
+    if (selectedAssets.length === 0) {
+      Alert.alert("Select media", "Please select at least one photo or video.");
+      return;
+    }
+    setMedia(
+      selectedAssets.map((asset) => ({
+        uri: asset.resolvedUri,
+        type: asset.mediaType === "video" ? "video" : "image",
+      }))
+    );
+    setStep(2);
   };
 
   const uploadMedia = async (mediaItem: SelectedMedia, index: number) => {
     if (!id || typeof id !== "string") return null;
-  
+
     const response = await fetch(mediaItem.uri);
     const blob = await response.blob();
-  
+
     const extension = mediaItem.type === "video" ? "mp4" : "jpg";
     const contentType = mediaItem.type === "video" ? "video/mp4" : "image/jpeg";
-  
+
     const mediaRef = ref(
       storage,
       `completedItems/${id}/${Date.now()}-${index}.${extension}`
     );
-  
+
     await uploadBytes(mediaRef, blob, { contentType });
-  
     const downloadUrl = await getDownloadURL(mediaRef);
-  
+
     let thumbnailUrl = null;
-  
+
     if (mediaItem.type === "video") {
-      const thumbnail = await VideoThumbnails.getThumbnailAsync(mediaItem.uri, {
-        time: 1000,
-      });
-  
+      const thumbnail = await VideoThumbnails.getThumbnailAsync(mediaItem.uri, { time: 1000 });
       const thumbnailResponse = await fetch(thumbnail.uri);
       const thumbnailBlob = await thumbnailResponse.blob();
-  
       const thumbnailRef = ref(
         storage,
         `completedItems/${id}/${Date.now()}-${index}-thumbnail.jpg`
       );
-  
-      await uploadBytes(thumbnailRef, thumbnailBlob, {
-        contentType: "image/jpeg",
-      });
-  
+      await uploadBytes(thumbnailRef, thumbnailBlob, { contentType: "image/jpeg" });
       thumbnailUrl = await getDownloadURL(thumbnailRef);
     }
-  
-    return {
-      url: downloadUrl,
-      type: mediaItem.type,
-      thumbnailUrl,
-    };
-  };
 
-  const goNext = () => {
-    if (media.length === 0) {
-      Alert.alert("Add media", "Please select at least one photo or video.");
-      return;
-    }
-
-    setStep(2);
+    return { url: downloadUrl, type: mediaItem.type, thumbnailUrl };
   };
 
   const completeItem = async () => {
@@ -216,7 +272,6 @@ export default function CompleteItemScreen() {
       );
 
       const cleanMedia = uploadedMedia.filter(Boolean);
-
       const firstImage = cleanMedia.find((m: any) => m.type === "image");
       const firstMedia = cleanMedia[0] as any;
       const imageUrl = firstImage?.url || firstMedia?.url || null;
@@ -301,16 +356,33 @@ export default function CompleteItemScreen() {
     router.back();
   };
 
+  const renderGridItem = ({ item: asset }: { item: GalleryAsset }) => {
+    const selectedIndex = selectedAssets.findIndex((a) => a.id === asset.id);
+    const isSelected = selectedIndex !== -1;
+    return (
+      <Pressable onPress={() => toggleAsset(asset)} style={styles.gridCell}>
+        <Image source={{ uri: asset.resolvedUri }} style={styles.gridCellImage} />
+        {asset.mediaType === "video" && (
+          <Text style={styles.videoDuration}>{formatDuration(asset.duration || 0)}</Text>
+        )}
+        {isSelected ? (
+          <View style={styles.selectionBadge}>
+            <Text style={styles.selectionBadgeText}>{selectedIndex + 1}</Text>
+          </View>
+        ) : (
+          selectedAssets.length > 0 && <View style={styles.selectionCircleEmpty} />
+        )}
+      </Pressable>
+    );
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.topBar}>
         <Pressable
           onPress={() => {
-            if (step === 2) {
-              setStep(1);
-            } else {
-              router.back();
-            }
+            if (step === 2) setStep(1);
+            else router.back();
           }}
           disabled={saving}
         >
@@ -320,24 +392,14 @@ export default function CompleteItemScreen() {
         <Text style={styles.topTitle}>{step === 1 ? "New post" : "Caption"}</Text>
 
         {step === 1 ? (
-          <Pressable onPress={goNext} disabled={media.length === 0}>
-            <Text
-              style={[
-                styles.actionText,
-                media.length === 0 && styles.actionTextDisabled,
-              ]}
-            >
+          <Pressable onPress={goNext} disabled={selectedAssets.length === 0 || galleryLoading}>
+            <Text style={[styles.actionText, (selectedAssets.length === 0 || galleryLoading) && styles.actionTextDisabled]}>
               Next
             </Text>
           </Pressable>
         ) : (
           <Pressable onPress={completeItem} disabled={saving || media.length === 0}>
-            <Text
-              style={[
-                styles.actionText,
-                (saving || media.length === 0) && styles.actionTextDisabled,
-              ]}
-            >
+            <Text style={[styles.actionText, (saving || media.length === 0) && styles.actionTextDisabled]}>
               {saving ? "Posting..." : "Post"}
             </Text>
           </Pressable>
@@ -345,74 +407,65 @@ export default function CompleteItemScreen() {
       </View>
 
       {step === 1 ? (
-        <ScrollView style={styles.content}>
-          <View style={styles.itemBox}>
-            <Text style={styles.itemLabel}>Completing</Text>
-            <Text style={styles.itemTitle}>{item?.title || "Loading..."}</Text>
-            <Text style={styles.category}>{item?.category}</Text>
-          </View>
-
-          {media.length > 0 ? (
-            <>
-              <View>
-                <ScrollView
-                  horizontal
-                  pagingEnabled
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.previewScroll}
-                  onMomentumScrollEnd={(e) => {
-                    setPreviewIndex(Math.round(e.nativeEvent.contentOffset.x / width));
-                  }}
-                >
-                  {media.map((mediaItem, index) => (
-                    <View
-                      key={`${mediaItem.uri}-${index}`}
-                      style={[
-                        styles.previewPage,
-                        {
-                          width,
-                          height: width * 1.15,
-                        },
-                      ]}
-                    >
-                      {mediaItem.type === "image" ? (
-                        <Image source={{ uri: mediaItem.uri }} style={styles.previewMedia} />
-                      ) : (
-                        <VideoPlayer uri={mediaItem.uri} style={styles.previewMedia} />
-                      )}
-
-                      <Pressable
-                        style={styles.removeButton}
-                        onPress={() => removeMedia(index)}
-                        disabled={saving}
-                      >
-                        <Text style={styles.removeButtonText}>×</Text>
-                      </Pressable>
-                    </View>
-                  ))}
-                </ScrollView>
-
-                {media.length > 1 && (
-                  <View style={styles.counter}>
-                    <Text style={styles.counterText}>{previewIndex + 1}/{media.length}</Text>
+        <View style={{ flex: 1 }}>
+          {/* Large preview */}
+          <View style={styles.previewBox}>
+            {previewAsset ? (
+              <>
+                <Image
+                  source={{ uri: previewAsset.resolvedUri }}
+                  style={{ width: "100%", height: "100%" }}
+                  resizeMode="contain"
+                />
+                {previewAsset.mediaType === "video" && (
+                  <View style={styles.previewPlayIcon}>
+                    <Text style={styles.previewPlayIconText}>▶</Text>
                   </View>
                 )}
+              </>
+            ) : (
+              <View style={styles.previewEmpty}>
+                <Text style={styles.previewEmptyText}>Select a photo or video</Text>
               </View>
+            )}
+            {selectedAssets.length > 1 && (
+              <View style={styles.multiSelectBadge}>
+                <Text style={styles.multiSelectBadgeText}>
+                  {selectedAssets.length}/{MAX_MEDIA}
+                </Text>
+              </View>
+            )}
+          </View>
 
-              <Text style={styles.mediaCount}>{media.length}/6 selected</Text>
+          {/* Gallery header */}
+          <View style={styles.galleryHeader}>
+            <Text style={styles.galleryAlbumName}>Recents</Text>
+          </View>
 
-              <Pressable style={styles.addMoreButton} onPress={pickMedia} disabled={saving}>
-                <Text style={styles.addMoreText}>Change selected media</Text>
+          {galleryPermission === false ? (
+            <View style={styles.permissionBox}>
+              <Text style={styles.permissionText}>
+                Allow photo access to select media.
+              </Text>
+              <Pressable onPress={() => Linking.openSettings()}>
+                <Text style={styles.permissionLink}>Open Settings</Text>
               </Pressable>
-            </>
+            </View>
+          ) : galleryLoading ? (
+            <ActivityIndicator style={{ marginTop: 40 }} color={C.text} />
           ) : (
-            <Pressable style={styles.emptyMediaBox} onPress={pickMedia}>
-              <Text style={styles.emptyMediaIcon}>＋</Text>
-              <Text style={styles.emptyMediaTitle}>Add photos or videos</Text>
-              <Text style={styles.emptyMediaSubtitle}>Select up to 6</Text>
-            </Pressable>
+            <FlatList
+              data={galleryAssets}
+              keyExtractor={(a) => a.id}
+              numColumns={3}
+              renderItem={renderGridItem}
+              onEndReached={loadMoreGallery}
+              onEndReachedThreshold={0.3}
+              showsVerticalScrollIndicator={false}
+              style={{ flex: 1 }}
+            />
           )}
-        </ScrollView>
+        </View>
       ) : (
         <ScrollView style={styles.content}>
           <View style={styles.captionPreview}>
@@ -422,19 +475,13 @@ export default function CompleteItemScreen() {
               showsHorizontalScrollIndicator={false}
               style={styles.previewScroll}
               onMomentumScrollEnd={(e) => {
-                setCaptionIndex(Math.round(e.nativeEvent.contentOffset.x / width));
+                setCaptionIndex(Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH));
               }}
             >
               {media.map((mediaItem, index) => (
                 <View
                   key={`${mediaItem.uri}-${index}`}
-                  style={[
-                    styles.captionPreviewPage,
-                    {
-                      width,
-                      height: width * 1.05,
-                    },
-                  ]}
+                  style={[styles.captionPreviewPage, { width: SCREEN_WIDTH, height: SCREEN_WIDTH * 1.05 }]}
                 >
                   {mediaItem.type === "image" ? (
                     <Image source={{ uri: mediaItem.uri }} style={styles.previewMedia} />
@@ -454,7 +501,6 @@ export default function CompleteItemScreen() {
 
           <View style={styles.captionBox}>
             <Text style={styles.captionLabel}>Write a caption</Text>
-
             <TextInput
               style={styles.captionInput}
               placeholder="Say something about this moment..."
@@ -465,7 +511,6 @@ export default function CompleteItemScreen() {
               editable={!saving}
               maxLength={500}
             />
-
             <Text style={styles.captionCount}>{caption.length}/500</Text>
           </View>
         </ScrollView>
@@ -554,7 +599,6 @@ function makeStyles(C: ThemeColors) {
       flex: 1,
       backgroundColor: C.background,
     },
-
     topBar: {
       paddingTop: 60,
       paddingHorizontal: 18,
@@ -565,151 +609,164 @@ function makeStyles(C: ThemeColors) {
       alignItems: "center",
       justifyContent: "space-between",
     },
-
     backText: {
       fontSize: 16,
       fontWeight: "700",
       color: C.text,
     },
-
     topTitle: {
       fontSize: 17,
       fontWeight: "900",
       color: C.text,
     },
-
     actionText: {
       fontSize: 16,
       fontWeight: "900",
       color: C.text,
     },
-
     actionTextDisabled: {
       color: C.disabled,
     },
-
     content: {
       flex: 1,
     },
 
-    itemBox: {
-      padding: 18,
-      borderBottomWidth: 1,
+    // Step 1 — gallery
+    previewBox: {
+      height: SCREEN_HEIGHT * 0.42,
+      backgroundColor: "#000",
+    },
+    previewEmpty: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    previewEmptyText: {
+      color: "#888",
+      fontSize: 15,
+    },
+    previewPlayIcon: {
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      marginTop: -24,
+      marginLeft: -24,
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: "rgba(0,0,0,0.5)",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    previewPlayIconText: {
+      color: "#fff",
+      fontSize: 18,
+      marginLeft: 3,
+    },
+    multiSelectBadge: {
+      position: "absolute",
+      bottom: 12,
+      right: 12,
+      backgroundColor: "rgba(0,0,0,0.6)",
+      borderRadius: 999,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+    },
+    multiSelectBadgeText: {
+      color: "#fff",
+      fontSize: 13,
+      fontWeight: "800",
+    },
+    galleryHeader: {
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: C.border,
     },
-
-    itemLabel: {
-      color: C.textSecondary,
-      fontSize: 12,
+    galleryAlbumName: {
+      fontSize: 15,
       fontWeight: "800",
-      textTransform: "uppercase",
-    },
-
-    itemTitle: {
-      marginTop: 6,
-      fontSize: 20,
-      fontWeight: "900",
       color: C.text,
     },
-
-    category: {
-      marginTop: 4,
+    permissionBox: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 32,
+      gap: 12,
+    },
+    permissionText: {
+      textAlign: "center",
       color: C.textSecondary,
-      fontWeight: "600",
+      fontSize: 15,
+    },
+    permissionLink: {
+      color: C.text,
+      fontWeight: "800",
+      fontSize: 15,
+    },
+    gridCell: {
+      width: CELL_SIZE,
+      height: CELL_SIZE,
+      padding: 1,
+    },
+    gridCellImage: {
+      width: CELL_SIZE - 2,
+      height: CELL_SIZE - 2,
+    },
+    videoDuration: {
+      position: "absolute",
+      bottom: 5,
+      right: 6,
+      color: "#fff",
+      fontSize: 11,
+      fontWeight: "700",
+      textShadowColor: "rgba(0,0,0,0.7)",
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 2,
+    },
+    selectionBadge: {
+      position: "absolute",
+      top: 6,
+      right: 6,
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      backgroundColor: C.buttonPrimary,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    selectionBadgeText: {
+      color: C.buttonPrimaryText,
+      fontSize: 12,
+      fontWeight: "900",
+    },
+    selectionCircleEmpty: {
+      position: "absolute",
+      top: 6,
+      right: 6,
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      borderWidth: 2,
+      borderColor: "rgba(255,255,255,0.8)",
     },
 
+    // Step 2 — caption
     previewScroll: {
       width: "100%",
       backgroundColor: "#000",
     },
-
-    previewPage: {
-      backgroundColor: "#000",
-      justifyContent: "center",
-      alignItems: "center",
-    },
-
     captionPreviewPage: {
       backgroundColor: "#000",
     },
-
     previewMedia: {
       width: "100%",
       height: "100%",
     },
-
-    removeButton: {
-      position: "absolute",
-      top: 14,
-      right: 14,
-      width: 34,
-      height: 34,
-      borderRadius: 17,
-      backgroundColor: "rgba(0,0,0,0.65)",
-      alignItems: "center",
-      justifyContent: "center",
-    },
-
-    removeButtonText: {
-      color: "#fff",
-      fontSize: 24,
-      fontWeight: "900",
-      lineHeight: 26,
-    },
-
-    mediaCount: {
-      padding: 12,
-      textAlign: "center",
-      color: C.textSecondary,
-      fontWeight: "700",
-    },
-
-    emptyMediaBox: {
-      margin: 18,
-      height: 330,
-      borderRadius: 24,
-      backgroundColor: C.surface,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-
-    emptyMediaIcon: {
-      fontSize: 42,
-      fontWeight: "300",
-      color: C.text,
-    },
-
-    emptyMediaTitle: {
-      marginTop: 8,
-      fontSize: 17,
-      fontWeight: "900",
-      color: C.text,
-    },
-
-    emptyMediaSubtitle: {
-      marginTop: 4,
-      color: C.textSecondary,
-      fontWeight: "600",
-    },
-
-    addMoreButton: {
-      marginHorizontal: 18,
-      marginTop: 16,
-      backgroundColor: C.surface,
-      padding: 14,
-      borderRadius: 16,
-      alignItems: "center",
-    },
-
-    addMoreText: {
-      fontWeight: "900",
-      color: C.text,
-    },
-
     captionPreview: {
       backgroundColor: "#000",
     },
-
     counter: {
       position: "absolute",
       top: 12,
@@ -719,31 +776,26 @@ function makeStyles(C: ThemeColors) {
       paddingVertical: 5,
       borderRadius: 999,
     },
-
     counterText: {
       color: "#fff",
       fontSize: 12,
       fontWeight: "800",
     },
-
     captionBox: {
       padding: 18,
     },
-
     captionLabel: {
       fontSize: 15,
       fontWeight: "900",
       marginBottom: 10,
       color: C.text,
     },
-
     captionInput: {
       minHeight: 130,
       fontSize: 16,
       textAlignVertical: "top",
       color: C.text,
     },
-
     captionCount: {
       marginTop: 8,
       color: C.textTertiary,
@@ -751,6 +803,7 @@ function makeStyles(C: ThemeColors) {
       textAlign: "right",
     },
 
+    // Discover sheet
     discoverOverlay: {
       flex: 1,
       justifyContent: "flex-end",
