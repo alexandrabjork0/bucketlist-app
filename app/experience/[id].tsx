@@ -111,8 +111,7 @@ export default function ExperienceScreen() {
           .slice(0, 8)
           .map((d) => ({ id: d.id, ...d.data() }))
       );
-    } catch (e) {
-      console.log(e);
+    } catch {
     } finally {
       setLoading(false);
     }

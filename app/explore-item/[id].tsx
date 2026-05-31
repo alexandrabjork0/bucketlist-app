@@ -115,8 +115,7 @@ export default function ExploreItemScreen() {
       );
 
       setCompletedItems(withAuthors);
-    } catch (error) {
-      console.log("Error fetching completed posts:", error);
+    } catch {
     } finally {
       setLoading(false);
     }

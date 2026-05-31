@@ -289,8 +289,7 @@ export default function CompleteItemScreen() {
 
       Alert.alert("Posted", "Your experience is now posted!");
       router.back();
-    } catch (error) {
-      console.log(error);
+    } catch {
       Alert.alert("Error", "Something went wrong while posting this item.");
     } finally {
       setSaving(false);
