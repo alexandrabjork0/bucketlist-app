@@ -2,10 +2,12 @@ import {
   arrayRemove,
   arrayUnion,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
   increment,
+  limit,
   query,
   serverTimestamp,
   updateDoc,
@@ -386,4 +388,66 @@ export async function completeItem(params: {
   }
   await batch.commit();
   return params.itemId;
+}
+
+// Delete a completion post and clean up its linked Discover experience if needed.
+export async function deleteCompletionPost(postId: string): Promise<void> {
+  const postRef = doc(db, "userBucketlistItems", postId);
+  const postSnap = await getDoc(postRef);
+  if (!postSnap.exists()) return;
+
+  const postData = postSnap.data();
+  const experienceId = postData.experienceId as string | null;
+  const postImageUrl = postData.imageUrl as string | null;
+
+  // No experience linked — simple delete
+  if (!experienceId) {
+    await deleteDoc(postRef);
+    return;
+  }
+
+  const expRef = doc(db, "experiences", experienceId);
+  const expSnap = await getDoc(expRef);
+
+  // Experience already gone — just delete the post
+  if (!expSnap.exists()) {
+    await deleteDoc(postRef);
+    return;
+  }
+
+  const expData = expSnap.data();
+  const newCount = Math.max(0, (expData.completionsCount || 0) - 1);
+
+  const batch = writeBatch(db);
+  batch.delete(postRef);
+
+  if (newCount === 0) {
+    // No completions left — remove the experience from Discover entirely
+    batch.delete(expRef);
+  } else {
+    let newHeroImageUrl = expData.heroImageUrl;
+
+    // If this post's image was the cover photo, find a replacement from another completion
+    if (postImageUrl && postImageUrl === expData.heroImageUrl) {
+      const othersSnap = await getDocs(
+        query(
+          collection(db, "userBucketlistItems"),
+          where("experienceId", "==", experienceId),
+          where("completed", "==", true),
+          limit(5)
+        )
+      );
+      newHeroImageUrl = othersSnap.docs
+        .filter((d) => d.id !== postId && d.data().imageUrl)
+        .map((d) => d.data().imageUrl as string)[0] ?? null;
+    }
+
+    batch.update(expRef, {
+      completionsCount: newCount,
+      heroImageUrl: newHeroImageUrl,
+      updatedAt: serverTimestamp(),
+    });
+  }
+
+  await batch.commit();
 }

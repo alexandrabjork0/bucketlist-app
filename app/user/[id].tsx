@@ -26,9 +26,9 @@ import { auth, db } from "../../lib/firebaseConfig";
 import { createNotification } from "../../lib/notifications";
 import { ThemeColors, useTheme } from "../../lib/theme";
 
-type ActiveTab = "collections" | "posts";
+type ActiveTab = "collections" | "memories";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const CARD_GAP = 12;
 const CARD_PAD = 16;
 const CARD_WIDTH = Math.floor((SCREEN_WIDTH - CARD_PAD * 2 - CARD_GAP) / 2);
@@ -126,7 +126,7 @@ export default function UserProfileScreen() {
   const isOwnProfile = auth.currentUser?.uid === id;
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
       {/* Profile header */}
       <View style={styles.profileHeader}>
         <View style={styles.headerRow}>
@@ -183,14 +183,14 @@ export default function UserProfileScreen() {
 
       {/* Tab bar */}
       <View style={styles.tabs}>
-        {(["collections", "posts"] as ActiveTab[]).map((tab) => (
+        {(["collections", "memories"] as ActiveTab[]).map((tab) => (
           <Pressable
             key={tab}
             style={[styles.tab, activeTab === tab && styles.tabActive]}
             onPress={() => switchTab(tab)}
           >
             <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === "memories" ? "Memories" : "Collections"}
             </Text>
           </Pressable>
         ))}
@@ -201,21 +201,16 @@ export default function UserProfileScreen() {
         ref={pagerRef}
         horizontal
         pagingEnabled
+        nestedScrollEnabled
         showsHorizontalScrollIndicator={false}
         scrollEventThrottle={16}
         onMomentumScrollEnd={(e) => {
           const page = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
-          setActiveTab(page === 0 ? "collections" : "posts");
+          setActiveTab(page === 0 ? "collections" : "memories");
         }}
-        style={{ flex: 1 }}
       >
         {/* Collections page */}
-        <ScrollView
-          style={{ width: SCREEN_WIDTH }}
-          contentContainerStyle={{ paddingTop: 20, paddingBottom: 48 }}
-          showsVerticalScrollIndicator={false}
-          nestedScrollEnabled
-        >
+        <View style={{ width: SCREEN_WIDTH, minHeight: SCREEN_HEIGHT * 0.7, paddingTop: 16 }}>
           {publicCollections.length === 0 ? (
             <Text style={styles.emptyText}>No public collections yet.</Text>
           ) : (
@@ -232,17 +227,12 @@ export default function UserProfileScreen() {
               ))}
             </View>
           )}
-        </ScrollView>
+        </View>
 
-        {/* Posts page */}
-        <ScrollView
-          style={{ width: SCREEN_WIDTH }}
-          contentContainerStyle={{ paddingTop: 20, paddingBottom: 48 }}
-          showsVerticalScrollIndicator={false}
-          nestedScrollEnabled
-        >
+        {/* Memories page */}
+        <View style={{ width: SCREEN_WIDTH, minHeight: SCREEN_HEIGHT * 0.7, paddingTop: 16 }}>
           {posts.length === 0 ? (
-            <Text style={styles.emptyText}>No posts yet.</Text>
+            <Text style={styles.emptyText}>No memories yet.</Text>
           ) : (
             <View style={styles.grid}>
               {posts.map((item) => (
@@ -256,9 +246,9 @@ export default function UserProfileScreen() {
               ))}
             </View>
           )}
-        </ScrollView>
+        </View>
       </ScrollView>
-    </View>
+    </ScrollView>
   );
 }
 

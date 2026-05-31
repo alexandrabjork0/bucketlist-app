@@ -1,7 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import {
     collection,
-    deleteDoc,
     doc,
     getDoc,
     getDocs,
@@ -17,6 +16,7 @@ import {
     Text,
     View,
 } from "react-native";
+import { deleteCompletionPost } from "../../lib/collections";
 import { auth, db } from "../../lib/firebaseConfig";
 import PostCard from "../../components/PostCard";
 import { ThemeColors, useTheme } from "../../lib/theme";
@@ -88,7 +88,7 @@ export default function PostScreen() {
         text: "Delete",
         style: "destructive",
         onPress: async () => {
-          await deleteDoc(doc(db, "userBucketlistItems", postId));
+          await deleteCompletionPost(postId);
 
           setPosts((prevPosts) =>
             prevPosts.filter((post) => post.id !== postId)

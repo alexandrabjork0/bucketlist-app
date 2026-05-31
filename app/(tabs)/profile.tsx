@@ -35,9 +35,9 @@ import PostThumbnail from "../../components/PostThumbnail";
 import { auth, db, storage } from "../../lib/firebaseConfig";
 import { ThemeColors, useTheme } from "../../lib/theme";
 
-type ActiveTab = "collections" | "posts";
+type ActiveTab = "collections" | "memories";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const CARD_GAP = 12;
 const CARD_PAD = 16;
 const CARD_WIDTH = Math.floor((SCREEN_WIDTH - CARD_PAD * 2 - CARD_GAP) / 2);
@@ -46,7 +46,6 @@ export default function ProfileScreen({ isFocused }: { isFocused: boolean }) {
   const C = useTheme();
   const styles = useMemo(() => makeStyles(C), [C]);
   const pagerRef = useRef<ScrollView>(null);
-
   const [profile, setProfile] = useState<any>(null);
   const [completedItems, setCompletedItems] = useState<any[]>([]);
   const [followersCount, setFollowersCount] = useState(0);
@@ -282,11 +281,10 @@ export default function ProfileScreen({ isFocused }: { isFocused: boolean }) {
           </Pressable>
         </View>
 
-        {/* Single vertical scroll: header → tabs (sticky) → content */}
+        {/* Single vertical scroll: header → tabs → pager */}
         <ScrollView
           style={{ flex: 1 }}
           showsVerticalScrollIndicator={false}
-          stickyHeaderIndices={[1]}
           contentContainerStyle={{ paddingBottom: 100 }}
         >
           {/* 0 — profile header, scrolls away */}
@@ -343,29 +341,30 @@ export default function ProfileScreen({ isFocused }: { isFocused: boolean }) {
               </Text>
             </Pressable>
             <Pressable
-              style={[styles.tab, activeTab === "posts" && styles.tabActive]}
-              onPress={() => switchTab("posts")}
+              style={[styles.tab, activeTab === "memories" && styles.tabActive]}
+              onPress={() => switchTab("memories")}
             >
-              <Text style={[styles.tabText, activeTab === "posts" && styles.tabTextActive]}>
-                Posts
+              <Text style={[styles.tabText, activeTab === "memories" && styles.tabTextActive]}>
+                Memories
               </Text>
             </Pressable>
           </View>
 
-          {/* 2 — horizontal pager, no flex:1 so height comes from content */}
+          {/* 2 — horizontal pager */}
           <ScrollView
             ref={pagerRef}
             horizontal
             pagingEnabled
+            nestedScrollEnabled
             showsHorizontalScrollIndicator={false}
             scrollEventThrottle={16}
             onMomentumScrollEnd={(e) => {
               const page = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
-              setActiveTab(page === 0 ? "collections" : "posts");
+              setActiveTab(page === 0 ? "collections" : "memories");
             }}
           >
             {/* Collections page */}
-            <View style={{ width: SCREEN_WIDTH, paddingTop: 16, paddingBottom: 100 }}>
+            <View style={{ width: SCREEN_WIDTH, minHeight: SCREEN_HEIGHT * 0.7, paddingTop: 16 }}>
               <View style={styles.collectionsGrid}>
                 {collections.map((coll) => (
                   <CollectionCard
@@ -389,11 +388,11 @@ export default function ProfileScreen({ isFocused }: { isFocused: boolean }) {
               )}
             </View>
 
-            {/* Posts page */}
-            <View style={{ width: SCREEN_WIDTH, paddingTop: 16, paddingBottom: 100 }}>
+            {/* Memories page */}
+            <View style={{ width: SCREEN_WIDTH, minHeight: SCREEN_HEIGHT * 0.7, paddingTop: 16 }}>
               {completedItems.length === 0 ? (
                 <Text style={styles.emptyText}>
-                  No posts yet. Complete an experience to see it here.
+                  No memories yet. Complete an experience to see it here.
                 </Text>
               ) : (
                 <View style={styles.grid}>
