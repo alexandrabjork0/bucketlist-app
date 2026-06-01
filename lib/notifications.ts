@@ -1,4 +1,11 @@
-import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import {
+  arrayUnion,
+  doc,
+  getDoc,
+  increment,
+  serverTimestamp,
+  setDoc,
+} from "firebase/firestore";
 import { db } from "./firebaseConfig";
 
 export type NotificationType =
@@ -97,32 +104,18 @@ export async function createNotification({
   }
 
   const notifRef = doc(db, "notifications", groupKey);
-  const notifSnap = await getDoc(notifRef);
 
-  if (notifSnap.exists()) {
-    const existing = notifSnap.data();
-    const existingActors: any[] = existing.actors || [];
-    const alreadyActed = existingActors.some((a: any) => a.userId === actorId);
-    const filtered = existingActors.filter((a: any) => a.userId !== actorId);
-    const newActors = [actor, ...filtered].slice(0, 3);
-
-    await setDoc(
-      notifRef,
-      {
-        actors: newActors,
-        actorCount: alreadyActed ? existing.actorCount : (existing.actorCount || 0) + 1,
-        read: false,
-        updatedAt: serverTimestamp(),
-      },
-      { merge: true }
-    );
-  } else {
-    await setDoc(notifRef, {
+  // Single atomic write — setDoc with merge supports arrayUnion and increment,
+  // so actors are included in the same write that creates the document.
+  // No read needed, avoiding the permission problem where actor ≠ recipient.
+  await setDoc(
+    notifRef,
+    {
       recipientId,
       type,
       tab,
-      actors: [actor],
-      actorCount: 1,
+      actors: arrayUnion(actor),
+      actorCount: increment(1),
       postId: postId || null,
       postTitle,
       postImageUrl,
@@ -132,8 +125,9 @@ export async function createNotification({
       read: false,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
-    });
-  }
+    },
+    { merge: true }
+  );
 }
 
 export async function createMilestoneNotification(
@@ -158,7 +152,6 @@ export async function createMilestoneNotification(
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     },
-    // merge: true so a re-trigger never resets an already-read notification
     { merge: true }
   );
 }

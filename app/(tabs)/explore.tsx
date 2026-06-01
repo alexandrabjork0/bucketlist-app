@@ -19,8 +19,8 @@ import {
   View,
 } from "react-native";
 import { auth, db } from "../../lib/firebaseConfig";
-import { ThemeColors, useTheme } from "../../lib/theme";
 import { migrateIdeasToExperiences } from "../../lib/migration";
+import { ThemeColors, useTheme } from "../../lib/theme";
 
 type Experience = {
   id: string;

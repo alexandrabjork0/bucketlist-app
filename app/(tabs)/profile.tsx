@@ -71,6 +71,7 @@ export default function ProfileScreen({ isFocused }: { isFocused: boolean }) {
     if (!auth.currentUser) return;
     const uid = auth.currentUser.uid;
 
+    try {
     const [userSnap, postsSnap, followersSnap, followingSnap, ownedSnap, sharedSnap] =
       await Promise.all([
         getDoc(doc(db, "users", uid)),
@@ -122,6 +123,9 @@ export default function ProfileScreen({ isFocused }: { isFocused: boolean }) {
       return { ...c, isShared: true, ownerUsername: ownerData?.username || "user", memberAvatars };
     });
     setCollections([...ownedCollections, ...sharedCollections]);
+    } catch (e: any) {
+      console.error("Profile load error:", e?.code, e?.message);
+    }
   };
 
   const reloadCollections = async () => {

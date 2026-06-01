@@ -83,7 +83,7 @@ export default function PostComments({ postId, authorId, expanded, onClose }: Pr
     );
     return onSnapshot(q, (snap) => {
       setComments(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
+    }, () => {});
   }, [postId]);
 
   const addComment = async () => {

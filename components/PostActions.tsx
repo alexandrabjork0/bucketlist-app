@@ -46,10 +46,10 @@ export default function PostActions({
         setLikesCount(snap.data().likesCount || 0);
         setCommentsCount(snap.data().commentsCount || 0);
       }
-    });
+    }, () => {});
     const unsubLike = onSnapshot(likeRef, (snap) => {
       setLiked(snap.exists());
-    });
+    }, () => {});
 
     return () => {
       unsubPost();

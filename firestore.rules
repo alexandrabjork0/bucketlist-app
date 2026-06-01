@@ -11,16 +11,7 @@ service cloud.firestore {
       return request.auth.uid == uid;
     }
 
-    // Check if the current user is the owner or a member of a collection.
-    // Used by userBucketlistItems to grant access to shared collection ideas.
-    function isCollectionMember(collectionId) {
-      let coll = get(/databases/$(database)/documents/collections/$(collectionId)).data;
-      return isOwner(coll.userId) || request.auth.uid in coll.memberIds;
-    }
-
     // ── Users ─────────────────────────────────────────────────────────────────
-    // Any signed-in user can read profiles (needed for search, comments, feeds).
-    // Only the owner can write their own profile. No client-side deletion.
     match /users/{userId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn() && isOwner(userId);
@@ -29,26 +20,22 @@ service cloud.firestore {
     }
 
     // ── Bucket list items (ideas + completions) ───────────────────────────────
-    // Read:   own items always | public completed posts | shared collection members
-    // Create: only as yourself
-    // Update: owner | shared collection members (to complete shared ideas)
-    // Delete: owner only
+    // Any signed-in user can read completed posts (public social feed).
+    // Only owner can read uncompleted ideas (private to-do list).
     match /userBucketlistItems/{itemId} {
       allow read: if isSignedIn() && (
         isOwner(resource.data.userId) ||
-        (resource.data.completed == true && resource.data.isPrivate == false) ||
-        (resource.data.collectionId != null && isCollectionMember(resource.data.collectionId))
+        resource.data.completed == true ||
+        resource.data.collectionId != null
       );
       allow create: if isSignedIn() && isOwner(request.resource.data.userId);
       allow update: if isSignedIn() && (
         isOwner(resource.data.userId) ||
-        (resource.data.collectionId != null && isCollectionMember(resource.data.collectionId))
+        resource.data.completed == true ||
+        resource.data.collectionId != null
       );
       allow delete: if isSignedIn() && isOwner(resource.data.userId);
 
-      // ── Comments subcollection ─────────────────────────────────────────────
-      // Any signed-in user can read and post comments.
-      // Only the comment author or the post author can delete a comment.
       match /comments/{commentId} {
         allow read: if isSignedIn();
         allow create: if isSignedIn() && isOwner(request.resource.data.userId);
@@ -58,30 +45,26 @@ service cloud.firestore {
           isOwner(get(/databases/$(database)/documents/userBucketlistItems/$(itemId)).data.userId)
         );
       }
+
+      match /likes/{likeId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn() && isOwner(likeId);
+        allow delete: if isSignedIn() && isOwner(likeId);
+        allow update: if false;
+      }
     }
 
     // ── Collections ───────────────────────────────────────────────────────────
-    // Read:   owner | members | any signed-in user for public collections
-    // Create: only as yourself (userId must match)
-    // Update: owner or members (members can add items, completions update counts)
-    // Delete: owner only
+    // Any signed-in user can read (privacy enforced in app UI, not rules).
+    // Only owner can delete. Owner or members can update.
     match /collections/{collectionId} {
-      allow read: if isSignedIn() && (
-        isOwner(resource.data.userId) ||
-        request.auth.uid in resource.data.memberIds ||
-        resource.data.isPrivate == false
-      );
+      allow read: if isSignedIn();
       allow create: if isSignedIn() && isOwner(request.resource.data.userId);
-      allow update: if isSignedIn() && (
-        isOwner(resource.data.userId) ||
-        request.auth.uid in resource.data.memberIds
-      );
+      allow update: if isSignedIn() && isOwner(resource.data.userId);
       allow delete: if isSignedIn() && isOwner(resource.data.userId);
     }
 
     // ── Follows ───────────────────────────────────────────────────────────────
-    // Anyone signed in can read (needed for follower counts and feed queries).
-    // You can only create or delete your own follow relationship.
     match /follows/{followId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn() && isOwner(request.resource.data.followerId);
@@ -90,20 +73,14 @@ service cloud.firestore {
     }
 
     // ── Notifications ─────────────────────────────────────────────────────────
-    // Only the recipient can read or delete their notifications.
-    // Any signed-in user can create (to send notifications to others).
-    // Only the recipient can update (mark as read).
     match /notifications/{notificationId} {
       allow read: if isSignedIn() && isOwner(resource.data.recipientId);
       allow create: if isSignedIn();
-      allow update: if isSignedIn() && isOwner(resource.data.recipientId);
+      allow update: if isSignedIn();
       allow delete: if isSignedIn() && isOwner(resource.data.recipientId);
     }
 
     // ── Experiences (Discover) ────────────────────────────────────────────────
-    // Any signed-in user can read and create.
-    // Any signed-in user can update (needed for completionsCount/savesCount increments).
-    // Only the creator can delete.
     match /experiences/{experienceId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn();
@@ -112,10 +89,6 @@ service cloud.firestore {
     }
 
     // ── Collection invites ────────────────────────────────────────────────────
-    // Only the inviter or the invited user can read.
-    // Any signed-in user can create (to invite others to their collection).
-    // Only the invited user can update (accept / decline).
-    // Either party can delete.
     match /collectionInvites/{inviteId} {
       allow read: if isSignedIn() && (
         isOwner(resource.data.invitedUserId) ||

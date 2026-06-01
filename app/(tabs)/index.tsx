@@ -349,7 +349,7 @@ export default function HomeScreen({ isFocused }: { isFocused: boolean }) {
 
   const loadHome = async (uid: string) => {
     didLoadRef.current = true;
-
+    try {
     // Phase 1: independent queries
     const [followsSnap, ownedCollSnap, memberCollSnap] = await Promise.all([
       getDocs(query(collection(db, "follows"), where("followerId", "==", uid))),
@@ -490,6 +490,9 @@ export default function HomeScreen({ isFocused }: { isFocused: boolean }) {
     );
 
     await Promise.all(phase2);
+    } catch (e: any) {
+      console.error("Home load error:", e?.code, e?.message);
+    }
   };
 
   // ── Follow a suggestion ───────────────────────────────────────────────────
