@@ -45,10 +45,6 @@ function getDisplayText(notification: any): string {
       return `${actorLabel} followed you`;
     case "save":
       return `${actorLabel} saved${postLabel} to their bucketlist`;
-    case "friend_completion":
-      return postTitle
-        ? `${actorLabel} just completed "${postTitle}"`
-        : `${actorLabel} just completed something new`;
     case "milestone":
       return previewText || "You reached a milestone!";
     case "system":
@@ -84,7 +80,6 @@ function getOnPress(notification: any): (() => void) | undefined {
     case "like":
     case "comment":
     case "save":
-    case "friend_completion":
       if (postId) return () => router.push({ pathname: "/explore-post/[id]", params: { id: postId } });
       return undefined;
     case "follow":

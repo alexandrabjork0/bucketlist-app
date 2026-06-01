@@ -38,7 +38,6 @@ import {
 import { auth, db, storage } from "../../lib/firebaseConfig";
 import {
   createMilestoneNotification,
-  createNotification,
 } from "../../lib/notifications";
 import { ThemeColors, useTheme } from "../../lib/theme";
 
@@ -58,21 +57,6 @@ const MILESTONES: Record<number, string> = {
 async function notifyCompletion(postId: string) {
   const currentUser = auth.currentUser;
   if (!currentUser) return;
-
-  const followersSnap = await getDocs(
-    query(collection(db, "follows"), where("followingId", "==", currentUser.uid))
-  );
-
-  await Promise.all(
-    followersSnap.docs.map((followDoc) =>
-      createNotification({
-        recipientId: followDoc.data().followerId,
-        type: "friend_completion",
-        actorId: currentUser.uid,
-        postId,
-      }).catch(() => {})
-    )
-  );
 
   const completedSnap = await getDocs(
     query(

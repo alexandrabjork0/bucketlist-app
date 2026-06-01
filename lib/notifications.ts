@@ -13,7 +13,6 @@ export type NotificationType =
   | "comment"
   | "follow"
   | "save"
-  | "friend_completion"
   | "milestone"
   | "system"
   | "collection_invite"
@@ -77,10 +76,6 @@ export async function createNotification({
       break;
     case "follow":
       groupKey = `follow_${recipientId}`;
-      tab = "personal";
-      break;
-    case "friend_completion":
-      groupKey = `friend_completion_${recipientId}_${actorId}_${postId}`;
       tab = "personal";
       break;
     case "milestone":
